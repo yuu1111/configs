@@ -12,6 +12,14 @@ bun add -D @yuu1111/tsconfig
 
 Extend one of the presets in your `tsconfig.json`:
 
+### Base
+
+```json
+{
+  "extends": "@yuu1111/tsconfig/base.json"
+}
+```
+
 ### React
 
 ```json
@@ -20,13 +28,6 @@ Extend one of the presets in your `tsconfig.json`:
   "compilerOptions": {
     "outDir": "dist"
   }
-}
-```
-
-### Base
-```json
-{
-  "extends": "@yuu1111/tsconfig/base.json"
 }
 ```
 
