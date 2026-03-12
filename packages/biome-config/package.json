@@ -1,13 +1,15 @@
 {
   "name": "@yuu1111/biome-config",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Shared Biome configuration",
   "license": "MIT",
   "exports": {
-    "./biome": "./shared.json"
+    "./biome": "./base.json",
+    "./react": "./react.json"
   },
   "files": [
-    "shared.json"
+    "base.json",
+    "react.json"
   ],
   "keywords": [
     "biome",
