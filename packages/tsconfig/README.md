@@ -12,17 +12,6 @@ bun add -D @yuu1111/tsconfig
 
 Extend one of the presets in your `tsconfig.json`:
 
-### Node.js
-
-```json
-{
-  "extends": "@yuu1111/tsconfig/node.json",
-  "compilerOptions": {
-    "outDir": "dist"
-  }
-}
-```
-
 ### React
 
 ```json
@@ -34,8 +23,7 @@ Extend one of the presets in your `tsconfig.json`:
 }
 ```
 
-### Base (custom setup)
-
+### Base
 ```json
 {
   "extends": "@yuu1111/tsconfig/base.json"
@@ -47,5 +35,4 @@ Extend one of the presets in your `tsconfig.json`:
 | Preset | Use case |
 |--------|----------|
 | `base.json` | Strict shared base |
-| `node.json` | Node.js (Node16 module resolution) |
 | `react.json` | React (JSX + DOM types) |
