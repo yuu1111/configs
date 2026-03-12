@@ -4,13 +4,8 @@
   "workspaces": [
     "packages/*"
   ],
-  "scripts": {
-    "changeset": "changeset",
-    "version": "changeset version"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
-    "@changesets/cli": "^2.29.0",
     "@yuu1111/biome-config": "workspace:*",
     "@yuu1111/tsconfig": "workspace:*",
     "typescript": "^5.9.3"

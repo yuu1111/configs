@@ -11,7 +11,7 @@
 
 - パッケージマネージャ: Bun
 - publish: npm publish
-- バージョニング: @changesets/cli (独立バージョン)
+- バージョニング: npm version (手動)
 - lint/format: Biome (self-hosting)
 
 ## コマンド
@@ -19,8 +19,7 @@
 - `bun install` - 依存インストール + workspace リンク
 - `bunx biome check .` - lint/format チェック
 - `bunx biome check --write .` - 自動修正
-- `bunx changeset` - changeset 作成
-- `bunx changeset version` - バージョン更新
+- `npm version patch/minor/major` - バージョン更新 (各パッケージディレクトリで実行)
 
 ## 注意点
 
