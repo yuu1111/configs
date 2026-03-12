@@ -1,0 +1,6 @@
+{
+  "extends": "@yuu1111/tsconfig/node.json",
+  "compilerOptions": {
+    "noEmit": true
+  }
+}

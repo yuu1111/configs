@@ -1,0 +1,17 @@
+{
+  "name": "@yuu1111/tsconfig",
+  "version": "0.1.0",
+  "description": "Shared TypeScript configurations",
+  "license": "MIT",
+  "tsconfig": "./base.json",
+  "files": [
+    "base.json",
+    "node.json",
+    "react.json"
+  ],
+  "keywords": [
+    "tsconfig",
+    "typescript",
+    "config"
+  ]
+}
