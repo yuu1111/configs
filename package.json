@@ -5,9 +5,9 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@biomejs/biome": "^2.4.6",
+    "@biomejs/biome": "^2.4.10",
     "@yuu1111/biome-config": "workspace:*",
     "@yuu1111/tsconfig": "workspace:*",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }

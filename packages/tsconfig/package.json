@@ -1,6 +1,6 @@
 {
   "name": "@yuu1111/tsconfig",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Shared TypeScript configurations",
   "license": "MIT",
   "tsconfig": "./base.json",
