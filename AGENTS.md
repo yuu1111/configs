@@ -23,5 +23,5 @@
 
 ## 注意点
 
-- Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `shared.json` (not `biome.json`)
+- Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
