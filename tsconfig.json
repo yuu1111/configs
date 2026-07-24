@@ -1,6 +1,6 @@
 {
-  "extends": "@yuu1111/tsconfig/node.json",
-  "compilerOptions": {
-    "noEmit": true
-  }
+	"extends": "@yuu1111/tsconfig/base.json",
+	"compilerOptions": {
+		"noEmit": true
+	}
 }

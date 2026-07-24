@@ -1,16 +1,19 @@
 {
-  "name": "@yuu1111/tsconfig",
-  "version": "1.0.3",
-  "description": "Shared TypeScript configurations",
-  "license": "MIT",
-  "tsconfig": "./base.json",
-  "files": [
-    "base.json",
-    "react.json"
-  ],
-  "keywords": [
-    "tsconfig",
-    "typescript",
-    "config"
-  ]
+	"name": "@yuu1111/tsconfig",
+	"version": "1.0.4",
+	"description": "Shared TypeScript configurations",
+	"license": "MIT",
+	"tsconfig": "./base.json",
+	"files": [
+		"base.json",
+		"bun.json",
+		"declaration-only.json",
+		"library.json",
+		"react.json"
+	],
+	"keywords": [
+		"tsconfig",
+		"typescript",
+		"config"
+	]
 }
