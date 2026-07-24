@@ -21,13 +21,17 @@ bunx biome check --write .   # auto-fix
 
 ## Release
 
-Versioning is manual via `npm version` inside each package, then `npm publish`.
+Publishing runs through npm Trusted Publisher when a GitHub Release is published.
+Use a package-specific tag whose version matches the selected package.
 
 ```bash
 cd packages/biome-config
-npm version patch
-npm publish
+npm version patch --no-git-tag-version
+# Commit and push the version change, then publish biome-config-vX.Y.Z on GitHub.
 ```
+
+Use `biome-config-vX.Y.Z` for `@yuu1111/biome-config` and
+`tsconfig-vX.Y.Z` for `@yuu1111/tsconfig`. Do not run `npm publish` locally.
 
 ## Notes
 

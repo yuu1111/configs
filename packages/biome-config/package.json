@@ -1,18 +1,23 @@
 {
-  "name": "@yuu1111/biome-config",
-  "version": "1.0.4",
-  "description": "Shared Biome configuration",
-  "license": "MIT",
-  "exports": {
-    "./biome": "./base.json",
-    "./react": "./react.json"
-  },
-  "files": [
-    "base.json",
-    "react.json"
-  ],
-  "keywords": [
-    "biome",
-    "config"
-  ]
+	"name": "@yuu1111/biome-config",
+	"version": "1.0.4",
+	"description": "Shared Biome configuration",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yuu1111/configs.git",
+		"directory": "packages/biome-config"
+	},
+	"exports": {
+		"./biome": "./base.json",
+		"./react": "./react.json"
+	},
+	"files": [
+		"base.json",
+		"react.json"
+	],
+	"keywords": [
+		"biome",
+		"config"
+	]
 }

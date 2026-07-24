@@ -3,6 +3,11 @@
 	"version": "1.0.4",
 	"description": "Shared TypeScript configurations",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yuu1111/configs.git",
+		"directory": "packages/tsconfig"
+	},
 	"tsconfig": "./base.json",
 	"files": [
 		"base.json",

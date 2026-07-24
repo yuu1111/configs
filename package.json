@@ -1,13 +1,13 @@
 {
-  "name": "configs",
-  "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
-  "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
-    "@yuu1111/biome-config": "workspace:*",
-    "@yuu1111/tsconfig": "workspace:*",
-    "typescript": "^6.0.3"
-  }
+	"name": "configs",
+	"private": true,
+	"workspaces": [
+		"packages/*"
+	],
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.14",
+		"@yuu1111/biome-config": "workspace:*",
+		"@yuu1111/tsconfig": "workspace:*",
+		"typescript": "^6.0.3"
+	}
 }
