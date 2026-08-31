@@ -1,0 +1,19 @@
+engine biome(1.0)
+language js(typescript)
+
+or {
+	`JSON.parse($value) as $type` as $match where {
+		not $type <: `unknown`,
+		register_diagnostic(span=$match, message="Validate parsed JSON before asserting its type", severity="warn")
+	},
+	`JSON.parse($value) as unknown as $type` as $match where {
+		register_diagnostic(span=$match, message="Validate parsed JSON before asserting its type", severity="warn")
+	},
+	`$response.json() as Promise<$type>` as $match where {
+		register_diagnostic(span=$match, message="Validate the JSON response before asserting its type", severity="warn")
+	},
+	`(await $response.json()) as $type` as $match where {
+		not $type <: `unknown`,
+		register_diagnostic(span=$match, message="Validate the JSON response before asserting its type", severity="warn")
+	}
+}

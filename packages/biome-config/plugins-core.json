@@ -1,0 +1,7 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+	"plugins": [
+		"./node_modules/@yuu1111/biome-config/plugins/no-reexports.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-unvalidated-json-cast.grit"
+	]
+}

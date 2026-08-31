@@ -1,0 +1,37 @@
+engine biome(1.0)
+language js(typescript)
+
+or {
+	`$target.$method($content)` as $match where {
+		$method <: r"^(?:reply|send|editReply|followUp|update)$",
+		or {
+			$content <: JsIdentifierExpression(),
+			$content <: JsTemplateExpression()
+		},
+		register_diagnostic(span=$match, message="Wrap dynamic Discord content in a payload that disables mentions", severity="warn")
+	},
+	`$target.$method({ $... })` as $match where {
+		$method <: r"^(?:reply|send|editReply|followUp|update)$",
+		$match <: contains `content: $content`,
+		or {
+			$content <: JsIdentifierExpression(),
+			$content <: JsTemplateExpression()
+		},
+		not $match <: contains `allowedMentions: $allowedMentions`,
+		not $match <: contains JsShorthandPropertyObjectMember(name=$name) where {
+			$name <: `allowedMentions`
+		},
+		register_diagnostic(span=$match, message="Set allowedMentions when sending dynamic Discord content", severity="warn")
+	},
+	`$target.$method({ $... })` as $match where {
+		$method <: r"^(?:reply|send|editReply|followUp|update)$",
+		$match <: contains JsShorthandPropertyObjectMember(name=$content) where {
+			$content <: `content`
+		},
+		not $match <: contains `allowedMentions: $allowedMentions`,
+		not $match <: contains JsShorthandPropertyObjectMember(name=$name) where {
+			$name <: `allowedMentions`
+		},
+		register_diagnostic(span=$match, message="Set allowedMentions when sending dynamic Discord content", severity="warn")
+	}
+}

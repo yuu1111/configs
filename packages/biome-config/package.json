@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/biome-config",
-	"version": "1.1.1",
+	"version": "1.2.0",
 	"description": "Shared Biome configuration",
 	"license": "MIT",
 	"repository": {
@@ -10,11 +10,17 @@
 	},
 	"exports": {
 		"./biome": "./base.json",
+		"./plugins/core": "./plugins-core.json",
+		"./plugins/discord": "./plugins-discord.json",
+		"./plugins/network": "./plugins-network.json",
 		"./react": "./react.json"
 	},
 	"files": [
 		"base.json",
 		"plugins",
+		"plugins-core.json",
+		"plugins-discord.json",
+		"plugins-network.json",
 		"react.json"
 	],
 	"keywords": [

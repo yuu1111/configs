@@ -19,7 +19,6 @@
 			}
 		}
 	},
-	"plugins": ["./node_modules/@yuu1111/biome-config/plugins/no-reexports.grit"],
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double"

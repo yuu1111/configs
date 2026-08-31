@@ -1,0 +1,16 @@
+engine biome(1.0)
+language js(typescript)
+
+or {
+	`fetch($url)` as $match where {
+		$url <: [$argument],
+		register_diagnostic(span=$match, message="Pass an AbortSignal to external fetch calls", severity="warn")
+	},
+	`fetch($url, { $... })` as $match where {
+		not $match <: contains `signal: $signal`,
+		not $match <: contains JsShorthandPropertyObjectMember(name=$name) where {
+			$name <: `signal`
+		},
+		register_diagnostic(span=$match, message="Pass an AbortSignal to external fetch calls", severity="warn")
+	}
+}
