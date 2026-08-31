@@ -1,0 +1,16 @@
+engine biome(1.0)
+language js(typescript)
+
+or {
+	JsExport(export_clause=JsExportFromClause()) as $match,
+	JsExport(export_clause=JsExportNamedFromClause()) as $match,
+	JsExport(export_clause=JsExportNamedClause()) as $match,
+	JsExport(export_clause=TsTypeAliasDeclaration(ty=$type)) as $match where {
+		$type <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
+		not $type <: r"^(?:any|bigint|boolean|never|null|number|object|string|symbol|undefined|unknown|void)$"
+	},
+	JsExport(export_clause=JsExportDefaultExpressionClause(expression=JsIdentifierExpression())) as $match,
+	JsExport(export_clause=JsVariableDeclarationClause(declaration=JsVariableDeclaration(declarators=$declarators))) as $match where {
+		$declarators <: some JsVariableDeclarator(initializer=JsInitializerClause(expression=JsIdentifierExpression()))
+	}
+} where { register_diagnostic(span=$match, message="Re-export is prohibited") }

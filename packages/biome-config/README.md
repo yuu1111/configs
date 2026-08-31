@@ -12,6 +12,9 @@ bun add -D @yuu1111/biome-config
 
 ### Base
 
+Includes a plugin that prohibits re-exports. Export declarations must define their
+value or type directly instead of forwarding another declaration.
+
 ```json
 {
   "$schema": "https://biomejs.dev/schemas/2.4.6/schema.json",
