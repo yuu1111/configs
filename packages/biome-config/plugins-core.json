@@ -4,6 +4,7 @@
 		"./node_modules/@yuu1111/biome-config/plugins/no-reexports.grit",
 		"./node_modules/@yuu1111/biome-config/plugins/no-incomplete-implementation.grit",
 		"./node_modules/@yuu1111/biome-config/plugins/no-type-safety-bypass.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-unsafe-errno-assertion.grit",
 		"./node_modules/@yuu1111/biome-config/plugins/no-meaningless-test.grit",
 		"./node_modules/@yuu1111/biome-config/plugins/no-useless-abstraction.grit"
 	]

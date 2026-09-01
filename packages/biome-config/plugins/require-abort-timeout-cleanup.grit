@@ -1,0 +1,11 @@
+engine biome(1.0)
+language js(typescript)
+
+`const $timer = setTimeout(() => $controller.abort(), $delay)` as $match where {
+	$match <: within JsFunctionBody() as $scope ,
+	$scope <: contains `fetch($url, { $... })` as $fetch where {
+		$fetch <: contains `signal: $controller.signal`
+	},
+	not $scope <: contains `clearTimeout($timer)`,
+	register_diagnostic(span=$match, message="Clear the AbortController timeout after using its signal", severity="warn")
+}

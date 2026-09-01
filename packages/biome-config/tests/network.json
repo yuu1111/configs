@@ -11,6 +11,8 @@
 		"../plugins/no-type-safety-bypass.grit",
 		"../plugins/no-unsafe-errno-assertion.grit",
 		"../plugins/no-meaningless-test.grit",
-		"../plugins/no-useless-abstraction.grit"
+		"../plugins/no-useless-abstraction.grit",
+		"../plugins/require-fetch-abort-signal.grit",
+		"../plugins/require-abort-timeout-cleanup.grit"
 	]
 }

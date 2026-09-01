@@ -9,13 +9,11 @@ const biomeExecutable = resolve(
 	"../../../node_modules/.bin",
 	process.platform === "win32" ? "biome.exe" : "biome",
 );
-const configPath = resolve(import.meta.dir, "core.json");
-
 afterAll(() => {
 	rmSync(temporaryDirectory, { recursive: true });
 });
 
-function lint(source: string, fixtureName: string) {
+function lint(source: string, fixtureName: string, configName = "core.json") {
 	const fixturePath = resolve(temporaryDirectory, `${fixtureName}.ts`);
 	writeFileSync(fixturePath, source);
 
@@ -23,7 +21,7 @@ function lint(source: string, fixtureName: string) {
 		biomeExecutable,
 		"lint",
 		"--config-path",
-		configPath,
+		resolve(import.meta.dir, configName),
 		"--max-diagnostics=50",
 		fixturePath,
 	]);
@@ -107,6 +105,36 @@ const property = object.name
 		expect(valid).not.toContain("Validate parsed JSON");
 	});
 
+	test("unsafe errno assertions", () => {
+		const invalid = lint(
+			`const first = (error as NodeJS.ErrnoException).code
+const second = (error as NodeJS.ErrnoException)["code"]
+`,
+			"errno-invalid",
+		);
+		const valid = lint(
+			`function hasErrorCode(error: unknown, code: string): boolean {
+	return typeof error === "object" && error !== null && "code" in error && error.code === code
+}
+
+const optionalCode = (error as NodeJS.ErrnoException | null)?.code
+`,
+			"errno-valid",
+		);
+
+		expect(invalid).toContain(
+			"Validate the error shape before reading errno properties",
+		);
+		expect(
+			invalid.match(
+				/Validate the error shape before reading errno properties/g,
+			),
+		).toHaveLength(2);
+		expect(valid).not.toContain(
+			"Validate the error shape before reading errno properties",
+		);
+	});
+
 	test("empty and tautological tests", () => {
 		const invalid = lint(
 			`test("empty", () => {}, 1000)
@@ -151,6 +179,57 @@ const loadAsync = async (id) => await fetchUser(id)
 		).toHaveLength(2);
 		expect(valid).not.toContain(
 			"Remove pass-through wrappers that add no behavior",
+		);
+	});
+});
+
+describe("network custom rules", () => {
+	test("AbortController timeout cleanup", () => {
+		const invalid = lint(
+			`async function load(url: string, timeoutMs: number) {
+	const controller = new AbortController()
+	const timeout = setTimeout(() => controller.abort(), timeoutMs)
+	return fetch(url, { signal: controller.signal })
+}
+
+const loadArrow = async (url: string, timeoutMs: number) => {
+	const controller = new AbortController()
+	const timeout = setTimeout(() => controller.abort(), timeoutMs)
+	return fetch(url, { signal: controller.signal })
+}
+`,
+			"abort-timeout-invalid",
+			"network.json",
+		);
+		const valid = lint(
+			`async function load(url: string, timeoutMs: number) {
+	const controller = new AbortController()
+	const timeout = setTimeout(() => controller.abort(), timeoutMs)
+	try {
+		return await fetch(url, { signal: controller.signal })
+	} finally {
+		clearTimeout(timeout)
+	}
+}
+
+async function loadWithNativeTimeout(url: string, timeoutMs: number) {
+	return fetch(url, { signal: AbortSignal.timeout(timeoutMs) })
+}
+`,
+			"abort-timeout-valid",
+			"network.json",
+		);
+
+		expect(invalid).toContain(
+			"Clear the AbortController timeout after using its signal",
+		);
+		expect(
+			invalid.match(
+				/Clear the AbortController timeout after using its signal/g,
+			),
+		).toHaveLength(2);
+		expect(valid).not.toContain(
+			"Clear the AbortController timeout after using its signal",
 		);
 	});
 });
