@@ -2,6 +2,9 @@
 	"$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
 	"plugins": [
 		"./node_modules/@yuu1111/biome-config/plugins/no-reexports.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/no-unvalidated-json-cast.grit"
+		"./node_modules/@yuu1111/biome-config/plugins/no-incomplete-implementation.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-type-safety-bypass.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-meaningless-test.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-useless-abstraction.grit"
 	]
 }

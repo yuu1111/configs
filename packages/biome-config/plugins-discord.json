@@ -3,7 +3,10 @@
 	"extends": ["./plugins-network.json"],
 	"plugins": [
 		"./node_modules/@yuu1111/biome-config/plugins/no-reexports.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/no-unvalidated-json-cast.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-incomplete-implementation.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-type-safety-bypass.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-meaningless-test.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/no-useless-abstraction.grit",
 		"./node_modules/@yuu1111/biome-config/plugins/require-fetch-abort-signal.grit",
 		"./node_modules/@yuu1111/biome-config/plugins/no-unsafe-dynamic-discord-message.grit"
 	]

@@ -1,6 +1,9 @@
 {
 	"name": "configs",
 	"private": true,
+	"scripts": {
+		"test": "bun test packages/biome-config/tests"
+	},
 	"workspaces": [
 		"packages/*"
 	],

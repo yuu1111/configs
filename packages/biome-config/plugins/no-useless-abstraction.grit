@@ -1,0 +1,9 @@
+engine biome(1.0)
+language js(typescript)
+
+or {
+	`const $wrapper = ($argument) => $target($argument)` as $match,
+	`const $wrapper = async ($argument) => await $target($argument)` as $match
+} where {
+	register_diagnostic(span=$match, message="Remove pass-through wrappers that add no behavior", severity="warn")
+}

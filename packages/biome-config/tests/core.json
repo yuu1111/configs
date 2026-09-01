@@ -1,0 +1,15 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+	"linter": {
+		"rules": {
+			"recommended": false
+		}
+	},
+	"plugins": [
+		"../plugins/no-reexports.grit",
+		"../plugins/no-incomplete-implementation.grit",
+		"../plugins/no-type-safety-bypass.grit",
+		"../plugins/no-meaningless-test.grit",
+		"../plugins/no-useless-abstraction.grit"
+	]
+}

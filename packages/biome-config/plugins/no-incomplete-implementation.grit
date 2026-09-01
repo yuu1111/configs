@@ -1,0 +1,24 @@
+engine biome(1.0)
+language js(typescript)
+
+or {
+	JsThrowStatement(argument=JsNewExpression(callee=JsIdentifierExpression())) as $match where {
+		$match <: r"(?i).*not[ -]?implemented.*|.*todo.*|.*coming soon.*"
+	},
+	`$promise.catch(() => null)` as $match,
+	`$promise.catch(() => [])` as $match,
+	`$promise.catch(() => ({}))` as $match,
+	`$promise.catch(($error) => null)` as $match,
+	`$promise.catch(($error) => [])` as $match,
+	`$promise.catch(($error) => ({}))` as $match,
+	`try { $...body } catch ($error) { return null; }` as $match,
+	`try { $...body } catch ($error) { return []; }` as $match,
+	`try { $...body } catch ($error) { return {}; }` as $match,
+	JsCatchClause(body=JsBlockStatement(statements=[
+		$statement
+	])) as $match where {
+		$statement <: r"^console\.(?:debug|error|info|log|warn)\(.*"
+	}
+} where {
+	register_diagnostic(span=$match, message="Do not leave incomplete implementations or silently replace failures", severity="warn")
+}

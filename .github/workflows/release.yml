@@ -36,6 +36,7 @@ jobs:
 
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bunx biome check .
+      - run: bun test
 
       - name: Select package
         id: package
