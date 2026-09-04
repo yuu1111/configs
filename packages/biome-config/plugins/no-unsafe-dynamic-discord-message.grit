@@ -8,6 +8,8 @@ or {
 			$content <: JsIdentifierExpression(),
 			$content <: JsTemplateExpression()
 		},
+		not $target <: `createHash($algorithm)`,
+		not $target <: `$namespace.createHash($algorithm)`,
 		register_diagnostic(span=$match, message="Wrap dynamic Discord content in a payload that disables mentions", severity="warn")
 	},
 	`$target.$method({ $... })` as $match where {

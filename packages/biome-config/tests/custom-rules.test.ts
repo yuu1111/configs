@@ -234,6 +234,33 @@ async function loadWithNativeTimeout(url: string, timeoutMs: number) {
 	});
 });
 
+describe("Discord custom rules", () => {
+	test("dynamic interaction updates without matching crypto hash updates", () => {
+		const invalid = lint(
+			`interaction.update(content)
+interaction.update({ content })
+`,
+			"discord-message-invalid",
+			"discord.json",
+		);
+		const valid = lint(
+			`interaction.update({ content, allowedMentions: { parse: [] } })
+createHash("sha256").update(content)
+crypto.createHash("sha256").update(content)
+`,
+			"discord-message-valid",
+			"discord.json",
+		);
+
+		expect(
+			invalid.match(
+				/(?:Wrap dynamic Discord content|Set allowedMentions when sending dynamic Discord content)/g,
+			),
+		).toHaveLength(2);
+		expect(valid).not.toContain("dynamic Discord content");
+	});
+});
+
 describe("preset hierarchy", () => {
 	test("child presets repeat every parent plugin", async () => {
 		const testConfig = await Bun.file(
