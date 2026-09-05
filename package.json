@@ -2,13 +2,14 @@
 	"name": "configs",
 	"private": true,
 	"scripts": {
-		"test": "bun test packages/biome-config/tests"
+		"test": "bun test packages"
 	},
 	"workspaces": [
 		"packages/*"
 	],
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.14",
+		"@types/bun": "^1.4.1",
 		"@yuu1111/biome-config": "workspace:*",
 		"@yuu1111/tsconfig": "workspace:*",
 		"typescript": "^6.0.3"
