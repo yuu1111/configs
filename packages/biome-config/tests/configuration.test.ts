@@ -51,7 +51,9 @@ function createConsumer(configExport: "biome" | "react") {
 		join(consumerDirectory, "biome.json"),
 		JSON.stringify({ extends: [`@yuu1111/biome-config/${configExport}`] }),
 	);
-	writeFileSync(join(consumerDirectory, ".gitignore"), "");
+	writeFileSync(join(consumerDirectory, ".gitignore"), "node_modules/\n");
+	const git = Bun.spawnSync(["git", "init", "--quiet", consumerDirectory]);
+	expect(git.exitCode, git.stderr.toString()).toBe(0);
 	writeFileSync(
 		join(consumerDirectory, "sample.json"),
 		JSON.stringify({ nested: { value: true }, list: [1, 2] }),
