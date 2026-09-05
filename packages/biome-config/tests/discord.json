@@ -5,5 +5,7 @@
 			"recommended": false
 		}
 	},
-	"plugins": ["../plugins/no-unsafe-dynamic-discord-message.grit"]
+	"plugins": [
+		"../plugins/no-unsafe-dynamic-discord-message.grit"
+	]
 }

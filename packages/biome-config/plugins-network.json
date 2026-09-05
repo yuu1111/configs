@@ -1,6 +1,8 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
-	"extends": ["./plugins-core.json"],
+	"extends": [
+		"./plugins-core.json"
+	],
 	"plugins": [
 		"./node_modules/@yuu1111/biome-config/plugins/no-reexports.grit",
 		"./node_modules/@yuu1111/biome-config/plugins/no-incomplete-implementation.grit",
