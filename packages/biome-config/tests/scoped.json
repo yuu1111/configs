@@ -11,6 +11,12 @@
 			"includes": [
 				"**/scoped-*.ts"
 			]
+		},
+		{
+			"path": "../plugins/no-direct-response.grit",
+			"includes": [
+				"**/response-*.ts"
+			]
 		}
 	]
 }

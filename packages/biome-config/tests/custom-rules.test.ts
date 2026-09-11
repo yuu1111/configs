@@ -390,3 +390,49 @@ export function load(id: string) {
 		expect(valid).not.toMatch(/Import the port instead of the adapter module/);
 	});
 });
+
+describe("scoped response construction rule", () => {
+	test("reports a direct Response built inside the scoped layer", () => {
+		const invalid = lint(
+			`export const respond = (body: unknown) => Response.json(body)\n`,
+			"response-json",
+			"scoped.json",
+		);
+		expect(invalid).toMatch(
+			/Build the response with the shared response helper/,
+		);
+	});
+
+	test("reports a direct Response constructor inside the scoped layer", () => {
+		const invalid = lint(
+			`export const respond = (body: string) => new Response(body)\n`,
+			"response-new",
+			"scoped.json",
+		);
+		expect(invalid).toMatch(
+			/Build the response with the shared response helper/,
+		);
+	});
+
+	test("accepts the shared helper inside the scoped layer", () => {
+		const valid = lint(
+			`import { jsonResponse } from "./helpers"\n\nexport const respond = (body: unknown) => jsonResponse(body)\n`,
+			"response-helper",
+			"scoped.json",
+		);
+		expect(valid).not.toMatch(
+			/Build the response with the shared response helper/,
+		);
+	});
+
+	test("ignores direct construction outside the scoped layer", () => {
+		const allowed = lint(
+			`export const respond = (body: unknown) => Response.json(body)\n`,
+			"elsewhere-response",
+			"scoped.json",
+		);
+		expect(allowed).not.toMatch(
+			/Build the response with the shared response helper/,
+		);
+	});
+});

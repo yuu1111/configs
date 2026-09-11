@@ -1,0 +1,20 @@
+engine biome(1.0)
+language js(typescript)
+
+or {
+	`new Response($...)` as $match where {
+		register_diagnostic(span=$match, message="Build the response with the shared response helper", severity="error")
+	},
+	`Response.json($body)` as $match where {
+		register_diagnostic(span=$match, message="Build the response with the shared response helper", severity="error")
+	},
+	`Response.json($body, $init)` as $match where {
+		register_diagnostic(span=$match, message="Build the response with the shared response helper", severity="error")
+	},
+	`Response.redirect($url)` as $match where {
+		register_diagnostic(span=$match, message="Build the response with the shared response helper", severity="error")
+	},
+	`Response.redirect($url, $status)` as $match where {
+		register_diagnostic(span=$match, message="Build the response with the shared response helper", severity="error")
+	}
+}
