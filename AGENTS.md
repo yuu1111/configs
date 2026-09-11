@@ -11,7 +11,7 @@
 
 - パッケージマネージャ: Bun
 - publish: GitHub Release から npm Trusted Publisher で自動実行
-- バージョニング: npm version (packageごとに手動)
+- バージョニング: bun pm version (packageごとに手動)
 - lint/format: Biome (self-hosting)
 
 ## コマンド
@@ -19,7 +19,7 @@
 - `bun install` - 依存インストール + workspace リンク
 - `bunx biome check .` - lint/format チェック
 - `bunx biome check --write .` - 自動修正
-- `npm version patch/minor/major --no-git-tag-version` - バージョン更新 (各パッケージディレクトリで実行)
+- `bun pm version patch/minor/major --no-git-tag-version` - バージョン更新 (各パッケージディレクトリで実行)
 
 ## 注意点
 
@@ -27,3 +27,4 @@
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
 - GitHub Release tag は `biome-config-vX.Y.Z` または `tsconfig-vX.Y.Z`
 - npm publish はローカルで実行せず、`.github/workflows/release.yml` に任せる
+- バージョン更新は `bun pm version` を使う (npm version は workspace の reify でエラーになる)
