@@ -10,7 +10,7 @@
 	},
 	"type": "module",
 	"bin": {
-		"comment-check": "./src/cli.ts"
+		"comment-check": "src/cli.ts"
 	},
 	"exports": {
 		".": "./src/scan.ts"
