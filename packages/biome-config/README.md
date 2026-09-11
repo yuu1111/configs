@@ -113,10 +113,10 @@ cacheRequest.catch(() => null)
 	"plugins": [
 		{
 			"path": "./node_modules/@yuu1111/biome-config/plugins/no-adapter-import.grit",
-			"includes": ["src/modules/authorization/**"]
+			"includes": ["**/src/modules/authorization/**"]
 		}
 	]
 }
 ```
 
-The plugin runs only on the files that match `includes`, so the same import stays valid in the adapters and in the layers that are allowed to reach them.
+The plugin runs only on the files that match `includes`, so the same import stays valid in the adapters and in the layers that are allowed to reach them. A plugin pattern is matched against the full file path, so it has to start with `**/` to match a path such as `src/modules/authorization`.
