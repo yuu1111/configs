@@ -16,6 +16,7 @@ bunx tsdoc-check src
 
 | Option | Description |
 |--------|-------------|
+| `--error <rule>` | Raise the rule to an error, repeatable |
 | `--ignore <path>` | Path to leave out, repeatable |
 | `--json` | Print the findings as JSON |
 

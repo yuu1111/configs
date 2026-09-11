@@ -16,13 +16,17 @@ export type TsdocRule =
 	| "type-param-mismatch";
 export type Severity = "error" | "warning";
 
-const KNOWN_RULES = new Set<string>([
+export const KNOWN_RULE_NAMES = [
 	"missing-doc",
 	"param-mismatch",
+	"suppression",
+	"suppression-unused",
 	"tsdoc-syntax",
 	"tsdoc-tag",
 	"type-param-mismatch",
-]);
+] as const;
+
+const KNOWN_RULES = new Set<string>(KNOWN_RULE_NAMES);
 
 /** TSDocに定義がないtagは構文errorではなく報告に留める */
 const TAG_MESSAGE_IDS = new Set(["tsdoc-undefined-tag"]);
@@ -193,6 +197,16 @@ function suppressionFindings(
 		}
 	}
 	return findings;
+}
+
+/** 指定したruleの指摘をerrorへ引き上げる */
+export function promoteFindings(
+	findings: Finding[],
+	rules: string[],
+): Finding[] {
+	return findings.map((finding) =>
+		rules.includes(finding.rule) ? { ...finding, severity: "error" } : finding,
+	);
 }
 
 /** 宣言の指摘へ抑制commentを適用する */
