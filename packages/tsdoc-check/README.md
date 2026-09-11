@@ -33,6 +33,18 @@ Only top-level exported declarations are checked. A file that does not parse is
 left to the TypeScript compiler and to Biome, so its declarations are not
 checked.
 
+## Suppressions
+
+An exception carries its own reason next to the declaration:
+
+```ts
+// tsdoc-check-ignore missing-doc: the loader reads this value
+export const value = 1
+```
+
+A suppression without a reason, with an unknown rule, or without any rule is
+an error, and a suppression that covers nothing is a warning.
+
 ## Notes
 
 The TSDoc parser reads the comment bodies and the checker reads the

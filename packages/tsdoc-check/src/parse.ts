@@ -12,11 +12,18 @@ export interface DocComment extends Position {
 	text: string;
 }
 
+/** 宣言に付けた抑制comment 1行分 */
+export interface Suppression extends Position {
+	reason: string;
+	rules: string[];
+}
+
 export interface Declaration extends Position {
 	comment: DocComment | null;
 	kind: string;
 	name: string;
 	parameters: string[];
+	suppressions: Suppression[];
 	typeParameters: string[];
 }
 
@@ -63,6 +70,47 @@ function docCommentOf(node: Node, source: string): DocComment | null {
 		start: last.start,
 		text: source.slice(last.start, last.end),
 	};
+}
+
+const DIRECTIVE = "tsdoc-check-ignore";
+
+function parseDirective(
+	line: string,
+): { reason: string; rules: string[] } | null {
+	const text = line
+		.trim()
+		.replace(/^\*+\s*/, "")
+		.trim();
+	if (!text.startsWith(DIRECTIVE)) {
+		return null;
+	}
+	const body = text.slice(DIRECTIVE.length);
+	const separator = body.indexOf(":");
+	const ruleText = separator === -1 ? body : body.slice(0, separator);
+	const reason = separator === -1 ? "" : body.slice(separator + 1).trim();
+	return {
+		reason,
+		rules: ruleText.split(/\s+/).filter((rule) => rule.length > 0),
+	};
+}
+
+/** 宣言の前にあるcommentから抑制commentを集める */
+function suppressionsOf(node: Node, source: string): Suppression[] {
+	const suppressions: Suppression[] = [];
+	for (const comment of node.leadingComments ?? []) {
+		if (comment.start === null || comment.start === undefined) {
+			continue;
+		}
+		let offset = comment.start + 2;
+		for (const line of comment.value.split("\n")) {
+			const directive = parseDirective(line);
+			if (directive !== null) {
+				suppressions.push({ ...positionAt(source, offset), ...directive });
+			}
+			offset += line.length + 1;
+		}
+	}
+	return suppressions;
 }
 
 function bindingName(node: Node | null | undefined): string | null {
@@ -223,8 +271,9 @@ export function collectDeclarations(
 		}
 		const comment = docCommentOf(statement, source);
 		const position = positionAt(source, statement.start ?? 0);
+		const suppressions = suppressionsOf(statement, source);
 		for (const symbol of symbolsOf(target)) {
-			declarations.push({ ...position, ...symbol, comment });
+			declarations.push({ ...position, ...symbol, comment, suppressions });
 		}
 	}
 	return declarations;

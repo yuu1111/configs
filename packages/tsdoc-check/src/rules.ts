@@ -1,13 +1,28 @@
-import { type Declaration, type Position, positionAt } from "./parse";
+import {
+	type Declaration,
+	type Position,
+	positionAt,
+	type Suppression,
+} from "./parse";
 import { parseTsdoc } from "./tsdoc";
 
 export type TsdocRule =
 	| "missing-doc"
 	| "param-mismatch"
+	| "suppression"
+	| "suppression-unused"
 	| "tsdoc-syntax"
 	| "tsdoc-tag"
 	| "type-param-mismatch";
 export type Severity = "error" | "warning";
+
+const KNOWN_RULES = new Set<string>([
+	"missing-doc",
+	"param-mismatch",
+	"tsdoc-syntax",
+	"tsdoc-tag",
+	"type-param-mismatch",
+]);
 
 /** TSDocに定義がないtagは構文errorではなく報告に留める */
 const TAG_MESSAGE_IDS = new Set(["tsdoc-undefined-tag"]);
@@ -39,7 +54,7 @@ function finding(
 }
 
 /** exported宣言1つ分のTSDocを検査する */
-export function classifyDeclaration(
+function checkDeclaration(
 	declaration: Declaration,
 	file: string,
 	source: string,
@@ -100,4 +115,99 @@ export function classifyDeclaration(
 		}
 	}
 	return findings;
+}
+
+function partitionFindings(
+	findings: Finding[],
+	suppressions: Suppression[],
+): { kept: Finding[]; used: Set<Suppression> } {
+	const used = new Set<Suppression>();
+	const kept: Finding[] = [];
+	for (const finding of findings) {
+		const matching = suppressions.find((suppression) =>
+			suppression.rules.includes(finding.rule),
+		);
+		if (matching === undefined) {
+			kept.push(finding);
+			continue;
+		}
+		used.add(matching);
+	}
+	return { kept, used };
+}
+
+function suppressionFindings(
+	suppressions: Suppression[],
+	used: Set<Suppression>,
+	file: string,
+): Finding[] {
+	const findings: Finding[] = [];
+	for (const suppression of suppressions) {
+		if (suppression.reason.length === 0) {
+			findings.push(
+				finding(
+					"suppression",
+					"error",
+					file,
+					suppression,
+					"The suppression needs a reason",
+				),
+			);
+			continue;
+		}
+		if (suppression.rules.length === 0) {
+			findings.push(
+				finding(
+					"suppression",
+					"error",
+					file,
+					suppression,
+					"The suppression needs at least one rule",
+				),
+			);
+			continue;
+		}
+		const unknown = suppression.rules.filter((rule) => !KNOWN_RULES.has(rule));
+		if (unknown.length > 0) {
+			findings.push(
+				finding(
+					"suppression",
+					"error",
+					file,
+					suppression,
+					`Unknown rule in the suppression: ${unknown.join(", ")}`,
+				),
+			);
+			continue;
+		}
+		if (!used.has(suppression)) {
+			findings.push(
+				finding(
+					"suppression-unused",
+					"warning",
+					file,
+					suppression,
+					`The suppression of ${suppression.rules.join(", ")} is not needed`,
+				),
+			);
+		}
+	}
+	return findings;
+}
+
+/** 宣言の指摘へ抑制commentを適用する */
+export function classifyDeclaration(
+	declaration: Declaration,
+	file: string,
+	source: string,
+): Finding[] {
+	const findings = checkDeclaration(declaration, file, source);
+	if (declaration.suppressions.length === 0) {
+		return findings;
+	}
+	const { kept, used } = partitionFindings(findings, declaration.suppressions);
+	return [
+		...kept,
+		...suppressionFindings(declaration.suppressions, used, file),
+	];
 }
