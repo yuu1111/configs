@@ -182,25 +182,6 @@ const loadAsync = async (id) => await fetchUser(id)
 		);
 	});
 
-	test("nested ternaries", () => {
-		const invalid = lint(
-			`const first = flag ? one : other ? two : three
-const second = mode === "a" ? 1 : mode === "b" ? 2 : 3
-`,
-			"nested-ternary-invalid",
-		);
-		const valid = lint(
-			`const first = flag ? one : two
-const second = mode === "a" ? 1 : 2
-`,
-			"nested-ternary-valid",
-		);
-
-		expect(invalid).toContain("lint/style/noNestedTernary");
-		expect(invalid.match(/lint\/style\/noNestedTernary/g)).toHaveLength(2);
-		expect(valid).not.toContain("lint/style/noNestedTernary");
-	});
-
 	test("ternaries used for side effects", () => {
 		const invalid = lint(
 			`flag ? enable() : disable()

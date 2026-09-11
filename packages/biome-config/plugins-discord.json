@@ -1,12 +1,5 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
-	"linter": {
-		"rules": {
-			"style": {
-				"noNestedTernary": "warn"
-			}
-		}
-	},
 	"plugins": [
 		"./node_modules/@yuu1111/biome-config/plugins/no-reexports.grit",
 		"./node_modules/@yuu1111/biome-config/plugins/no-incomplete-implementation.grit",

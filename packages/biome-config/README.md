@@ -19,6 +19,12 @@ bun add -D @yuu1111/biome-config
 }
 ```
 
+The base configuration enables the recommended rules, errors on barrel files and re-export-all, and warns about nested ternaries:
+
+```ts
+const size = small ? "s" : medium ? "m" : "l"
+```
+
 ### React
 
 CSS/Tailwind support included.
@@ -46,7 +52,7 @@ Custom rules are opt-in. Add one preset after the base or React configuration:
 
 Choose the most specific preset needed by the project:
 
-- `plugins/core` checks re-exports, incomplete implementations, type-safety bypasses, unsafe errno assertions, meaningless tests, pass-through wrappers, nested ternaries, and ternaries used for side effects
+- `plugins/core` checks re-exports, incomplete implementations, type-safety bypasses, unsafe errno assertions, meaningless tests, pass-through wrappers, and ternaries used for side effects
 - `plugins/network` includes `core`, requires an `AbortSignal` for `fetch`, and checks cleanup for manually scheduled abort timeouts
 - `plugins/discord` includes `network` and checks dynamic Discord messages for explicit mention handling
 
@@ -61,7 +67,6 @@ Do not list parent presets separately. Each child preset includes its parent rul
 - `no-meaningless-test` warns about empty `test` or `it` callbacks and `toBe`, `toEqual`, or `toStrictEqual` comparisons where an identifier or literal is compared with itself
 - `no-useless-abstraction` warns about named single-argument arrow functions that only pass the same argument to another function, including the equivalent async form
 - `no-ternary-statement` warns when a ternary operator is used as a standalone statement, such as `flag ? enable() : disable()`, where an if/else statement is clearer
-- `no-nested-ternary` (Biome built-in) warns when a ternary operator is nested inside another ternary operator
 
 The rules intentionally stay narrow. A wrapper that validates, transforms, logs, caches, starts a transaction, or performs another operation is not reported as a pass-through wrapper. Tests with setup or assertions are not treated as empty.
 
@@ -80,7 +85,6 @@ expect(result).toEqual(result)
 
 const loadUser = (id) => fetchUser(id)
 
-const size = small ? "s" : medium ? "m" : "l"
 flag ? enable() : disable()
 ```
 

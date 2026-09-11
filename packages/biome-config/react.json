@@ -21,6 +21,9 @@
 			"performance": {
 				"noBarrelFile": "error",
 				"noReExportAll": "error"
+			},
+			"style": {
+				"noNestedTernary": "warn"
 			}
 		}
 	},

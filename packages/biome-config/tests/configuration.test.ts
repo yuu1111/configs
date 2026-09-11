@@ -140,6 +140,22 @@ describe("published Biome configurations", () => {
 		});
 	}
 
+	for (const configExport of ["biome", "react"] as const) {
+		test(`${configExport} export warns about nested ternaries`, () => {
+			const consumerDirectory = createConsumer(configExport);
+			try {
+				writeFileSync(
+					join(consumerDirectory, "index.ts"),
+					'export const pick = (low: boolean, mid: boolean) => (low ? "s" : mid ? "m" : "l")\n',
+				);
+				const result = runBiome(consumerDirectory, "lint", "index.ts");
+				expect(result.output).toContain("lint/style/noNestedTernary");
+			} finally {
+				rmSync(consumerDirectory, { recursive: true, force: true });
+			}
+		});
+	}
+
 	test("React export enables Tailwind CSS parsing", () => {
 		const consumerDirectory = createConsumer("react");
 		try {

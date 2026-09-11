@@ -2,10 +2,7 @@
 	"$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
 	"linter": {
 		"rules": {
-			"recommended": false,
-			"style": {
-				"noNestedTernary": "warn"
-			}
+			"recommended": false
 		}
 	},
 	"plugins": [
