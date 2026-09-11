@@ -20,6 +20,28 @@ const biomeExecutable = resolve(
 
 type JsonObject = Record<string, unknown>;
 
+function isJsonObject(value: unknown): value is JsonObject {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseJsonObject(text: string, source: string): JsonObject {
+	const value: unknown = JSON.parse(text);
+	if (!isJsonObject(value)) {
+		throw new Error(`${source} is not a JSON object`);
+	}
+	return value;
+}
+
+function readStringArray(record: JsonObject, key: string): string[] {
+	const value = record[key];
+	if (
+		Array.isArray(value) &&
+		value.every((entry) => typeof entry === "string")
+	) {
+		return value;
+	}
+	throw new Error(`${key} is not a string array`);
+}
 function createConsumer(configExport: "biome" | "react") {
 	const consumerDirectory = mkdtempSync(
 		join(tmpdir(), "biome-config-consumer-"),
@@ -30,13 +52,14 @@ function createConsumer(configExport: "biome" | "react") {
 		"@yuu1111",
 		"biome-config",
 	);
-	const manifest = JSON.parse(
+	const manifest = parseJsonObject(
 		readFileSync(join(packageDirectory, "package.json"), "utf8"),
-	) as { files: string[] };
+		"package.json",
+	);
 
 	writeFileSync(join(consumerDirectory, "package.json"), "{}\n");
 	mkdirSync(packageDestination, { recursive: true });
-	for (const entry of manifest.files) {
+	for (const entry of readStringArray(manifest, "files")) {
 		const source = join(packageDirectory, entry);
 		const destination = join(packageDestination, entry);
 		mkdirSync(join(destination, ".."), { recursive: true });
@@ -78,8 +101,8 @@ function runBiome(
 	};
 }
 
-function readJson(file: string) {
-	return JSON.parse(readFileSync(file, "utf8")) as JsonObject;
+function readJson(file: string): JsonObject {
+	return parseJsonObject(readFileSync(file, "utf8"), file);
 }
 
 describe("published Biome configurations", () => {

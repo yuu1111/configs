@@ -21,10 +21,39 @@ const tscExecutable = resolve(
 	process.platform === "win32" ? "tsc.exe" : "tsc",
 );
 
-const manifest = JSON.parse(
+type JsonObject = Record<string, unknown>;
+
+function isJsonObject(value: unknown): value is JsonObject {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseJsonObject(text: string, source: string): JsonObject {
+	const value: unknown = JSON.parse(text);
+	if (!isJsonObject(value)) {
+		throw new Error(`${source} is not a JSON object`);
+	}
+	return value;
+}
+
+function readStringArray(record: JsonObject, key: string): string[] {
+	const value = record[key];
+	if (
+		Array.isArray(value) &&
+		value.every((entry) => typeof entry === "string")
+	) {
+		return value;
+	}
+	throw new Error(`${key} is not a string array`);
+}
+
+const manifest = parseJsonObject(
 	readFileSync(resolve(packageDirectory, "package.json"), "utf8"),
-) as { files: string[] };
-for (const fileName of ["package.json", ...manifest.files]) {
+	"package.json",
+);
+for (const fileName of [
+	"package.json",
+	...readStringArray(manifest, "files"),
+]) {
 	cpSync(
 		resolve(packageDirectory, fileName),
 		resolve(fixturePackageDirectory, fileName),
@@ -66,9 +95,12 @@ function showConfig(preset: Preset, overrides: Record<string, unknown> = {}) {
 			`tsc --showConfig failed for ${preset}: ${result.stdout.toString()}${result.stderr.toString()}`,
 		);
 	}
-	return JSON.parse(result.stdout.toString()) as {
-		compilerOptions: Record<string, unknown>;
-	};
+	const config = parseJsonObject(result.stdout.toString(), "tsc --showConfig");
+	const compilerOptions = config.compilerOptions;
+	if (!isJsonObject(compilerOptions)) {
+		throw new Error("compilerOptions is not a JSON object");
+	}
+	return { compilerOptions };
 }
 
 describe("published tsconfig presets", () => {
