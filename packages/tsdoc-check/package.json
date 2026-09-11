@@ -1,0 +1,33 @@
+{
+	"name": "@yuu1111/tsdoc-check",
+	"version": "1.0.0",
+	"description": "Shared TSDoc syntax and contract checker",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yuu1111/configs.git",
+		"directory": "packages/tsdoc-check"
+	},
+	"type": "module",
+	"bin": {
+		"tsdoc-check": "src/cli.ts"
+	},
+	"exports": {
+		".": "./src/scan.ts"
+	},
+	"files": [
+		"src"
+	],
+	"keywords": [
+		"tsdoc",
+		"documentation",
+		"lint"
+	],
+	"dependencies": {
+		"@babel/parser": "^8.0.5",
+		"@microsoft/tsdoc": "^0.16.0"
+	},
+	"devDependencies": {
+		"@babel/types": "^8.0.5"
+	}
+}
