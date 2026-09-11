@@ -1,0 +1,37 @@
+{
+	"name": "@yuu1111/knip-config",
+	"version": "1.0.0",
+	"description": "Shared Knip configuration",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yuu1111/configs.git",
+		"directory": "packages/knip-config"
+	},
+	"type": "module",
+	"exports": {
+		"./application": "./application.ts",
+		"./base": "./base.ts",
+		"./library": "./library.ts"
+	},
+	"files": [
+		"application.ts",
+		"base.ts",
+		"library.ts"
+	],
+	"keywords": [
+		"knip",
+		"config"
+	],
+	"peerDependencies": {
+		"knip": ">=5.0.0"
+	},
+	"peerDependenciesMeta": {
+		"knip": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"knip": "^6.34.0"
+	}
+}

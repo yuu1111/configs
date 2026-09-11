@@ -6,6 +6,7 @@
 
 - `packages/biome-config` - @yuu1111/biome-config (共有 Biome 設定)
 - `packages/tsconfig` - @yuu1111/tsconfig (共有 TypeScript 設定)
+- `packages/knip-config` - @yuu1111/knip-config (共有 Knip 設定)
 
 ## ツールチェーン
 
@@ -25,6 +26,6 @@
 
 - Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
-- GitHub Release tag は `biome-config-vX.Y.Z` または `tsconfig-vX.Y.Z`
+- GitHub Release tag は `biome-config-vX.Y.Z`、`tsconfig-vX.Y.Z`、または `knip-config-vX.Y.Z`
 - npm publish はローカルで実行せず、`.github/workflows/release.yml` に任せる
 - バージョン更新は `bun pm version` を使う (npm version は workspace の reify でエラーになる)
