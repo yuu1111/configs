@@ -14,7 +14,7 @@ bun add -D @yuu1111/biome-config
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
   "extends": ["@yuu1111/biome-config/biome"]
 }
 ```
@@ -31,7 +31,7 @@ CSS/Tailwind support included.
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
   "extends": ["@yuu1111/biome-config/react"]
 }
 ```
@@ -42,7 +42,7 @@ Custom rules are opt-in. Add one preset after the base or React configuration:
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
   "extends": [
     "@yuu1111/biome-config/biome",
     "@yuu1111/biome-config/plugins/network"
