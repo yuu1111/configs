@@ -1,0 +1,26 @@
+{
+	"name": "@yuu1111/comment-check",
+	"version": "1.0.0",
+	"description": "Shared comment and suppression checker",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yuu1111/configs.git",
+		"directory": "packages/comment-check"
+	},
+	"type": "module",
+	"bin": {
+		"comment-check": "./src/cli.ts"
+	},
+	"exports": {
+		".": "./src/scan.ts"
+	},
+	"files": [
+		"src"
+	],
+	"keywords": [
+		"comment",
+		"lint",
+		"suppression"
+	]
+}

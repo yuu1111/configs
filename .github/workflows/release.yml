@@ -53,6 +53,10 @@ jobs:
               package_dir="packages/tsconfig"
               release_version="${RELEASE_TAG#tsconfig-v}"
               ;;
+            comment-check-v*)
+              package_dir="packages/comment-check"
+              release_version="${RELEASE_TAG#comment-check-v}"
+              ;;
             knip-config-v*)
               package_dir="packages/knip-config"
               release_version="${RELEASE_TAG#knip-config-v}"
