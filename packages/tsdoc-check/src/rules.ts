@@ -6,6 +6,7 @@ import {
 } from "./parse";
 import { parseTsdoc } from "./tsdoc";
 
+/** tsdoc-checkが報告するruleの識別子 */
 export type TsdocRule =
 	| "missing-doc"
 	| "param-mismatch"
@@ -14,8 +15,10 @@ export type TsdocRule =
 	| "tsdoc-syntax"
 	| "tsdoc-tag"
 	| "type-param-mismatch";
+/** 指摘の重大度 */
 export type Severity = "error" | "warning";
 
+/** 抑制commentと--errorで指定できるrule名の一覧 */
 export const KNOWN_RULE_NAMES = [
 	"missing-doc",
 	"param-mismatch",
@@ -31,6 +34,7 @@ const KNOWN_RULES = new Set<string>(KNOWN_RULE_NAMES);
 /** TSDocに定義がないtagは構文errorではなく報告に留める */
 const TAG_MESSAGE_IDS = new Set(["tsdoc-undefined-tag"]);
 
+/** 検出したTSDoc違反1件の内容と位置 */
 export interface Finding {
 	column: number;
 	file: string;

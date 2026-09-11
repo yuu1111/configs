@@ -1,5 +1,6 @@
 import type { Finding } from "./rules";
 
+/** baselineに記録する指摘1件の識別情報と件数 */
 export interface BaselineEntry {
 	rule: string;
 	file: string;
@@ -7,16 +8,19 @@ export interface BaselineEntry {
 	count: number;
 }
 
+/** baseline fileの形式と記録済みentryの一覧 */
 export interface BaselineFile {
 	version: 1;
 	entries: BaselineEntry[];
 }
 
+/** baselineと現在の指摘を比較した結果 */
 export interface BaselineComparison {
 	added: Finding[];
 	resolved: BaselineEntry[];
 }
 
+/** entryをbaseline上で一意に識別するkeyを返す */
 export function entryKey(entry: {
 	rule: string;
 	file: string;
@@ -34,6 +38,7 @@ function compareEntries(left: BaselineEntry, right: BaselineEntry): number {
 	return leftKey < rightKey ? -1 : 1;
 }
 
+/** 指摘一覧を件数付きentryへ集計してbaselineを作成する */
 export function createBaseline(findings: Finding[]): BaselineFile {
 	const entries = new Map<string, BaselineEntry>();
 	for (const finding of findings) {
@@ -53,6 +58,7 @@ export function createBaseline(findings: Finding[]): BaselineFile {
 	return { version: 1, entries: [...entries.values()].sort(compareEntries) };
 }
 
+/** 現在の指摘とbaselineを突き合わせ、新規追加分と解消済み分を求める */
 export function compareWithBaseline(
 	findings: Finding[],
 	baseline: BaselineFile,

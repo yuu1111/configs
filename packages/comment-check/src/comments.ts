@@ -1,5 +1,7 @@
+/** 抽出するcommentの種別 */
 export type CommentKind = "line" | "block";
 
+/** 抽出したcomment1件の種別と原文上の位置 */
 export interface CommentPiece {
 	kind: CommentKind;
 	text: string;
@@ -226,6 +228,7 @@ function step(state: ScanState, source: string): void {
 	stepExpression(state, source);
 }
 
+/** 文字列や正規表現リテラルを除外してsourceからcommentを抽出する */
 export function extractComments(source: string): CommentPiece[] {
 	const shebang = source.startsWith("#!") ? source.indexOf("\n") : 0;
 	const state: ScanState = {

@@ -1,11 +1,13 @@
 import { TSDocConfiguration, TSDocParser } from "@microsoft/tsdoc";
 
+/** TSDoc解析が報告した構文またはtagの指摘1件 */
 export interface TsdocIssue {
 	message: string;
 	messageId: string;
 	position: number;
 }
 
+/** TSDoc解析の結果と検出した引数tagの名前 */
 export interface TsdocResult {
 	issues: TsdocIssue[];
 	parameters: string[];

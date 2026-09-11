@@ -1,6 +1,7 @@
 import { parse } from "@babel/parser";
 import type { Comment, Node } from "@babel/types";
 
+/** 1始まりの行と桁 */
 export interface Position {
 	column: number;
 	line: number;
@@ -18,6 +19,7 @@ export interface Suppression extends Position {
 	rules: string[];
 }
 
+/** 検査対象のexported宣言1件の種別、名前、引数と付随comment */
 export interface Declaration extends Position {
 	comment: DocComment | null;
 	kind: string;
