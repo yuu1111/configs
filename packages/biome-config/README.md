@@ -19,7 +19,7 @@ bun add -D @yuu1111/biome-config
 }
 ```
 
-The base configuration enables the recommended rules, errors on barrel files and re-export-all, and warns about nested ternaries:
+The base configuration enables the recommended rules, errors on barrel files and re-export-all, and warns about nested ternaries, empty block statements, and excessive cognitive complexity:
 
 ```ts
 const size = small ? "s" : medium ? "m" : "l"
@@ -52,7 +52,7 @@ Custom rules are opt-in. Add one preset after the base or React configuration:
 
 Choose the most specific preset needed by the project:
 
-- `plugins/core` checks re-exports, incomplete implementations, type-safety bypasses, unsafe errno assertions, meaningless tests, pass-through wrappers, and ternaries used for side effects
+- `plugins/core` checks forwarding exports, incomplete implementations, type-safety bypasses, unsafe errno assertions, meaningless tests, pass-through wrappers, and ternaries used for side effects
 - `plugins/network` includes `core`, requires an `AbortSignal` for `fetch`, and checks cleanup for manually scheduled abort timeouts
 - `plugins/discord` includes `network` and checks dynamic Discord messages for explicit mention handling
 
@@ -60,11 +60,11 @@ Do not list parent presets separately. Each child preset includes its parent rul
 
 #### Core rules
 
-- `no-reexports` prohibits exports that only forward an imported symbol or module
-- `no-incomplete-implementation` warns about placeholder throws, catch blocks that only log, and rejected promises or caught errors replaced with `null`, `[]`, or `{}`
-- `no-type-safety-bypass` warns about `as unknown as T`, `Record<string, unknown>` assertions, unchecked JSON assertions, static `Reflect.get`, and receiver-free `Reflect.apply`
+- `no-reexports` warns about exports that only forward an existing binding, such as `export type Alias = Imported`, `export default imported`, or `export const wrapped = imported`; the `export ... from` forms are covered by the base barrel-file rules
+- `no-incomplete-implementation` errors on placeholder throws and warns about catch blocks that only log, and rejected promises or caught errors replaced with `null`, `[]`, or `{}`
+- `no-type-safety-bypass` errors on `as unknown as T` and warns about `Record<string, unknown>` assertions, unchecked JSON assertions, static `Reflect.get`, and receiver-free `Reflect.apply`
 - `no-unsafe-errno-assertion` warns when code reads `code` directly through a `NodeJS.ErrnoException` assertion without validating the caught value
-- `no-meaningless-test` warns about empty `test` or `it` callbacks and `toBe`, `toEqual`, or `toStrictEqual` comparisons where an identifier or literal is compared with itself
+- `no-meaningless-test` errors on `toBe`, `toEqual`, or `toStrictEqual` comparisons where an identifier or literal is compared with itself, and warns about empty `test` or `it` callbacks
 - `no-useless-abstraction` warns about named single-argument arrow functions that only pass the same argument to another function, including the equivalent async form
 - `no-ternary-statement` warns when a ternary operator is used as a standalone statement, such as `flag ? enable() : disable()`, where an if/else statement is clearer
 

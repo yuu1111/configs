@@ -57,14 +57,19 @@ cacheRequest.catch(() => null)
 			"incomplete-valid",
 		);
 
-		expect(invalid).toContain(
-			"Do not leave incomplete implementations or silently replace failures",
+		expect(invalid).toMatch(/× Remove the placeholder implementation/);
+		expect(
+			invalid.match(/Remove the placeholder implementation/g),
+		).toHaveLength(1);
+		expect(invalid).toMatch(
+			/! Do not leave incomplete implementations or silently replace failures/,
 		);
 		expect(
 			invalid.match(
 				/Do not leave incomplete implementations or silently replace failures/g,
 			),
-		).toHaveLength(3);
+		).toHaveLength(2);
+		expect(valid).not.toContain("Remove the placeholder implementation");
 		expect(valid).not.toContain(
 			"Do not leave incomplete implementations or silently replace failures",
 		);
@@ -151,8 +156,12 @@ expect(true).toBe(true)
 			"meaningless-test-valid",
 		);
 
-		expect(invalid).toContain("Remove empty or tautological tests");
-		expect(valid).not.toContain("Remove empty or tautological tests");
+		expect(invalid).toMatch(/! Remove empty tests/);
+		expect(invalid.match(/Remove empty tests/g)).toHaveLength(1);
+		expect(invalid).toMatch(/× Remove tautological assertions/);
+		expect(invalid.match(/Remove tautological assertions/g)).toHaveLength(2);
+		expect(valid).not.toContain("Remove empty tests");
+		expect(valid).not.toContain("Remove tautological assertions");
 	});
 
 	test("pass-through wrappers", () => {
@@ -213,6 +222,29 @@ const value = first() ?? second()
 		expect(valid).not.toContain(
 			"Use an if/else statement instead of a ternary operator for side effects",
 		);
+	});
+
+	test("forwarding exports that built-in rules do not cover", () => {
+		const invalid = lint(
+			`const forwarded = 1
+export default forwarded
+export const wrapped = forwarded
+export type Alias = Forwarded
+`,
+			"reexport-invalid",
+		);
+		const valid = lint(
+			`const value = 1
+export { value }
+export const doubled = value * 2
+export type Alias = { value: number }
+`,
+			"reexport-valid",
+		);
+
+		expect(invalid).toContain("Re-export is prohibited");
+		expect(invalid.match(/Re-export is prohibited/g)).toHaveLength(3);
+		expect(valid).not.toContain("Re-export is prohibited");
 	});
 });
 

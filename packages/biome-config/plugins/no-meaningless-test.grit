@@ -2,36 +2,45 @@ engine biome(1.0)
 language js(typescript)
 
 or {
-	`$test($name, () => {}, $...)` as $match where { $test <: r"^(?:test|it)$" },
+	`$test($name, () => {}, $...)` as $match where {
+		$test <: r"^(?:test|it)$",
+		register_diagnostic(span=$match, message="Remove empty tests", severity="warn")
+	},
 	`$test($name, async () => {}, $...)` as $match where {
-		$test <: r"^(?:test|it)$"
+		$test <: r"^(?:test|it)$",
+		register_diagnostic(span=$match, message="Remove empty tests", severity="warn")
 	},
 	`$test($name, function () {}, $...)` as $match where {
-		$test <: r"^(?:test|it)$"
+		$test <: r"^(?:test|it)$",
+		register_diagnostic(span=$match, message="Remove empty tests", severity="warn")
 	},
 	`$test($name, async function () {}, $...)` as $match where {
-		$test <: r"^(?:test|it)$"
+		$test <: r"^(?:test|it)$",
+		register_diagnostic(span=$match, message="Remove empty tests", severity="warn")
 	},
 	`expect($value).$matcher($value)` as $match where {
 		$value <: JsIdentifierExpression(),
-		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$"
+		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$",
+		register_diagnostic(span=$match, message="Remove tautological assertions", severity="error")
 	},
 	`expect($value).$matcher($value)` as $match where {
 		$value <: JsStringLiteralExpression(),
-		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$"
+		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$",
+		register_diagnostic(span=$match, message="Remove tautological assertions", severity="error")
 	},
 	`expect($value).$matcher($value)` as $match where {
 		$value <: JsNumberLiteralExpression(),
-		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$"
+		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$",
+		register_diagnostic(span=$match, message="Remove tautological assertions", severity="error")
 	},
 	`expect($value).$matcher($value)` as $match where {
 		$value <: JsBooleanLiteralExpression(),
-		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$"
+		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$",
+		register_diagnostic(span=$match, message="Remove tautological assertions", severity="error")
 	},
 	`expect($value).$matcher($value)` as $match where {
 		$value <: JsNullLiteralExpression(),
-		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$"
+		$matcher <: r"^(?:toBe|toEqual|toStrictEqual)$",
+		register_diagnostic(span=$match, message="Remove tautological assertions", severity="error")
 	}
-} where {
-	register_diagnostic(span=$match, message="Remove empty or tautological tests", severity="warn")
 }
