@@ -2,7 +2,10 @@
 	"name": "configs",
 	"private": true,
 	"scripts": {
-		"test": "bun test packages"
+		"test": "bun test packages",
+		"format": "biome check --write --unsafe .",
+		"check": "biome check .",
+		"typecheck": "tsc --noEmit"
 	},
 	"workspaces": [
 		"packages/*"
