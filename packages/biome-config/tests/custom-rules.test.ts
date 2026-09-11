@@ -181,6 +181,58 @@ const loadAsync = async (id) => await fetchUser(id)
 			"Remove pass-through wrappers that add no behavior",
 		);
 	});
+
+	test("nested ternaries", () => {
+		const invalid = lint(
+			`const first = flag ? one : other ? two : three
+const second = mode === "a" ? 1 : mode === "b" ? 2 : 3
+`,
+			"nested-ternary-invalid",
+		);
+		const valid = lint(
+			`const first = flag ? one : two
+const second = mode === "a" ? 1 : 2
+`,
+			"nested-ternary-valid",
+		);
+
+		expect(invalid).toContain("lint/style/noNestedTernary");
+		expect(invalid.match(/lint\/style\/noNestedTernary/g)).toHaveLength(2);
+		expect(valid).not.toContain("lint/style/noNestedTernary");
+	});
+
+	test("ternaries used for side effects", () => {
+		const invalid = lint(
+			`flag ? enable() : disable()
+mode === "a" ? start() : stop()
+`,
+			"ternary-statement-invalid",
+		);
+		const valid = lint(
+			`if (flag) {
+	enable()
+} else {
+	disable()
+}
+
+const label = flag ? "on" : "off"
+const value = first() ?? second()
+`,
+			"ternary-statement-valid",
+		);
+
+		expect(invalid).toContain(
+			"Use an if/else statement instead of a ternary operator for side effects",
+		);
+		expect(
+			invalid.match(
+				/Use an if\/else statement instead of a ternary operator for side effects/g,
+			),
+		).toHaveLength(2);
+		expect(valid).not.toContain(
+			"Use an if/else statement instead of a ternary operator for side effects",
+		);
+	});
 });
 
 describe("network custom rules", () => {

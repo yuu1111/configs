@@ -1,0 +1,6 @@
+engine biome(1.0)
+language js(typescript)
+
+JsExpressionStatement(expression=JsConditionalExpression()) as $match where {
+	register_diagnostic(span=$match, message="Use an if/else statement instead of a ternary operator for side effects", severity="warn")
+}

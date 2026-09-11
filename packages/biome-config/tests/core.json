@@ -2,7 +2,10 @@
 	"$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
 	"linter": {
 		"rules": {
-			"recommended": false
+			"recommended": false,
+			"style": {
+				"noNestedTernary": "warn"
+			}
 		}
 	},
 	"plugins": [
@@ -11,6 +14,7 @@
 		"../plugins/no-type-safety-bypass.grit",
 		"../plugins/no-unsafe-errno-assertion.grit",
 		"../plugins/no-meaningless-test.grit",
-		"../plugins/no-useless-abstraction.grit"
+		"../plugins/no-useless-abstraction.grit",
+		"../plugins/no-ternary-statement.grit"
 	]
 }
