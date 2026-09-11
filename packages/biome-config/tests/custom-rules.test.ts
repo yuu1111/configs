@@ -352,3 +352,41 @@ describe("preset hierarchy", () => {
 		expect(new Set(discord.plugins).size).toBe(discord.plugins.length);
 	});
 });
+
+describe("scoped adapter boundary rule", () => {
+	const adapterImport = `import { query } from "../../integrations/d1/query"
+
+export function load(id: string) {
+	return query(id)
+}
+`;
+
+	test("reports an adapter import inside the scoped layer", () => {
+		const invalid = lint(adapterImport, "scoped-violating", "scoped.json");
+		expect(invalid).toMatch(/Import the port instead of the adapter module/);
+		expect(
+			invalid.match(/Import the port instead of the adapter module/g),
+		).toHaveLength(1);
+	});
+
+	test("ignores the same import outside the scoped layer", () => {
+		const allowed = lint(adapterImport, "outside-scope", "scoped.json");
+		expect(allowed).not.toMatch(
+			/Import the port instead of the adapter module/,
+		);
+	});
+
+	test("accepts a local import inside the scoped layer", () => {
+		const valid = lint(
+			`import { decide } from "./decide"
+
+export function load(id: string) {
+	return decide(id)
+}
+`,
+			"scoped-valid",
+			"scoped.json",
+		);
+		expect(valid).not.toMatch(/Import the port instead of the adapter module/);
+	});
+});

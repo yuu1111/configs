@@ -1,0 +1,9 @@
+engine biome(1.0)
+language js(typescript)
+
+JsImport() as $match where {
+	$match <: contains JsModuleSource() as $source where {
+		$source <: r".*(?:integrations|adapters)/.*"
+	},
+	register_diagnostic(span=$match, message="Import the port instead of the adapter module", severity="error")
+}

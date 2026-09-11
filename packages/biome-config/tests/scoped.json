@@ -1,0 +1,16 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+	"linter": {
+		"rules": {
+			"recommended": false
+		}
+	},
+	"plugins": [
+		{
+			"path": "../plugins/no-adapter-import.grit",
+			"includes": [
+				"**/scoped-*.ts"
+			]
+		}
+	]
+}

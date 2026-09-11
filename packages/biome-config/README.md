@@ -103,3 +103,20 @@ cacheRequest.catch(() => null)
 #### Discord rule
 
 `no-unsafe-dynamic-discord-message` warns when dynamic message content is sent without an explicit `allowedMentions` policy.
+
+#### Project-scoped rule
+
+`no-adapter-import` errors when a module imports a path that contains `integrations/` or `adapters/`. It has no preset because the layer it protects is specific to the project. Declare it in the project's own configuration and narrow it with `includes`:
+
+```json
+{
+	"plugins": [
+		{
+			"path": "./node_modules/@yuu1111/biome-config/plugins/no-adapter-import.grit",
+			"includes": ["src/modules/authorization/**"]
+		}
+	]
+}
+```
+
+The plugin runs only on the files that match `includes`, so the same import stays valid in the adapters and in the layers that are allowed to reach them.
