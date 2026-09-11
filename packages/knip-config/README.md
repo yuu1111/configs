@@ -46,3 +46,19 @@ export default {
 
 Dynamic entry points, CLI binaries, and generated files stay in the consuming
 project because a shared preset cannot infer them from the project layout.
+
+A repository that also holds another project keeps that project out of the
+report with `ignore`, so its files are not read as source of the parent:
+
+```ts
+import { application } from "@yuu1111/knip-config/application"
+
+export default {
+	...application,
+	ignore: ["FFXIVReplayAnalyzer/**"]
+}
+```
+
+On such a repository the preset alone took the unused exports from 48 to 41,
+and the nested project took the report down to the single unused type that the
+repository really has left.
