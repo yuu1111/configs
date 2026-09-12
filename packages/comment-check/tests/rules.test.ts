@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
 	classifyComment,
 	findJapanesePeriod,
+	isCrampedComment,
 	parseEnabledRules,
 } from "../src/rules";
 
@@ -57,5 +58,28 @@ describe("opt-in rules", () => {
 	test("finds the first Japanese period of a comment body", () => {
 		expect(findJapanesePeriod(" plain comment")).toBe(-1);
 		expect(findJapanesePeriod(" 一つ。二つ。")).toBe(3);
+	});
+
+	test("accepts the cramped comment rule without duplicates", () => {
+		expect(parseEnabledRules(["cramped-comment"])).toEqual(["cramped-comment"]);
+		expect(parseEnabledRules(["cramped-comment", "cramped-comment"])).toEqual([
+			"cramped-comment",
+		]);
+	});
+
+	test("detects a comment that starts under the previous line", () => {
+		expect(isCrampedComment("const a = 1\n/**\n * b\n */\n", 12)).toBe(true);
+	});
+
+	test("accepts a blank line, a file start, and a block opener", () => {
+		expect(isCrampedComment("const a = 1\n\n/**\n * b\n */\n", 13)).toBe(false);
+		expect(isCrampedComment("/**\n * b\n */\n", 0)).toBe(false);
+		expect(isCrampedComment("export interface A {\n\t/**\n", 21)).toBe(false);
+	});
+
+	test("accepts a comment that follows another comment", () => {
+		expect(isCrampedComment("const a = 1\n// note\n/**\n * b\n */\n", 20)).toBe(
+			false,
+		);
 	});
 });

@@ -15,6 +15,7 @@ const DEFAULT_BASELINE = "comment-baseline.json";
 
 const RULE_MESSAGES: Record<string, string> = {
 	"broad-suppression": "file-wide suppression hides too much",
+	"cramped-comment": "a multi-line comment needs a blank line before it",
 	"japanese-period":
 		"a Japanese sentence in a comment does not end with a period",
 	"placeholder-comment": "placeholder comment should be resolved or tracked",

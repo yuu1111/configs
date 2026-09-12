@@ -5,6 +5,7 @@ import type { Located } from "@yuu1111/shared/findings";
  */
 export const RULE_IDS = [
 	"broad-suppression",
+	"cramped-comment",
 	"undocumented-directive",
 	"placeholder-comment",
 	"separator-comment",
@@ -19,7 +20,7 @@ export type RuleId = (typeof RULE_IDS)[number];
 /**
  * 既定では実行せず--enableで明示的に有効にするruleの識別子一覧
  */
-export const OPT_IN_RULE_IDS = ["japanese-period"] as const;
+export const OPT_IN_RULE_IDS = ["cramped-comment", "japanese-period"] as const;
 
 /**
  * OPT_IN_RULE_IDSが定義するrule識別子のunion型
@@ -38,6 +39,8 @@ const PLACEHOLDER_PATTERN = /\b(TODO|FIXME|XXX|HACK)\b/;
 const SEPARATOR_PATTERN = /^[-=*_#~+./\\|]{4,}$/;
 const DIRECTIVE_PATTERN = /^@ts-(?:ignore|expect-error)\b([\s\S]*)$/;
 const JAPANESE_PERIOD = "。";
+const BLOCK_OPENER = /(?:=>|[{(,[])\s*$/;
+const COMMENT_CONTINUATION = /^(?:\/\/|\*|\/\*)/;
 
 /**
  * --enableの値を検証して重複を除く 未知のrule名は設定errorにする
@@ -61,6 +64,23 @@ export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
  */
 export function findJapanesePeriod(text: string): number {
 	return text.indexOf(JAPANESE_PERIOD);
+}
+
+/**
+ * 行頭のcommentが直前の行へ空行なしで続いているか判定する
+ */
+export function isCrampedComment(source: string, start: number): boolean {
+	const lineStart = source.lastIndexOf("\n", start - 1) + 1;
+	if (lineStart === 0 || source.slice(lineStart, start).trim() !== "") {
+		return false;
+	}
+	const previousEnd = lineStart - 1;
+	const previousStart = source.lastIndexOf("\n", previousEnd - 1) + 1;
+	const previous = source.slice(previousStart, previousEnd).trim();
+	if (previous === "" || previous.endsWith("*/")) {
+		return false;
+	}
+	return !(COMMENT_CONTINUATION.test(previous) || BLOCK_OPENER.test(previous));
 }
 
 /**

@@ -139,6 +139,37 @@ describe("source scanning", () => {
 		expect(comparison.added).toEqual([]);
 		expect(comparison.resolved).toEqual([]);
 	});
+
+	test("keeps the cramped comment rule off by default", () => {
+		const source = "const a = 1\n/**\n * b\n */\nexport const b = 1\n";
+		expect(scanSource(source, "src/a.ts")).toEqual([]);
+	});
+
+	test("reports a multi-line comment that directly follows code", () => {
+		const source = "const a = 1\n/**\n * b\n */\nexport const b = 1\n";
+		expect(scanSource(source, "src/a.ts", ["cramped-comment"])).toEqual([
+			{
+				column: 1,
+				file: "src/a.ts",
+				line: 2,
+				rule: "cramped-comment",
+				text: "b",
+			},
+		]);
+	});
+
+	test("accepts a multi-line comment after a blank line", () => {
+		const source = "const a = 1\n\n/**\n * b\n */\nexport const b = 1\n";
+		expect(scanSource(source, "src/a.ts", ["cramped-comment"])).toEqual([]);
+	});
+
+	test("accepts a single-line comment and a comment that opens a block", () => {
+		const single = "const a = 1\n/** b */\nexport const b = 1\n";
+		expect(scanSource(single, "src/a.ts", ["cramped-comment"])).toEqual([]);
+		const block =
+			"export interface A {\n\t/**\n\t * b\n\t */\n\tb: string;\n}\n";
+		expect(scanSource(block, "src/a.ts", ["cramped-comment"])).toEqual([]);
+	});
 });
 
 describe("command line", () => {

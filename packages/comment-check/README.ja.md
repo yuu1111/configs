@@ -30,11 +30,18 @@ Checked 42 files: 1 new, 0 resolved, 3 baselined
 comment-check --enable japanese-period .
 ```
 
+複数行のcommentを直前の行へ続けず空行で区切るProjectは、もう一つのopt-inのruleを指定する
+
+```bash
+comment-check --enable cramped-comment .
+```
+
 ## Rules
 
 | Rule | 検出対象 |
 |------|---------|
 | `broad-suppression` | `biome-ignore-all`、`@ts-nocheck`、ruleを書いていない `eslint-disable` |
+| `cramped-comment` | 直前の行へ空行なしで続く複数行comment（opt-in） |
 | `undocumented-directive` | 説明の無い `@ts-ignore` と `@ts-expect-error` |
 | `placeholder-comment` | `TODO`、`FIXME`、`XXX`、`HACK` |
 | `separator-comment` | 記号だけで作った装飾comment |

@@ -32,11 +32,19 @@ opt-in rule:
 comment-check --enable japanese-period .
 ```
 
+A project that keeps a blank line before every multi-line comment names the
+other opt-in rule:
+
+```bash
+comment-check --enable cramped-comment .
+```
+
 ## Rules
 
 | Rule | Detects |
 |------|---------|
 | `broad-suppression` | `biome-ignore-all`, `@ts-nocheck`, and rule-less `eslint-disable` |
+| `cramped-comment` | a multi-line block comment written directly under the previous line (opt-in) |
 | `undocumented-directive` | `@ts-ignore` or `@ts-expect-error` without a description |
 | `placeholder-comment` | `TODO`, `FIXME`, `XXX`, `HACK` |
 | `separator-comment` | decorative comments made only of punctuation |

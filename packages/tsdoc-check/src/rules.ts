@@ -19,6 +19,7 @@ export type TsdocRule =
 	| "tsdoc-syntax"
 	| "tsdoc-tag"
 	| "type-param-mismatch";
+
 /**
  * 抑制commentと--errorで指定できるrule名の一覧
  */

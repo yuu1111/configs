@@ -7,6 +7,7 @@ import {
 	classifyComment,
 	type Finding,
 	findJapanesePeriod,
+	isCrampedComment,
 	normalizeComment,
 	type OptInRuleId,
 } from "./rules";
@@ -59,6 +60,21 @@ export function scanSource(
 				file,
 				line: position.line,
 				rule,
+				text,
+			});
+		}
+		if (
+			enabled.includes("cramped-comment") &&
+			comment.kind === "block" &&
+			source.slice(comment.start, comment.end).includes("\n") &&
+			isCrampedComment(source, comment.start)
+		) {
+			const position = positionAt(source, comment.start);
+			findings.push({
+				column: position.column,
+				file,
+				line: position.line,
+				rule: "cramped-comment",
 				text,
 			});
 		}
