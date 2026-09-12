@@ -33,6 +33,7 @@ function createContext(): EngineCommandContext {
 					"document-style-check": true,
 					knip: true,
 					"tsdoc-check": true,
+					typecheck: true,
 				},
 			},
 			"test",
@@ -58,6 +59,13 @@ describe("engine commands", () => {
 			"biome",
 			"check",
 			".",
+		]);
+	});
+
+	test("runs the type checker on the project tsconfig", () => {
+		expect(buildEngineCommand("typecheck", "tsc", createContext())).toEqual([
+			"tsc",
+			"--noEmit",
 		]);
 	});
 
@@ -128,6 +136,9 @@ describe("engine limits", () => {
 		).toEqual(["ignore skipped (biome.json holds its settings)"]);
 		expect(skippedEngineOptions("knip", { targets: ["src"] })).toEqual([
 			"targets skipped (knip analyzes the whole project)",
+		]);
+		expect(skippedEngineOptions("typecheck", { targets: ["src"] })).toEqual([
+			"targets skipped (tsc checks the project named by tsconfig.json)",
 		]);
 	});
 

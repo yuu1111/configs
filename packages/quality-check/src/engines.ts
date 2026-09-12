@@ -33,6 +33,7 @@ export const ENGINE_BINS: Record<EngineName, string> = {
 	"document-style-check": "document-style-check",
 	knip: "knip",
 	"tsdoc-check": "tsdoc-check",
+	typecheck: "tsc",
 };
 
 const WINDOWS_SHIMS = [".exe", ".cmd", ".bat", ""];
@@ -65,6 +66,10 @@ export const ENGINE_LIMITS: Record<
 	Partial<Record<"ignore" | "targets", string>>
 > = {
 	biome: { ignore: "biome.json holds its settings" },
+	typecheck: {
+		ignore: "tsconfig.json holds its settings",
+		targets: "tsc checks the project named by tsconfig.json",
+	},
 	knip: {
 		ignore: "knip.ts holds its settings",
 		targets: "knip analyzes the whole project",
@@ -163,6 +168,9 @@ export function buildEngineCommand(
 	const errorArguments = rules.flatMap((rule) => ["--error", rule]);
 	if (name === "biome") {
 		return [executable, "check", ...targets, ...extra];
+	}
+	if (name === "typecheck") {
+		return [executable, "--noEmit", ...extra];
 	}
 	if (name === "knip") {
 		return [executable, ...extra];

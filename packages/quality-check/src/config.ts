@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
  */
 export const ENGINE_NAMES = [
 	"biome",
+	"typecheck",
 	"knip",
 	"comment-check",
 	"document-style-check",
@@ -43,6 +44,7 @@ export interface TsdocCheckOptions extends EngineOptions {
  */
 export interface EngineConfigMap {
 	biome: EngineOptions;
+	typecheck: EngineOptions;
 	knip: EngineOptions;
 	"comment-check": EngineOptions;
 	"document-style-check": EngineOptions;
@@ -95,6 +97,7 @@ function isEngineName(value: string): value is EngineName {
 
 const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
 	biome: ["args", "ignore", "targets"],
+	typecheck: ["args", "ignore", "targets"],
 	knip: ["args", "ignore", "targets"],
 	"comment-check": ["args", "ignore", "targets"],
 	"document-style-check": ["args", "ignore", "targets"],

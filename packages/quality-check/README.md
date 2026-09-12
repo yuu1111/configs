@@ -2,8 +2,9 @@
 
 # @yuu1111/quality-check
 
-Runs Biome, Knip, comment-check, document-style-check, and the TSDoc checker
-from one CLI instead of one script per project. The baseline diff lives here too.
+Runs Biome, the type checker, Knip, comment-check, document-style-check, and the
+TSDoc checker from one CLI instead of one script per project. The baseline diff
+lives here too.
 
 ## Install
 
@@ -30,6 +31,7 @@ import { defineConfig } from "@yuu1111/quality-check";
 export default defineConfig({
 	engines: {
 		biome: true,
+		typecheck: true,
 		knip: true,
 		"comment-check": true,
 		"document-style-check": true,
@@ -67,19 +69,20 @@ quality-check: 1 of 3 engines failed
 | `config` | Conditions of each engine |
 | `baseline` | Baseline file path; `false` disables the diff |
 
-Engines run in the order `biome`, `knip`, `comment-check`,
+Engines run in the order `biome`, `typecheck`, `knip`, `comment-check`,
 `document-style-check`, `tsdoc-check`.
 
 `engines` only delegates the start-up, and the conditions belong under the
-engine in `config`. Each engine takes:
+engine in `config`. Each engine runs:
 
-| Engine | Conditions |
-|--------|------------|
-| `biome` | `targets`, `args`; `biome.json` holds the excluded paths |
-| `knip` | `args`; `knip.ts` holds the settings |
-| `comment-check` | `ignore`, `targets`, `args` |
-| `document-style-check` | `ignore`, `targets`, `args` |
-| `tsdoc-check` | `ignore`, `targets`, `args`, `error` (rule names to fail on) |
+| Engine | Command | Conditions |
+|--------|---------|------------|
+| `biome` | `biome check` | `targets`, `args`; `biome.json` holds the excluded paths |
+| `typecheck` | `tsc --noEmit` | `args`; `tsconfig.json` holds the settings |
+| `knip` | `knip` | `args`; `knip.ts` holds the settings |
+| `comment-check` | `comment-check --json` | `ignore`, `targets`, `args` |
+| `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args` |
+| `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `error` (rule names to fail on) |
 
 `args` is appended after the engine defaults, for conditions the config cannot
 express and for the case where an engine changes its arguments.
@@ -109,13 +112,17 @@ so:
 biome: ignore skipped (biome.json holds its settings)
 ```
 
-Biome and Knip keep their excluded paths in `biome.json` and `knip.ts`. This
-CLI starts the engines from one file and aggregates the results.
+Biome, the type checker, and Knip keep their settings in `biome.json`,
+`tsconfig.json`, and `knip.ts`. This CLI starts the engines from one file and
+aggregates the results.
 
 `comment-check` runs with an unwritten baseline path so that it reports every
 finding. The new-and-resolved diff is done by this CLI from a single baseline
 file, so an existing `comment-baseline.json` is moved over with
 `--update-baseline`.
+
+`typecheck` only runs `tsc --noEmit`, so a project with more than one tsconfig
+has to start it once per target.
 
 ## License
 
