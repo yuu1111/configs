@@ -9,6 +9,7 @@ import type { EngineResult } from "../src/run";
 function result(
 	name: EngineResult["name"],
 	status: EngineResult["status"],
+	skipped: string[] = [],
 ): EngineResult {
 	return {
 		detected: [],
@@ -17,6 +18,7 @@ function result(
 		output: "",
 		reported: [],
 		resolved: 0,
+		skipped,
 		status,
 		warnings: [],
 	};
@@ -27,6 +29,17 @@ describe("quality report", () => {
 		const section = formatEngineSection(result("knip", "failed"));
 		expect(section).toContain("== knip ==");
 		expect(section).toContain("knip: failed (exit 1)");
+	});
+
+	test("reports a condition that the engine did not take", () => {
+		const section = formatEngineSection(
+			result("biome", "passed", [
+				"ignore skipped (biome.json holds its settings)",
+			]),
+		);
+		expect(section).toContain(
+			"biome: ignore skipped (biome.json holds its settings)",
+		);
 	});
 
 	test("lists the failed and passed engines", () => {

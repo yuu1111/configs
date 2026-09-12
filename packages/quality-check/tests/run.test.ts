@@ -51,9 +51,9 @@ function createOptions(overrides: Partial<RunOptions>): RunOptions {
 		baseline: null,
 		config: parseConfig({ engines: { biome: true } }, "test"),
 		cwd: ".",
+		overrides: { ignore: [], targets: ["."] },
 		rawBaseline: "raw.json",
 		resolve: () => "/fake/bin",
-		targets: ["."],
 		...overrides,
 	};
 }
@@ -93,6 +93,21 @@ describe("engine orchestration", () => {
 		const results = await runEngines(createOptions({ resolve: () => null }));
 		expect(results[0]?.status).toBe("error");
 		expect(results[0]?.message).toBe("biome is not installed");
+	});
+
+	test("reports a condition that the engine could not take", async () => {
+		const results = await runEngines(
+			createOptions({
+				config: parseConfig(
+					{ config: { biome: { ignore: ["dist"] } }, engines: { biome: true } },
+					"test",
+				),
+				runner: runnerFor({ exitCode: 0, stderr: "", stdout: "" }),
+			}),
+		);
+		expect(results[0]?.skipped).toEqual([
+			"ignore skipped (biome.json holds its settings)",
+		]);
 	});
 
 	test("reports a new finding from a finding engine", async () => {

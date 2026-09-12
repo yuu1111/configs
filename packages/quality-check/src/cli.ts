@@ -98,13 +98,6 @@ function parseArguments(argv: string[]): Options {
 	return options;
 }
 
-function mergeIgnores(config: QualityConfig, ignores: string[]): QualityConfig {
-	if (ignores.length === 0) {
-		return config;
-	}
-	return { ...config, ignore: [...(config.ignore ?? []), ...ignores] };
-}
-
 function resolveBaselinePath(
 	options: Options,
 	config: QualityConfig,
@@ -138,7 +131,7 @@ async function main(argv: string[]): Promise<number> {
 		console.error(`quality.config.ts not found in ${cwd}`);
 		return 2;
 	}
-	const config = mergeIgnores(await loadConfig(configPath), options.ignores);
+	const config = await loadConfig(configPath);
 	const baselinePath = resolveBaselinePath(options, config, cwd);
 	const results = await runEngines({
 		baseline:
@@ -147,9 +140,8 @@ async function main(argv: string[]): Promise<number> {
 				: readBaseline(baselinePath),
 		config,
 		cwd,
+		overrides: { ignore: options.ignores, targets: options.targets },
 		rawBaseline: join(tmpdir(), `quality-check-raw-${process.pid}.json`),
-		targets:
-			options.targets.length > 0 ? options.targets : (config.targets ?? ["."]),
 	});
 	if (options.update) {
 		if (baselinePath === null) {

@@ -19,11 +19,34 @@ export const ENGINE_NAMES = [
 export type EngineName = (typeof ENGINE_NAMES)[number];
 
 /**
- * engineのbinへ追加で渡す起動設定
+ * engineへ渡す起動条件
  */
 export interface EngineOptions {
+	/** 検査から外すpath engineが受け取れないときはreportへ出す */
+	ignore?: string[];
+	/** 検査する対象path engineが受け取れないときはreportへ出す */
+	targets?: string[];
 	/** engineの既定引数の後ろへ足す引数 */
 	args?: string[];
+}
+
+/**
+ * TSDoc検査へ渡す起動条件
+ */
+export interface TsdocCheckOptions extends EngineOptions {
+	/** 違反として扱うrule名 */
+	error?: string[];
+}
+
+/**
+ * engine名ごとの起動条件
+ */
+export interface EngineConfigMap {
+	biome: EngineOptions;
+	knip: EngineOptions;
+	"comment-check": EngineOptions;
+	"document-style-check": EngineOptions;
+	"tsdoc-check": TsdocCheckOptions;
 }
 
 /**
@@ -31,13 +54,11 @@ export interface EngineOptions {
  */
 export interface QualityConfig {
 	/** 起動するengine 値がfalseまたは未指定のengineは起動しない */
-	engines: Partial<Record<EngineName, boolean | EngineOptions>>;
-	/** file走査engineが検査から外すpath */
-	ignore?: string[];
+	engines: Partial<Record<EngineName, boolean>>;
+	/** engineごとの起動条件 省略したengineは既定値で起動する */
+	config?: Partial<EngineConfigMap>;
 	/** baseline fileのpath falseなら差分判定を行わない */
 	baseline?: string | false;
-	/** file走査engineへ渡す対象path */
-	targets?: string[];
 }
 
 /**
@@ -72,6 +93,14 @@ function isEngineName(value: string): value is EngineName {
 	return (ENGINE_NAMES as readonly string[]).includes(value);
 }
 
+const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
+	biome: ["args", "ignore", "targets"],
+	knip: ["args", "ignore", "targets"],
+	"comment-check": ["args", "ignore", "targets"],
+	"document-style-check": ["args", "ignore", "targets"],
+	"tsdoc-check": ["args", "error", "ignore", "targets"],
+};
+
 function readStringArray(value: unknown, field: string): string[] | undefined {
 	if (value === undefined) {
 		return undefined;
@@ -98,27 +127,96 @@ function readBaseline(
 	throw new Error(`${source}: baseline must be a path string or false`);
 }
 
-function parseEngineOptions(
+function parseEngines(
 	value: unknown,
 	source: string,
-	name: EngineName,
-): boolean | EngineOptions {
-	if (typeof value === "boolean") {
-		return value;
-	}
+): Partial<Record<EngineName, boolean>> {
 	if (!isJsonObject(value)) {
-		throw new Error(
-			`${source}: engines.${name} must be a boolean or an object`,
-		);
+		throw new Error(`${source} must export an engines object`);
 	}
-	const unknown = Object.keys(value).filter((key) => key !== "args");
+	const engines: Partial<Record<EngineName, boolean>> = {};
+	for (const [name, enabled] of Object.entries(value)) {
+		if (!isEngineName(name)) {
+			throw new Error(`${source}: unknown engine: ${name}`);
+		}
+		if (typeof enabled !== "boolean") {
+			throw new Error(
+				`${source}: engines.${name} must be a boolean 起動条件はconfigへ置く`,
+			);
+		}
+		engines[name] = enabled;
+	}
+	if (ENGINE_NAMES.every((name) => !engines[name])) {
+		throw new Error(`${source} must enable at least one engine`);
+	}
+	return engines;
+}
+
+function parseEngineOptions(
+	value: JsonObject,
+	source: string,
+	name: EngineName,
+): TsdocCheckOptions {
+	const unknown = Object.keys(value).filter(
+		(key) => !ENGINE_OPTION_KEYS[name].includes(key),
+	);
 	if (unknown.length > 0) {
 		throw new Error(
-			`${source}: engines.${name} has an unknown option: ${unknown[0]}`,
+			`${source}: config.${name} has an unknown option: ${unknown[0]}`,
 		);
 	}
-	const args = readStringArray(value.args, `${source}: engines.${name}.args`);
-	return args === undefined ? {} : { args };
+	const options: TsdocCheckOptions = {};
+	const ignore = readStringArray(
+		value.ignore,
+		`${source}: config.${name}.ignore`,
+	);
+	if (ignore !== undefined) {
+		options.ignore = ignore;
+	}
+	const targets = readStringArray(
+		value.targets,
+		`${source}: config.${name}.targets`,
+	);
+	if (targets !== undefined) {
+		options.targets = targets;
+	}
+	const args = readStringArray(value.args, `${source}: config.${name}.args`);
+	if (args !== undefined) {
+		options.args = args;
+	}
+	if (name === "tsdoc-check") {
+		const error = readStringArray(
+			value.error,
+			`${source}: config.${name}.error`,
+		);
+		if (error !== undefined) {
+			options.error = error;
+		}
+	}
+	return options;
+}
+
+function parseEngineConfig(
+	value: unknown,
+	source: string,
+): Partial<EngineConfigMap> | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (!isJsonObject(value)) {
+		throw new Error(`${source}: config must be an object`);
+	}
+	const config: Partial<EngineConfigMap> = {};
+	for (const [name, options] of Object.entries(value)) {
+		if (!isEngineName(name)) {
+			throw new Error(`${source}: unknown engine in config: ${name}`);
+		}
+		if (!isJsonObject(options)) {
+			throw new Error(`${source}: config.${name} must be an object`);
+		}
+		config[name] = parseEngineOptions(options, source, name);
+	}
+	return config;
 }
 
 /**
@@ -128,31 +226,16 @@ export function parseConfig(value: unknown, source: string): QualityConfig {
 	if (!isJsonObject(value)) {
 		throw new Error(`${source} must export a config object`);
 	}
-	if (!isJsonObject(value.engines)) {
-		throw new Error(`${source} must export an engines object`);
+	const config: QualityConfig = {
+		engines: parseEngines(value.engines, source),
+	};
+	const engineConfig = parseEngineConfig(value.config, source);
+	if (engineConfig !== undefined) {
+		config.config = engineConfig;
 	}
-	const engines: Partial<Record<EngineName, boolean | EngineOptions>> = {};
-	for (const [name, options] of Object.entries(value.engines)) {
-		if (!isEngineName(name)) {
-			throw new Error(`${source}: unknown engine: ${name}`);
-		}
-		engines[name] = parseEngineOptions(options, source, name);
-	}
-	if (ENGINE_NAMES.every((name) => !engines[name])) {
-		throw new Error(`${source} must enable at least one engine`);
-	}
-	const config: QualityConfig = { engines };
 	const baseline = readBaseline(value.baseline, source);
 	if (baseline !== undefined) {
 		config.baseline = baseline;
-	}
-	const ignore = readStringArray(value.ignore, `${source}: ignore`);
-	if (ignore !== undefined) {
-		config.ignore = ignore;
-	}
-	const targets = readStringArray(value.targets, `${source}: targets`);
-	if (targets !== undefined) {
-		config.targets = targets;
 	}
 	return config;
 }
@@ -165,17 +248,16 @@ export function enabledEngines(config: QualityConfig): EngineName[] {
 }
 
 /**
- * engineの起動設定を返す 無効なengineにはnullを返す
+ * engineの起動条件を返す 無効なengineにはnullを返す
  */
-export function engineOptions(
+export function engineConfig<K extends EngineName>(
 	config: QualityConfig,
-	name: EngineName,
-): EngineOptions | null {
-	const value = config.engines[name];
-	if (!value) {
+	name: K,
+): EngineConfigMap[K] | null {
+	if (!config.engines[name]) {
 		return null;
 	}
-	return value === true ? {} : value;
+	return config.config?.[name] ?? ({} as EngineConfigMap[K]);
 }
 
 /**

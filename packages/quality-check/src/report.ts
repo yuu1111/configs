@@ -25,6 +25,9 @@ function describeStatus(result: EngineResult): string {
  */
 export function formatEngineSection(result: EngineResult): string {
 	const lines = [`== ${result.name} ==`];
+	for (const skipped of result.skipped) {
+		lines.push(`${result.name}: ${skipped}`);
+	}
 	if (result.output !== "" && !isFindingEngine(result.name)) {
 		lines.push(result.output);
 	}
@@ -73,6 +76,7 @@ export function toJsonReport(results: EngineResult[]): unknown {
 			name: result.name,
 			reported: result.reported,
 			resolved: result.resolved,
+			skipped: result.skipped,
 			status: result.status,
 			warnings: result.warnings,
 		})),

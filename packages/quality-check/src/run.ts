@@ -7,8 +7,10 @@ import {
 	type EngineProcessResult,
 	type EngineRunner,
 	isFindingEngine,
+	type RunOverrides,
 	resolveExecutable,
 	runEngineProcess,
+	skippedEngineOptions,
 } from "./engines";
 import { type NormalizedFinding, parseFindings } from "./findings";
 
@@ -30,6 +32,8 @@ export interface EngineResult {
 	/** baseline適用後に残った阻害する検出 */
 	reported: NormalizedFinding[];
 	resolved: number;
+	/** engineが受け取らなかった起動条件 */
+	skipped: string[];
 	status: EngineStatus;
 	warnings: NormalizedFinding[];
 }
@@ -42,8 +46,8 @@ export interface RunOptions {
 	baseline: BaselineFile | null;
 	config: QualityConfig;
 	cwd: string;
-	/** file走査engineへ渡す対象path */
-	targets: string[];
+	/** コマンドラインから渡された起動条件の上書き */
+	overrides: RunOverrides;
 	/** comment-checkのbaseline差分を無効化する未作成のpath */
 	rawBaseline: string;
 	/** engineの実行fileを解決する関数 テストでは差し替える */
@@ -63,6 +67,7 @@ function baseResult(
 		output,
 		reported: [],
 		resolved: 0,
+		skipped: [],
 		warnings: [],
 	};
 }
@@ -144,7 +149,7 @@ async function runProcessEngine(
 	};
 }
 
-async function runEngine(
+async function executeEngine(
 	name: EngineName,
 	options: RunOptions,
 	context: EngineCommandContext,
@@ -164,6 +169,19 @@ async function runEngine(
 	return await runProcessEngine(name, options, executable, context, runner);
 }
 
+async function runEngine(
+	name: EngineName,
+	options: RunOptions,
+	context: EngineCommandContext,
+	runner: EngineRunner,
+): Promise<EngineResult> {
+	const result = await executeEngine(name, options, context, runner);
+	return {
+		...result,
+		skipped: skippedEngineOptions(name, options.config.config?.[name]),
+	};
+}
+
 /**
  * 設定で有効なengineを順に起動する
  */
@@ -171,9 +189,8 @@ export async function runEngines(options: RunOptions): Promise<EngineResult[]> {
 	const runner = options.runner ?? runEngineProcess;
 	const context: EngineCommandContext = {
 		config: options.config,
-		ignores: options.config.ignore ?? [],
+		overrides: options.overrides,
 		rawBaseline: options.rawBaseline,
-		targets: options.targets,
 	};
 	const results: EngineResult[] = [];
 	for (const name of enabledEngines(options.config)) {

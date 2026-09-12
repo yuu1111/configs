@@ -7,6 +7,7 @@ import {
 	buildEngineCommand,
 	type EngineCommandContext,
 	resolveExecutable,
+	skippedEngineOptions,
 } from "../src/engines";
 
 const temporaryDirectories: string[] = [];
@@ -21,18 +22,23 @@ function createContext(): EngineCommandContext {
 	return {
 		config: parseConfig(
 			{
+				config: {
+					biome: { ignore: ["src/generated"] },
+					"comment-check": { ignore: ["src/generated"] },
+					"tsdoc-check": { error: ["missing-doc"] },
+				},
 				engines: {
 					biome: true,
 					"comment-check": true,
+					"document-style-check": true,
 					knip: true,
-					"tsdoc-check": { args: ["--error", "missing-doc"] },
+					"tsdoc-check": true,
 				},
 			},
 			"test",
 		),
-		ignores: ["src/generated"],
+		overrides: { ignore: [], targets: ["."] },
 		rawBaseline: "raw.json",
-		targets: ["."],
 	};
 }
 
@@ -82,28 +88,55 @@ describe("engine commands", () => {
 				"document-style-check",
 				createContext(),
 			),
+		).toEqual(["document-style-check", "lint", "--json", "."]);
+	});
+
+	test("turns the rule names of the TSDoc engine into flags", () => {
+		expect(
+			buildEngineCommand("tsdoc-check", "tsdoc-check", createContext()),
+		).toEqual(["tsdoc-check", "--json", "--error", "missing-doc", "."]);
+	});
+
+	test("adds the command line overrides to the engines that accept them", () => {
+		const context = createContext();
+		context.overrides = { ignore: ["dist"], targets: ["src"] };
+		expect(buildEngineCommand("biome", "biome", context)).toEqual([
+			"biome",
+			"check",
+			"src",
+		]);
+		expect(
+			buildEngineCommand("comment-check", "comment-check", context),
 		).toEqual([
-			"document-style-check",
-			"lint",
+			"comment-check",
 			"--json",
-			".",
+			"--baseline",
+			"raw.json",
+			"src",
 			"--ignore",
 			"src/generated",
+			"--ignore",
+			"dist",
+		]);
+	});
+});
+
+describe("engine limits", () => {
+	test("reports the conditions that an engine cannot take", () => {
+		expect(
+			skippedEngineOptions("biome", { ignore: ["src/generated"] }),
+		).toEqual(["ignore skipped (biome.json holds its settings)"]);
+		expect(skippedEngineOptions("knip", { targets: ["src"] })).toEqual([
+			"targets skipped (knip analyzes the whole project)",
 		]);
 	});
 
-	test("appends the configured arguments after the engine defaults", () => {
-		expect(
-			buildEngineCommand("tsdoc-check", "tsdoc-check", createContext()),
-		).toEqual([
-			"tsdoc-check",
-			"--json",
-			".",
-			"--ignore",
-			"src/generated",
-			"--error",
-			"missing-doc",
-		]);
+	test("reports nothing for the conditions an engine can take", () => {
+		expect(skippedEngineOptions("comment-check", { ignore: ["dist"] })).toEqual(
+			[],
+		);
+		expect(skippedEngineOptions("biome", { targets: ["src"] })).toEqual([]);
+		expect(skippedEngineOptions("biome", undefined)).toEqual([]);
 	});
 });
 

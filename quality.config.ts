@@ -5,6 +5,11 @@ export default defineConfig({
 		biome: true,
 		"comment-check": true,
 		"document-style-check": true,
-		"tsdoc-check": { args: ["--error", "single-line-doc"] },
+		"tsdoc-check": true,
+	},
+	config: {
+		"tsdoc-check": {
+			error: ["single-line-doc"],
+		},
 	},
 });

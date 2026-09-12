@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { enabledEngines, parseConfig } from "../src/config";
+import { enabledEngines, engineConfig, parseConfig } from "../src/config";
 
 describe("quality config", () => {
 	test("runs the enabled engines in registry order", () => {
@@ -10,14 +10,31 @@ describe("quality config", () => {
 		expect(enabledEngines(config)).toEqual(["biome", "tsdoc-check"]);
 	});
 
-	test("keeps the arguments of an engine", () => {
+	test("reads the conditions of an engine from the config section", () => {
 		const config = parseConfig(
-			{ engines: { "tsdoc-check": { args: ["--error", "missing-doc"] } } },
+			{
+				config: { "tsdoc-check": { error: ["missing-doc"], ignore: ["dist"] } },
+				engines: { "tsdoc-check": true },
+			},
 			"test",
 		);
-		expect(config.engines["tsdoc-check"]).toEqual({
-			args: ["--error", "missing-doc"],
+		expect(engineConfig(config, "tsdoc-check")).toEqual({
+			error: ["missing-doc"],
+			ignore: ["dist"],
 		});
+	});
+
+	test("gives an enabled engine without conditions an empty object", () => {
+		const config = parseConfig({ engines: { biome: true } }, "test");
+		expect(engineConfig(config, "biome")).toEqual({});
+	});
+
+	test("gives a disabled engine null", () => {
+		const config = parseConfig(
+			{ engines: { biome: true, knip: false } },
+			"test",
+		);
+		expect(engineConfig(config, "knip")).toBeNull();
 	});
 
 	test("rejects an unknown engine", () => {
@@ -32,9 +49,36 @@ describe("quality config", () => {
 		);
 	});
 
+	test("rejects an engine switch that is not a boolean", () => {
+		expect(() =>
+			parseConfig({ engines: { biome: { args: [] } } }, "test"),
+		).toThrow("must be a boolean");
+	});
+
+	test("rejects an unknown engine in the config section", () => {
+		expect(() =>
+			parseConfig({ config: { eslint: {} }, engines: { biome: true } }, "test"),
+		).toThrow("unknown engine in config");
+	});
+
 	test("rejects an unknown engine option", () => {
 		expect(() =>
-			parseConfig({ engines: { biome: { target: "src" } } }, "test"),
+			parseConfig(
+				{ config: { biome: { target: "src" } }, engines: { biome: true } },
+				"test",
+			),
+		).toThrow("unknown option");
+	});
+
+	test("rejects the rule option outside the TSDoc engine", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: { biome: { error: ["missing-doc"] } },
+					engines: { biome: true },
+				},
+				"test",
+			),
 		).toThrow("unknown option");
 	});
 

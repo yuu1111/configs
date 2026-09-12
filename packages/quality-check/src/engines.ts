@@ -1,6 +1,11 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { type EngineName, engineOptions, type QualityConfig } from "./config";
+import {
+	type EngineName,
+	type EngineOptions,
+	engineConfig,
+	type QualityConfig,
+} from "./config";
 
 /**
  * 子プロセスとして起動したengineの生の結果
@@ -34,14 +39,60 @@ const WINDOWS_SHIMS = [".exe", ".cmd", ".bat", ""];
 const POSIX_SHIMS = [""];
 
 /**
+ * コマンドラインから渡された起動条件の上書き
+ */
+export interface RunOverrides {
+	ignore: string[];
+	targets: string[];
+}
+
+/**
  * engineのコマンドを組み立てるための実行条件
  */
 export interface EngineCommandContext {
 	config: QualityConfig;
-	ignores: string[];
+	/** 対応するengineへだけ足す上書き */
+	overrides: RunOverrides;
 	/** comment-checkのbaseline差分を無効化するために渡す未作成のpath */
 	rawBaseline: string;
-	targets: string[];
+}
+
+/**
+ * engineが受け取らない起動条件と、その設定の持ち主
+ */
+export const ENGINE_LIMITS: Record<
+	EngineName,
+	Partial<Record<"ignore" | "targets", string>>
+> = {
+	biome: { ignore: "biome.json holds its settings" },
+	knip: {
+		ignore: "knip.ts holds its settings",
+		targets: "knip analyzes the whole project",
+	},
+	"comment-check": {},
+	"document-style-check": {},
+	"tsdoc-check": {},
+};
+
+/**
+ * engineが受け取らないため渡さなかった起動条件を返す
+ */
+export function skippedEngineOptions(
+	name: EngineName,
+	options: EngineOptions | undefined,
+): string[] {
+	if (options === undefined) {
+		return [];
+	}
+	const limits = ENGINE_LIMITS[name];
+	const skipped: string[] = [];
+	for (const key of ["ignore", "targets"] as const) {
+		const reason = limits[key];
+		if (reason !== undefined && options[key] !== undefined) {
+			skipped.push(`${key} skipped (${reason})`);
+		}
+	}
+	return skipped;
 }
 
 /**
@@ -95,24 +146,34 @@ export function buildEngineCommand(
 	executable: string,
 	context: EngineCommandContext,
 ): string[] {
-	const extra = engineOptions(context.config, name)?.args ?? [];
+	const options: EngineOptions = engineConfig(context.config, name) ?? {};
+	const limits = ENGINE_LIMITS[name];
+	const extra = options.args ?? [];
+	const ignores =
+		limits.ignore === undefined
+			? [...(options.ignore ?? []), ...context.overrides.ignore]
+			: [];
+	const requested =
+		context.overrides.targets.length > 0
+			? context.overrides.targets
+			: (options.targets ?? ["."]);
+	const targets = limits.targets === undefined ? requested : [];
+	const ignoreArguments = ignores.flatMap((ignore) => ["--ignore", ignore]);
+	const rules = engineConfig(context.config, "tsdoc-check")?.error ?? [];
+	const errorArguments = rules.flatMap((rule) => ["--error", rule]);
 	if (name === "biome") {
-		return [executable, "check", ...context.targets, ...extra];
+		return [executable, "check", ...targets, ...extra];
 	}
 	if (name === "knip") {
 		return [executable, ...extra];
 	}
-	const ignoreArguments = context.ignores.flatMap((ignore) => [
-		"--ignore",
-		ignore,
-	]);
 	if (name === "comment-check") {
 		return [
 			executable,
 			"--json",
 			"--baseline",
 			context.rawBaseline,
-			...context.targets,
+			...targets,
 			...ignoreArguments,
 			...extra,
 		];
@@ -122,7 +183,7 @@ export function buildEngineCommand(
 			executable,
 			"lint",
 			"--json",
-			...context.targets,
+			...targets,
 			...ignoreArguments,
 			...extra,
 		];
@@ -130,7 +191,8 @@ export function buildEngineCommand(
 	return [
 		executable,
 		"--json",
-		...context.targets,
+		...errorArguments,
+		...targets,
 		...ignoreArguments,
 		...extra,
 	];
