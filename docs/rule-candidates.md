@@ -21,11 +21,6 @@
 | `empty-link` | `[]()` のような空リンク | error / on | MD042 |
 | `bare-url` | 本文中の裸のURL | error / on (fixable) | MD034 |
 | `image-alt-text` | altの無い画像 | error / on | MD045 |
-| `list-marker-consistency` | `-` と `*` の混在 | opt-in (fixable) | MD004 |
-| `japanese-comma` | 日本語文の `,` | opt-in | — |
-| `full-width-alphanumeric` | `ＡＢＣ１２３` のような全角英数 | opt-in | — |
-
-`japanese-comma` と `full-width-alphanumeric` は `japanese-period` と同じく、日本語の文書だけで有効にするopt-inに置く
 
 ## biome-config
 
