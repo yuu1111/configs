@@ -71,11 +71,3 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 | `--write` | 報告の代わりに整形を適用する |
 | `--json` | 検出をJSONで出力する |
 
-## Notes
-
-opt-in ruleは `--enable` で指定するまで動かない `lint --write` の後にも `japanese-period` がerrorとして残るのは、`。` を外すと前後の文の書き換えが要るためで、このruleは報告だけを行う
-
-`scan`は既存の検証記録を上書きしない 古い記録を信じず、新しい名前で作り直す
-
-基準fileは`## 判断基準`の節に判断項目を見出しで並べたMarkdown
-パッケージは基準を同梱しない document-styleの`SKILL.md`がその一例で、同じ形のfileなら別の基準でもよい

@@ -49,11 +49,3 @@ comment-check --enable japanese-period .
 | `--ignore <path>` | 検査から外すpath 複数指定できる |
 | `--update-baseline` | baselineを現在の検出で置き換える |
 | `--json` | 新規と解消済みの検出をJSONで出力する |
-
-## Notes
-
-生成物のディレクトリなどProjectが持つpathは `--ignore` で検査から外す 例えば `--ignore src/generated`
-
-baselineはrule、file、comment本文をキーにするため、行が動いてもそのcommentを新規とは報告しない Biomeは `biome-ignore` の理由と未使用の抑制を既に扱うため、このcheckerはBiomeが読まないcommentの細部だけを担当する
-
-`japanese-period` は `--enable` で指定するまで動かないため、既存Projectの検出結果は変わらない 最初の `。` の位置を行と桁で報告し、句点が複数あっても1 commentにつき1件にまとめ、comment本文は書き換えない

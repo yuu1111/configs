@@ -75,14 +75,3 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 | `--ignore <path>` | Path to leave out, repeatable |
 | `--write` | Apply the fixes instead of reporting them |
 | `--json` | Print findings as JSON |
-
-## Notes
-
-An opt-in rule stays off until `--enable` names it. `lint --write` therefore
-leaves a `japanese-period` error in place: dropping a `。` needs a rewrite of the
-sentence around it, so the rule reports and stops.
-
-`scan` refuses to overwrite an existing review file, so regenerate it under a new name rather than trusting a stale record.
-
-The rules file is a Markdown document whose `## 判断基準` section lists one heading per judgment.
-The package ships no criteria of its own: the document-style skill's `SKILL.md` is one such file, and any other file with the same shape works.
