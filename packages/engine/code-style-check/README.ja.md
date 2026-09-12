@@ -60,5 +60,5 @@ Checked 42 files: 1 errors, 0 warnings
 
 | Option | 説明 |
 |--------|-------------|
-| `--ignore <path>` | 検査から外すpath 複数指定できる |
+| `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--json` | 検出を `errors` と `warnings` のJSONで出力する |

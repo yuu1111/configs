@@ -74,7 +74,7 @@ quality-check: 1 of 3 engines failed (1250ms)
 
 | Field | 説明 |
 |-------|-------------|
-| `engines` | 起動するengine 値は `true` または `false` |
+| `engines` | 起動するengine、値は `true` または `false` |
 | `config` | engineごとの起動条件 |
 | `baseline` | baseline fileのpath `false` なら差分判定を行わない |
 
@@ -92,7 +92,8 @@ engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment
 | `document-style-check` | `document-style-check lint --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名） |
 | `tsdoc-check` | `tsdoc-check --json` | `ignore`、`targets`、`args`、`error`（違反として扱うrule名） |
 
-`args` はengineの既定引数の後ろへ足す 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
+`args` はengineの既定引数の後ろへ足す
+設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
 
 engineが受け取らない条件は渡さず、その旨をそのengineのsectionへ出す
 
@@ -101,11 +102,14 @@ engineが受け取らない条件は渡さず、その旨をそのengineのsecti
 biome: ignore skipped (biome.json holds its settings)
 ```
 
-`enable` は `comment-check` と `document-style-check` の `--enable <rule>` になり、他のengineでは拒否される このCLIはengineを同梱しないため、opt-in ruleを有効にするProjectは対応するengine packageも同じ変更で更新する
+`enable` は `comment-check` と `document-style-check` の `--enable <rule>` になり、他のengineでは拒否される
+このCLIはengineを同梱しないため、opt-in ruleを有効にするProjectは対応するengine packageも同じ変更で更新する
 
-`comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する 新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す
+`comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する
+新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す
 
-`typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する 省略時はカレントの `tsconfig.json` を1回だけ読む
+`typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する
+省略時はカレントの `tsconfig.json` を1回だけ読む
 
 ## Options
 
@@ -113,7 +117,7 @@ biome: ignore skipped (biome.json holds its settings)
 |--------|-------------|
 | `--config <path>` | 読み込むconfig file（既定は `quality.config.ts`） |
 | `--baseline <path>` | baseline fileを上書きする |
-| `--ignore <path>` | 除外pathを追加する 複数指定できる |
+| `--ignore <path>` | 除外pathを追加する、複数指定できる |
 | `--update-baseline` | 現在の検出でbaselineを置き換える |
 | `--json` | engineごとの結果をJSONで出力する |
 

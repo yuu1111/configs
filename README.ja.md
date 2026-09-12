@@ -30,7 +30,8 @@ bunx biome check --write .   # auto-fix
 
 ## Release
 
-公開はGitHub Releaseの作成時にnpm Trusted Publisher経由で走る 選んだpackageのversionと一致するpackage固有のtagを使う
+公開はGitHub Releaseの作成時にnpm Trusted Publisher経由で走る
+選んだpackageのversionと一致するpackage固有のtagを使う
 
 ```bash
 cd packages/config/biome-config
@@ -38,4 +39,5 @@ bun pm version patch --no-git-tag-version
 # Commit and push the version change, then publish biome-config-vX.Y.Z on GitHub.
 ```
 
-`@yuu1111/biome-config` は `biome-config-vX.Y.Z`、`@yuu1111/tsconfig` は `tsconfig-vX.Y.Z` を使う ローカルで `npm publish` は実行しない
+`@yuu1111/biome-config` は `biome-config-vX.Y.Z`、`@yuu1111/tsconfig` は `tsconfig-vX.Y.Z` を使う
+ローカルで `npm publish` は実行しない

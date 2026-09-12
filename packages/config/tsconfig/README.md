@@ -12,19 +12,48 @@ bun add -D @yuu1111/tsconfig
 
 ## Usage
 
-Extend one preset in your `tsconfig.json` and add the project settings the preset leaves out.
+Extend one preset in `tsconfig.json` and add the paths it leaves to the project.
+
+```json
+{
+  "extends": "@yuu1111/tsconfig/base.json",
+  "include": ["src/**/*.ts"]
+}
+```
 
 ## Presets
 
-| Preset | Use case |
-|--------|----------|
-| `base` | Strict shared base |
-| `bun` | Bun projects |
-| `declaration-only` | Declaration-only library builds |
-| `library` | Library builds with declarations and source maps |
-| `react` | React (JSX + DOM types) |
+| Preset | Extends | Use case |
+|--------|---------|----------|
+| `base` | — | Strict baseline shared by the other presets |
+| `bun` | `base` | Adds the Bun global types |
+| `library` | `base` | Emits JavaScript with declarations and source maps |
+| `declaration-only` | `library` | Emits declaration files only |
+| `react` | `base` | Adds the DOM types and the JSX transform |
 
 ### base
+
+Every other preset extends `base`.
+It checks types without emitting, and leaves the emit to the preset or the bundler.
+
+| Option | Value |
+|--------|-------|
+| `target` | `ESNext` |
+| `lib` | `["ESNext"]` |
+| `module` | `Preserve` |
+| `moduleResolution` | `bundler` |
+| `moduleDetection` | `force` |
+| `strict` | `true` |
+| `noEmit` | `true` |
+| `isolatedModules` | `true` |
+| `verbatimModuleSyntax` | `true` |
+| `esModuleInterop` | `true` |
+| `resolveJsonModule` | `true` |
+| `skipLibCheck` | `true` |
+| `forceConsistentCasingInFileNames` | `true` |
+| `noUncheckedIndexedAccess` | `true` |
+| `noFallthroughCasesInSwitch` | `true` |
+| `exactOptionalPropertyTypes` | `true` |
 
 ```json
 {
@@ -34,7 +63,7 @@ Extend one preset in your `tsconfig.json` and add the project settings the prese
 
 ### bun
 
-Install `@types/bun` in the consuming project.
+Adds `types: ["bun"]`. Install `@types/bun` in the project.
 
 ```json
 {
@@ -42,22 +71,16 @@ Install `@types/bun` in the consuming project.
 }
 ```
 
-### declaration-only
-
-Use this preset when a bundler emits JavaScript and TypeScript only needs to emit declaration files.
-
-```json
-{
-  "extends": "@yuu1111/tsconfig/declaration-only.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist"
-  },
-  "include": ["src/**/*.ts"]
-}
-```
-
 ### library
+
+Turns emit on and writes declarations, declaration maps, and source maps.
+
+| Option | Value |
+|--------|-------|
+| `noEmit` | `false` |
+| `declaration` | `true` |
+| `declarationMap` | `true` |
+| `sourceMap` | `true` |
 
 ```json
 {
@@ -70,7 +93,24 @@ Use this preset when a bundler emits JavaScript and TypeScript only needs to emi
 }
 ```
 
+### declaration-only
+
+Extends `library` and sets `emitDeclarationOnly`, for a build where a bundler emits the JavaScript.
+
+```json
+{
+  "extends": "@yuu1111/tsconfig/declaration-only.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts"]
+}
+```
+
 ### react
+
+Adds `DOM` and `DOM.Iterable` to `lib` and sets `jsx: "react-jsx"`.
 
 ```json
 {

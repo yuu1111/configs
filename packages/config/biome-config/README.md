@@ -12,7 +12,45 @@ bun add -D @yuu1111/biome-config
 
 ## Usage
 
-### base
+Extend `biome` and add the rule layers the project needs:
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "extends": [
+    "@yuu1111/biome-config/biome",
+    "@yuu1111/biome-config/plugins/core"
+  ]
+}
+```
+
+## Presets
+
+| Preset | Use case |
+|--------|----------|
+| `biome` | Formatter, lint rules, and VCS integration |
+| `react` | `biome` plus CSS and Tailwind |
+| `plugins/core` | Seven general-purpose rule plugins |
+| `plugins/network` | Two `fetch` rule plugins |
+| `plugins/discord` | One Discord rule plugin |
+
+`biome` and `react` are complete configurations.
+The `plugins/*` presets only add rules, so list them after `biome` or `react`; their rules are off until the preset is extended.
+
+### biome
+
+| Setting | Value |
+|---------|-------|
+| `vcs` | git, `useIgnoreFile` |
+| `formatter` | enabled, `indentStyle: "tab"` |
+| `javascript.formatter.quoteStyle` | `double` |
+| `json.formatter.expand` | `always` |
+| `assist.source.organizeImports` | `on` |
+| `linter.rules.recommended` | `true` |
+| `performance.noBarrelFile`, `performance.noReExportAll` | `error` |
+| `complexity.noExcessiveCognitiveComplexity` | `warn` |
+| `style.noNestedTernary` | `warn` |
+| `suspicious.noEmptyBlockStatements` | `warn` |
 
 ```json
 {
@@ -21,15 +59,9 @@ bun add -D @yuu1111/biome-config
 }
 ```
 
-The base configuration enables the recommended rules, errors on barrel files and re-export-all, and warns about nested ternaries, empty block statements, and excessive cognitive complexity:
-
-```ts
-const size = small ? "s" : medium ? "m" : "l"
-```
-
 ### react
 
-CSS/Tailwind support included.
+Adds the CSS formatter and linter, with the Tailwind directives enabled.
 
 ```json
 {
@@ -38,45 +70,21 @@ CSS/Tailwind support included.
 }
 ```
 
-## Presets
+### plugins/core
 
-Custom rules are opt-in. Each preset holds one layer of rules; add the layers the project needs after the base or React configuration:
+| Rule | Severity | Default | Detects |
+|------|----------|---------|---------|
+| `no-reexports` | warn | false | An export that only forwards an existing binding, such as `export type Alias = Imported` or `export default imported`; the `export ... from` forms are covered by the base barrel-file rules |
+| `no-incomplete-implementation` | error, warn | false | A placeholder throw, as an error; a catch block that only logs, or a rejected promise or caught error replaced with `null`, `[]`, or `{}`, as a warning |
+| `no-type-safety-bypass` | error, warn | false | `as unknown as T`, as an error; a `Record<string, unknown>` assertion, an unchecked JSON assertion, static `Reflect.get`, or a receiver-free `Reflect.apply`, as a warning |
+| `no-unsafe-errno-assertion` | warn | false | Reading `code` through a `NodeJS.ErrnoException` assertion without validating the caught value |
+| `no-meaningless-test` | error, warn | false | A `toBe`, `toEqual`, or `toStrictEqual` comparison of an identifier or literal with itself, as an error; an empty `test` or `it` callback, as a warning |
+| `no-useless-abstraction` | warn | false | A named single-argument arrow function that only passes the same argument to another function, including the async form |
+| `no-ternary-statement` | warn | false | A ternary operator used as a standalone statement, such as `flag ? enable() : disable()` |
 
-```json
-{
-  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
-  "extends": [
-    "@yuu1111/biome-config/biome",
-    "@yuu1111/biome-config/plugins/core",
-    "@yuu1111/biome-config/plugins/network"
-  ]
-}
-```
-
-| Preset | Rules |
-|--------|-------|
-| `plugins/core` | Forwarding exports, incomplete implementations, type-safety bypasses, unsafe errno assertions, meaningless tests, pass-through wrappers, and ternaries used for side effects |
-| `plugins/network` | An `AbortSignal` for `fetch`, and cleanup for manually scheduled abort timeouts |
-| `plugins/discord` | Explicit mention handling for dynamic Discord messages |
-
-A preset does not include the other layers, so list every layer the project needs.
-The [project-scoped rules](#project-scoped-rules) below are not presets: each needs `includes` to name the layer it protects, and a shared preset cannot carry that, so the project declares them in its own configuration.
-
-### core
-
-- `no-reexports` warns about exports that only forward an existing binding, such as `export type Alias = Imported`, `export default imported`, or `export const wrapped = imported`; the `export ... from` forms are covered by the base barrel-file rules
-- `no-incomplete-implementation` errors on placeholder throws and warns about catch blocks that only log, and rejected promises or caught errors replaced with `null`, `[]`, or `{}`
-- `no-type-safety-bypass` errors on `as unknown as T` and warns about `Record<string, unknown>` assertions, unchecked JSON assertions, static `Reflect.get`, and receiver-free `Reflect.apply`
-- `no-unsafe-errno-assertion` warns when code reads `code` directly through a `NodeJS.ErrnoException` assertion without validating the caught value
-- `no-meaningless-test` errors on `toBe`, `toEqual`, or `toStrictEqual` comparisons where an identifier or literal is compared with itself, and warns about empty `test` or `it` callbacks
-- `no-useless-abstraction` warns about named single-argument arrow functions that only pass the same argument to another function, including the equivalent async form
-- `no-ternary-statement` warns when a ternary operator is used as a standalone statement, such as `flag ? enable() : disable()`, where an if/else statement is clearer
-
-The rules intentionally stay narrow.
+The rules stay narrow.
 A wrapper that validates, transforms, logs, caches, starts a transaction, or performs another operation is not reported as a pass-through wrapper.
-Tests with setup or assertions are not treated as empty.
-
-Examples reported by `plugins/core`:
+A test with setup or assertions is not treated as empty.
 
 ```ts
 throw new Error("Not implemented")
@@ -101,21 +109,30 @@ Suppress an intentional exception with a reason:
 cacheRequest.catch(() => null)
 ```
 
-### network
+### plugins/network
 
-- `require-fetch-abort-signal` warns when a `fetch` call omits the `signal` option
-- `require-abort-timeout-cleanup` warns when a function uses a `setTimeout` callback to abort a `fetch` request but does not clear that timer
+| Rule | Severity | Default | Detects |
+|------|----------|---------|---------|
+| `require-fetch-abort-signal` | warn | false | A `fetch` call that omits the `signal` option |
+| `require-abort-timeout-cleanup` | warn | false | A function that aborts a `fetch` request from a `setTimeout` callback but never clears the timer |
 
-### discord
+### plugins/discord
 
-`no-unsafe-dynamic-discord-message` warns when dynamic message content is sent without an explicit `allowedMentions` policy.
+| Rule | Severity | Default | Detects |
+|------|----------|---------|---------|
+| `no-unsafe-dynamic-discord-message` | warn | false | Dynamic message content sent without an explicit `allowedMentions` policy |
 
-## Project-scoped rules
+## Scoped rules
+
+| Rule | Severity | Default | Detects |
+|------|----------|---------|---------|
+| `no-adapter-import` | error | false | An import of a path that contains `integrations/` or `adapters/` |
+| `no-direct-response` | error | false | `new Response(...)`, `Response.json(...)`, or `Response.redirect(...)` in the scoped layer |
+
+They need `includes` to name the layer they protect, so a shared preset cannot carry them.
+Declare them in the project's own configuration.
 
 ### no-adapter-import
-
-`no-adapter-import` errors when a module imports a path that contains `integrations/` or `adapters/`.
-Declare it in the project's own configuration and narrow it with `includes`:
 
 ```json
 {
@@ -147,9 +164,6 @@ A module that keeps its own adapter implementations under an `adapters/` directo
 ```
 
 ### no-direct-response
-
-`no-direct-response` errors on `new Response(...)`, `Response.json(...)` and `Response.redirect(...)` inside the scoped layer.
-Scope it to the layer that has to build every response through the shared helper:
 
 ```json
 {

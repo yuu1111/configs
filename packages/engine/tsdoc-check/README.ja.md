@@ -40,12 +40,13 @@ TSDocが定義していないtagは `tsdoc-tag` のwarningになる `@descriptio
 export const value = 1
 ```
 
-理由の無い抑制、未知のrule、ruleを書いていない抑制はerror 何も抑制しない抑制はwarning
+理由の無い抑制、未知のrule、ruleを書いていない抑制はerror
+何も抑制しない抑制はwarning
 
 ## Options
 
 | Option | 説明 |
 |--------|-------------|
-| `--error <rule>` | 指定したruleをerrorへ上げる 複数指定できる |
-| `--ignore <path>` | 検査から外すpath 複数指定できる |
+| `--error <rule>` | 指定したruleをerrorへ上げる、複数指定できる |
+| `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--json` | 検出をJSONで出力する |

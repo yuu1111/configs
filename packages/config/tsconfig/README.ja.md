@@ -12,19 +12,48 @@ bun add -D @yuu1111/tsconfig
 
 ## Usage
 
-`tsconfig.json` でpresetを1つextendsし、presetが持たないProject設定を足す
+`tsconfig.json` でpresetを1つextendsし、presetが持たないpathをProjectで足す
+
+```json
+{
+  "extends": "@yuu1111/tsconfig/base.json",
+  "include": ["src/**/*.ts"]
+}
+```
 
 ## Presets
 
-| Preset | 用途 |
-|--------|------|
-| `base` | 厳格な共有base |
-| `bun` | Bun project |
-| `declaration-only` | declarationだけを出すlibrary build |
-| `library` | declarationとsource mapを出すlibrary build |
-| `react` | React（JSX + DOM型） |
+| Preset | Extends | 用途 |
+|--------|---------|------|
+| `base` | — | 他のpresetが継承する厳格なbase |
+| `bun` | `base` | Bunのglobal型を足す |
+| `library` | `base` | declarationとsource mapを出してJavaScriptをemitする |
+| `declaration-only` | `library` | declaration fileだけを出す |
+| `react` | `base` | DOM型とJSX transformを足す |
 
 ### base
+
+他のpresetはすべて `base` をextendsする
+emitせずに型検査だけを行い、emitはpresetまたはbundlerへ任せる
+
+| Option | 値 |
+|--------|-----|
+| `target` | `ESNext` |
+| `lib` | `["ESNext"]` |
+| `module` | `Preserve` |
+| `moduleResolution` | `bundler` |
+| `moduleDetection` | `force` |
+| `strict` | `true` |
+| `noEmit` | `true` |
+| `isolatedModules` | `true` |
+| `verbatimModuleSyntax` | `true` |
+| `esModuleInterop` | `true` |
+| `resolveJsonModule` | `true` |
+| `skipLibCheck` | `true` |
+| `forceConsistentCasingInFileNames` | `true` |
+| `noUncheckedIndexedAccess` | `true` |
+| `noFallthroughCasesInSwitch` | `true` |
+| `exactOptionalPropertyTypes` | `true` |
 
 ```json
 {
@@ -34,6 +63,7 @@ bun add -D @yuu1111/tsconfig
 
 ### bun
 
+`types: ["bun"]` を足す
 利用Projectで `@types/bun` をinstallする
 
 ```json
@@ -42,22 +72,16 @@ bun add -D @yuu1111/tsconfig
 }
 ```
 
-### declaration-only
-
-bundlerがJavaScriptを出し、TypeScriptはdeclaration fileだけを出す場合にこのpresetを使う
-
-```json
-{
-  "extends": "@yuu1111/tsconfig/declaration-only.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist"
-  },
-  "include": ["src/**/*.ts"]
-}
-```
-
 ### library
+
+emitを有効にし、declaration、declaration map、source mapを出す
+
+| Option | 値 |
+|--------|-----|
+| `noEmit` | `false` |
+| `declaration` | `true` |
+| `declarationMap` | `true` |
+| `sourceMap` | `true` |
 
 ```json
 {
@@ -70,7 +94,24 @@ bundlerがJavaScriptを出し、TypeScriptはdeclaration fileだけを出す場�
 }
 ```
 
+### declaration-only
+
+`library` をextendsし、bundlerがJavaScriptを出すbuild向けに `emitDeclarationOnly` を設定する
+
+```json
+{
+  "extends": "@yuu1111/tsconfig/declaration-only.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts"]
+}
+```
+
 ### react
+
+`lib` へ `DOM` と `DOM.Iterable` を足し、`jsx: "react-jsx"` を設定する
 
 ```json
 {

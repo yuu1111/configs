@@ -2,7 +2,7 @@
 
 # @yuu1111/comment-check
 
-baselineを持つ小さなcomment検査 抑制commentとplaceholder commentの増殖を止める
+baselineを持つ小さなcomment検査で、抑制commentとplaceholder commentの増殖を止める
 
 ## Install
 
@@ -52,7 +52,7 @@ comment-check --enable cramped-comment .
 | Option | 説明 |
 |--------|-------------|
 | `--baseline <path>` | 読み書きするbaseline file（既定は `comment-baseline.json`） |
-| `--enable <rule>` | opt-in ruleを実行する 複数指定できる 未知の名前は設定error |
-| `--ignore <path>` | 検査から外すpath 複数指定できる |
+| `--enable <rule>` | opt-in ruleを実行する、複数指定できる、未知の名前は設定error |
+| `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--update-baseline` | baselineを現在の検出で置き換える |
 | `--json` | 新規と解消済みの検出をJSONで出力する |

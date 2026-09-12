@@ -2,7 +2,7 @@
 
 # @yuu1111/document-style-check
 
-判断記録を持つ小さなMarkdown検査 機械的に意味のない違反を文書から除き、残りへ書かれた判断を要求する
+判断記録を持つ小さなMarkdown検査で、機械的に意味のない違反を文書から除き、残りへ書かれた判断を要求する
 
 ## Install
 
@@ -64,9 +64,9 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 
 | Option | 説明 |
 |--------|-------------|
-| `--rules <path>` | `## 判断基準`を持つ基準file `scan`と`check`では必須 |
+| `--rules <path>` | `## 判断基準`を持つ基準fileで、`scan`と`check`では必須 |
 | `--review <path>` | 読み書きする検証記録file |
-| `--enable <rule>` | opt-in ruleを実行する 複数指定できる 未知の名前は設定error |
-| `--ignore <path>` | 検査から外すpath 複数指定できる |
+| `--enable <rule>` | opt-in ruleを実行する、複数指定できる、未知の名前は設定error |
+| `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--write` | 報告の代わりに整形を適用する |
 | `--json` | 検出をJSONで出力する |

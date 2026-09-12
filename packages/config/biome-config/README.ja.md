@@ -12,7 +12,45 @@ bun add -D @yuu1111/biome-config
 
 ## Usage
 
-### base
+`biome` をextendsし、Projectに必要なrule層を足す
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "extends": [
+    "@yuu1111/biome-config/biome",
+    "@yuu1111/biome-config/plugins/core"
+  ]
+}
+```
+
+## Presets
+
+| Preset | 用途 |
+|--------|------|
+| `biome` | formatter、lint rule、VCS連携 |
+| `react` | `biome` にCSSとTailwindを足す |
+| `plugins/core` | 汎用のrule plugin 7つ |
+| `plugins/network` | `fetch` のrule plugin 2つ |
+| `plugins/discord` | Discordのrule plugin 1つ |
+
+`biome` と `react` は完結した設定で、`plugins/*` はruleだけを足す
+`biome` か `react` の後ろへ並べ、presetをextendsするまでそれぞれのruleは無効になる
+
+### biome
+
+| Setting | 値 |
+|---------|-----|
+| `vcs` | git、`useIgnoreFile` |
+| `formatter` | 有効、`indentStyle: "tab"` |
+| `javascript.formatter.quoteStyle` | `double` |
+| `json.formatter.expand` | `always` |
+| `assist.source.organizeImports` | `on` |
+| `linter.rules.recommended` | `true` |
+| `performance.noBarrelFile`、`performance.noReExportAll` | `error` |
+| `complexity.noExcessiveCognitiveComplexity` | `warn` |
+| `style.noNestedTernary` | `warn` |
+| `suspicious.noEmptyBlockStatements` | `warn` |
 
 ```json
 {
@@ -21,15 +59,9 @@ bun add -D @yuu1111/biome-config
 }
 ```
 
-base設定はrecommended ruleを有効にし、barrel fileとre-export-allをerror、nested ternary、空block文、過剰なcognitive complexityをwarningにする
-
-```ts
-const size = small ? "s" : medium ? "m" : "l"
-```
-
 ### react
 
-CSS/Tailwind対応を含む
+CSSのformatterとlinterを足し、Tailwind directiveを有効にする
 
 ```json
 {
@@ -38,42 +70,21 @@ CSS/Tailwind対応を含む
 }
 ```
 
-## Presets
+### plugins/core
 
-Custom ruleはopt-in baseまたはReact設定の後ろに、必要な層のpresetを並べる
+| Rule | 重大度 | Default | 検出対象 |
+|------|----------|---------|---------|
+| `no-reexports` | warn | false | 既存bindingを転送するだけのexport（`export type Alias = Imported` など）、`export ... from` の形はbaseのbarrel file ruleが担当する |
+| `no-incomplete-implementation` | error, warn | false | placeholderのthrowはerror、logだけのcatch、`null`・`[]`・`{}` へ置き換えたrejected promiseとcatchしたerrorはwarn |
+| `no-type-safety-bypass` | error, warn | false | `as unknown as T` はerror、`Record<string, unknown>` のassertion、未検証のJSON assertion、静的な `Reflect.get`、receiver無しの `Reflect.apply` はwarn |
+| `no-unsafe-errno-assertion` | warn | false | catchした値を検証せず `NodeJS.ErrnoException` のassertion経由で `code` を読むコード |
+| `no-meaningless-test` | error, warn | false | identifierやliteralを自分自身と比較する `toBe`・`toEqual`・`toStrictEqual` はerror、空の `test`・`it` callbackはwarn |
+| `no-useless-abstraction` | warn | false | 同じ引数を別の関数へ渡すだけの名前付き単一引数arrow function（async版も含む） |
+| `no-ternary-statement` | warn | false | `flag ? enable() : disable()` のような文としてのternary |
 
-```json
-{
-  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
-  "extends": [
-    "@yuu1111/biome-config/biome",
-    "@yuu1111/biome-config/plugins/core",
-    "@yuu1111/biome-config/plugins/network"
-  ]
-}
-```
-
-| Preset | rule |
-|--------|------|
-| `plugins/core` | forwarding export、未完成実装、型安全の迂回、安全でないerrno assertion、無意味なtest、pass-through wrapper、副作用目的のternary |
-| `plugins/network` | `fetch` への `AbortSignal` 要求と、手動で予約したabort timeoutの後始末 |
-| `plugins/discord` | 動的なDiscord messageの明示的なmention処理 |
-
-presetは他の層を含まないため、Projectに必要な層をすべて並べる [Project固有のrule](#project固有のrule)はpresetではない 対象層を選ぶ `includes` を共有presetは持てないため、Project自身の設定で宣言する
-
-### core
-
-- `no-reexports` は既存bindingを転送するだけのexport（`export type Alias = Imported`、`export default imported`、`export const wrapped = imported` など）をwarningにする `export ... from` の形はbaseのbarrel file ruleが担当する
-- `no-incomplete-implementation` はplaceholderのthrowをerror、logだけのcatch、`null`・`[]`・`{}` へ置き換えたrejected promiseとcatchしたerrorをwarningにする
-- `no-type-safety-bypass` は `as unknown as T` をerror、`Record<string, unknown>` のassertion、未検証のJSON assertion、静的な `Reflect.get`、receiver無しの `Reflect.apply` をwarningにする
-- `no-unsafe-errno-assertion` はcatchした値を検証せず `NodeJS.ErrnoException` のassertion経由で `code` を直接読むコードをwarningにする
-- `no-meaningless-test` はidentifierやliteralを自分自身と比較する `toBe`・`toEqual`・`toStrictEqual` をerror、空の `test`・`it` callbackをwarningにする
-- `no-useless-abstraction` は同じ引数を別の関数へ渡すだけの名前付き単一引数arrow functionをwarningにする 同じ形のasync版も含む
-- `no-ternary-statement` は `flag ? enable() : disable()` のような文としてのternaryをwarningにする if/elseの方が明確な箇所が対象
-
-ruleは意図的に狭く保つ 検証、変換、log、cache、transaction開始などの処理を行うwrapperはpass-through wrapperとして報告しない 準備やassertionのあるtestは空として扱わない
-
-`plugins/core` が報告する例
+ruleは意図的に狭く保つ
+検証、変換、log、cache、transaction開始などの処理を行うwrapperはpass-through wrapperとして報告しない
+準備やassertionのあるtestは空として扱わない
 
 ```ts
 throw new Error("Not implemented")
@@ -98,20 +109,30 @@ flag ? enable() : disable()
 cacheRequest.catch(() => null)
 ```
 
-### network
+### plugins/network
 
-- `require-fetch-abort-signal` は `fetch` 呼び出しが `signal` optionを省いているとwarningにする
-- `require-abort-timeout-cleanup` は `setTimeout` callbackで `fetch` をabortしていながらそのtimerをclearしない関数をwarningにする
+| Rule | 重大度 | Default | 検出対象 |
+|------|----------|---------|---------|
+| `require-fetch-abort-signal` | warn | false | `signal` optionを省いた `fetch` 呼び出し |
+| `require-abort-timeout-cleanup` | warn | false | `setTimeout` callbackで `fetch` をabortしながらそのtimerをclearしない関数 |
 
-### discord
+### plugins/discord
 
-`no-unsafe-dynamic-discord-message` は明示的な `allowedMentions` policy無しで動的なmessage内容を送るとwarningにする
+| Rule | 重大度 | Default | 検出対象 |
+|------|----------|---------|---------|
+| `no-unsafe-dynamic-discord-message` | warn | false | 明示的な `allowedMentions` policy無しで送る動的なmessage内容 |
 
-## Project固有のrule
+## Scoped rules
+
+| Rule | 重大度 | Default | 検出対象 |
+|------|----------|---------|---------|
+| `no-adapter-import` | error | false | `integrations/` か `adapters/` を含むpathのimport |
+| `no-direct-response` | error | false | 対象層での `new Response(...)`、`Response.json(...)`、`Response.redirect(...)` |
+
+対象層を選ぶ `includes` を必要とするため共有presetでは持てない
+Project自身の設定で宣言する
 
 ### no-adapter-import
-
-`no-adapter-import` は `integrations/` か `adapters/` を含むpathをmoduleがimportするとerrorにする Project自身の設定で宣言し、`includes` で絞る
 
 ```json
 {
@@ -124,11 +145,16 @@ cacheRequest.catch(() => null)
 }
 ```
 
-pluginは `includes` に一致したfileだけで走るため、同じimportはadapter側と統合層へ到達してよい層では有効なままになる pluginのpatternはfileのfull pathと照合されるため、`src/modules/authorization` のようなpathへ一致させるには `**/` から始める必要がある
+pluginは `includes` に一致したfileだけで走る
+そのためadapter側と、統合層へ到達してよい層では同じimportが有効なままになる
+patternはfileのfull pathと照合されるため、`src/modules/authorization` のようなpathへ一致させるには `**/` から始める
 
-pluginの `path` はfile pathとして解決されるため、上記のように `node_modules` 経由で参照する package specifierはplugin packageとして解決され、`.grit` fileを指せない
+pluginの `path` はfile pathとして解決される
+そのため上記のように `node_modules` 経由のpathを書く
+`@yuu1111/biome-config/plugins/scoped/no-adapter-import.grit` のようなpackage specifierはplugin packageとして解決され、`.grit` fileへは到達しない
 
-統合moduleへ到達してよい層はpatternから外す 自身のadapter実装を `adapters/` に置くmoduleはそのディレクトリを除外しないと、ruleがadapter自身を報告する
+統合moduleへ到達してよい層はpatternから外す
+自身のadapter実装を `adapters/` に置くmoduleは、そのディレクトリを除外しないとruleがadapter自身を報告する
 
 ```json
 {
@@ -140,8 +166,6 @@ pluginの `path` はfile pathとして解決されるため、上記のように
 ```
 
 ### no-direct-response
-
-`no-direct-response` は対象層での `new Response(...)`、`Response.json(...)`、`Response.redirect(...)` をerrorにする すべてのresponseを共有helper経由で組み立てる層へ絞る
 
 ```json
 {
