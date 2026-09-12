@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { ansiPainter } from "../src/color";
 import {
 	formatEngineSection,
 	formatSummary,
@@ -57,6 +58,37 @@ describe("quality report", () => {
 		expect(formatSummary([result("biome", "passed")])).toBe(
 			"quality-check: 1 engines passed",
 		);
+	});
+
+	test("paints the state of the engine", () => {
+		const section = formatEngineSection(
+			result("biome", "passed"),
+			ansiPainter(),
+		);
+		expect(section).toContain("\u001b[36m== biome ==\u001b[0m");
+		expect(section).toContain("\u001b[32mpassed\u001b[0m");
+	});
+
+	test("paints a warning apart from an error", () => {
+		const engine = result("comment-check", "failed");
+		engine.warnings = [
+			{
+				column: 1,
+				engine: "comment-check",
+				file: "src/a.ts",
+				line: 1,
+				rule: "placeholder-comment",
+				severity: "warning",
+				text: "later",
+			},
+		];
+		const section = formatEngineSection(engine, ansiPainter());
+		expect(section).toContain("\u001b[33mwarning\u001b[0m");
+	});
+
+	test("paints the failed summary", () => {
+		const summary = formatSummary([result("biome", "failed")], ansiPainter());
+		expect(summary).toContain("\u001b[31m");
 	});
 
 	test("reports the failed engines as JSON", () => {

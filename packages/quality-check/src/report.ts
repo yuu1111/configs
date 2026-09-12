@@ -1,9 +1,14 @@
+import { type Painter, plainPainter } from "./color";
 import { isFindingEngine } from "./engines";
 import type { NormalizedFinding } from "./findings";
 import type { EngineResult } from "./run";
 
-function describeFinding(finding: NormalizedFinding): string {
-	return `${finding.file}:${finding.line}:${finding.column} ${finding.rule} ${finding.severity} ${finding.text}`;
+function describeFinding(
+	finding: NormalizedFinding,
+	paint: Painter,
+	tone: "error" | "warn",
+): string {
+	return `${finding.file}:${finding.line}:${finding.column} ${finding.rule} ${paint(finding.severity, tone)} ${finding.text}`;
 }
 
 function describeCounts(result: EngineResult): string {
@@ -13,38 +18,48 @@ function describeCounts(result: EngineResult): string {
 	return `${result.reported.length} new, ${result.resolved} resolved, ${result.warnings.length} warnings`;
 }
 
-function describeStatus(result: EngineResult): string {
+function describeStatus(result: EngineResult, paint: Painter): string {
 	if (result.status === "error") {
-		return "error";
+		return paint("error", "error");
 	}
-	return `${result.status} (${describeCounts(result)})`;
+	const tone = result.status === "passed" ? "pass" : "error";
+	return `${paint(result.status, tone)} (${describeCounts(result)})`;
 }
 
 /**
  * engine1つ分の出力sectionを組み立てる
  */
-export function formatEngineSection(result: EngineResult): string {
-	const lines = [`== ${result.name} ==`];
+export function formatEngineSection(
+	result: EngineResult,
+	paint: Painter = plainPainter,
+): string {
+	const lines = [paint(`== ${result.name} ==`, "header")];
 	for (const skipped of result.skipped) {
-		lines.push(`${result.name}: ${skipped}`);
+		lines.push(paint(`${result.name}: ${skipped}`, "muted"));
 	}
 	if (result.output !== "" && !isFindingEngine(result.name)) {
 		lines.push(result.output);
 	}
-	for (const finding of [...result.reported, ...result.warnings]) {
-		lines.push(describeFinding(finding));
+	for (const finding of result.reported) {
+		lines.push(describeFinding(finding, paint, "error"));
+	}
+	for (const finding of result.warnings) {
+		lines.push(describeFinding(finding, paint, "warn"));
 	}
 	if (result.message !== undefined) {
-		lines.push(result.message);
+		lines.push(paint(result.message, "error"));
 	}
-	lines.push(`${result.name}: ${describeStatus(result)}`);
+	lines.push(`${result.name}: ${describeStatus(result, paint)}`);
 	return lines.join("\n");
 }
 
 /**
  * 失敗したengineを列挙した集約summaryを組み立てる
  */
-export function formatSummary(results: EngineResult[]): string {
+export function formatSummary(
+	results: EngineResult[],
+	paint: Painter = plainPainter,
+): string {
 	const failed = results
 		.filter((result) => result.status !== "passed")
 		.map((result) => result.name);
@@ -52,14 +67,17 @@ export function formatSummary(results: EngineResult[]): string {
 		.filter((result) => result.status === "passed")
 		.map((result) => result.name);
 	if (failed.length === 0) {
-		return `quality-check: ${results.length} engines passed`;
+		return paint(`quality-check: ${results.length} engines passed`, "pass");
 	}
 	const lines = [
-		`quality-check: ${failed.length} of ${results.length} engines failed`,
-		`  failed: ${failed.join(", ")}`,
+		paint(
+			`quality-check: ${failed.length} of ${results.length} engines failed`,
+			"error",
+		),
+		`  ${paint("failed:", "error")} ${failed.join(", ")}`,
 	];
 	if (passed.length > 0) {
-		lines.push(`  passed: ${passed.join(", ")}`);
+		lines.push(`  ${paint("passed:", "pass")} ${passed.join(", ")}`);
 	}
 	return lines.join("\n");
 }

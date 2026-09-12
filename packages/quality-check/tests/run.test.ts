@@ -49,6 +49,7 @@ function runnerFor(result: EngineProcessResult): EngineRunner {
 function createOptions(overrides: Partial<RunOptions>): RunOptions {
 	return {
 		baseline: null,
+		color: false,
 		config: parseConfig({ engines: { biome: true } }, "test"),
 		cwd: ".",
 		overrides: { ignore: [], targets: ["."] },
@@ -59,6 +60,20 @@ function createOptions(overrides: Partial<RunOptions>): RunOptions {
 }
 
 describe("engine orchestration", () => {
+	test("passes the color capability to the engine command", async () => {
+		const commands: string[][] = [];
+		await runEngines(
+			createOptions({
+				color: true,
+				runner: async (command) => {
+					commands.push(command);
+					return { exitCode: 0, stderr: "", stdout: "" };
+				},
+			}),
+		);
+		expect(commands[0]).toContain("--colors=force");
+	});
+
 	test("passes a process engine that exits with 0", async () => {
 		const results = await runEngines(
 			createOptions({

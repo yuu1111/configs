@@ -20,6 +20,7 @@ function createWorkspace(): string {
 
 function createContext(): EngineCommandContext {
 	return {
+		color: false,
 		config: parseConfig(
 			{
 				config: {
@@ -72,6 +73,43 @@ describe("engine commands", () => {
 	test("leaves the Knip arguments to its own configuration", () => {
 		expect(buildEngineCommand("knip", "knip", createContext())).toEqual([
 			"knip",
+		]);
+	});
+
+	test("forces the Biome colors when the output supports them", () => {
+		const context = createContext();
+		context.color = true;
+		expect(buildEngineCommand("biome", "biome", context)).toEqual([
+			"biome",
+			"check",
+			"--colors=force",
+			".",
+		]);
+	});
+
+	test("asks the type checker for colored output", () => {
+		const context = createContext();
+		context.color = true;
+		expect(buildEngineCommand("typecheck", "tsc", context)).toEqual([
+			"tsc",
+			"--noEmit",
+			"--pretty",
+		]);
+	});
+
+	test("keeps a color flag off the engines that print JSON", () => {
+		const context = createContext();
+		context.color = true;
+		expect(
+			buildEngineCommand("comment-check", "comment-check", context),
+		).toEqual([
+			"comment-check",
+			"--json",
+			"--baseline",
+			"raw.json",
+			".",
+			"--ignore",
+			"src/generated",
 		]);
 	});
 

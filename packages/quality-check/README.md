@@ -38,7 +38,7 @@ export default defineConfig({
 		"tsdoc-check": true,
 	},
 	config: {
-		"comment-check": { ignore: ["FFXIVReplayAnalyzer"] },
+		"comment-check": { ignore: ["another-project"] },
 		"tsdoc-check": { error: ["missing-doc"] },
 	},
 });
@@ -103,6 +103,12 @@ express and for the case where an engine changes its arguments.
 
 Exit code 0 means every engine passed, 1 that at least one failed, and 2 that the
 configuration or an engine could not start.
+
+Color is added only when stdout is a terminal. `NO_COLOR` turns it off and
+`FORCE_COLOR` turns it on; the `--json` output stays plain.
+
+The engines that can color their own output receive the same permission: Biome
+gets `--colors=force` and tsc gets `--pretty`.
 
 A condition that an engine does not take is not passed on, and the section says
 so:

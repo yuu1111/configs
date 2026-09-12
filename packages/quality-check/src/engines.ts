@@ -52,6 +52,8 @@ export interface RunOverrides {
  */
 export interface EngineCommandContext {
 	config: QualityConfig;
+	/** engine自身の出力へ色を付けるか */
+	color: boolean;
 	/** 対応するengineへだけ足す上書き */
 	overrides: RunOverrides;
 	/** comment-checkのbaseline差分を無効化するために渡す未作成のpath */
@@ -144,6 +146,22 @@ export function resolveExecutable(
 }
 
 /**
+ * engine自身の出力へ色を付けるための引数を返す
+ */
+function colorArguments(name: EngineName, color: boolean): string[] {
+	if (!color) {
+		return [];
+	}
+	if (name === "biome") {
+		return ["--colors=force"];
+	}
+	if (name === "typecheck") {
+		return ["--pretty"];
+	}
+	return [];
+}
+
+/**
  * engineへ渡すコマンドを組み立てる
  */
 export function buildEngineCommand(
@@ -167,10 +185,21 @@ export function buildEngineCommand(
 	const rules = engineConfig(context.config, "tsdoc-check")?.error ?? [];
 	const errorArguments = rules.flatMap((rule) => ["--error", rule]);
 	if (name === "biome") {
-		return [executable, "check", ...targets, ...extra];
+		return [
+			executable,
+			"check",
+			...colorArguments(name, context.color),
+			...targets,
+			...extra,
+		];
 	}
 	if (name === "typecheck") {
-		return [executable, "--noEmit", ...extra];
+		return [
+			executable,
+			"--noEmit",
+			...colorArguments(name, context.color),
+			...extra,
+		];
 	}
 	if (name === "knip") {
 		return [executable, ...extra];

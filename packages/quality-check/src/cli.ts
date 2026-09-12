@@ -2,6 +2,7 @@
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createBaseline, readBaseline, writeBaseline } from "./baseline";
+import { ansiPainter, colorEnabled, plainPainter } from "./color";
 import {
 	DEFAULT_BASELINE_FILE,
 	findConfigFile,
@@ -125,6 +126,8 @@ async function main(argv: string[]): Promise<number> {
 		return 0;
 	}
 	const options = parseArguments(argv);
+	const color = colorEnabled(process.stdout, process.env);
+	const paint = color ? ansiPainter() : plainPainter;
 	const cwd = process.cwd();
 	const configPath = resolveConfigPath(options, cwd);
 	if (configPath === null) {
@@ -138,6 +141,7 @@ async function main(argv: string[]): Promise<number> {
 			options.update || baselinePath === null
 				? null
 				: readBaseline(baselinePath),
+		color,
 		config,
 		cwd,
 		overrides: { ignore: options.ignores, targets: options.targets },
@@ -153,7 +157,10 @@ async function main(argv: string[]): Promise<number> {
 		);
 		writeBaseline(baselinePath, baseline);
 		console.log(
-			`Recorded ${baseline.entries.length} entries in ${baselinePath}`,
+			paint(
+				`Recorded ${baseline.entries.length} entries in ${baselinePath}`,
+				"pass",
+			),
 		);
 		return 0;
 	}
@@ -161,9 +168,9 @@ async function main(argv: string[]): Promise<number> {
 		console.log(JSON.stringify(toJsonReport(results), null, "\t"));
 	} else {
 		for (const result of results) {
-			console.log(formatEngineSection(result));
+			console.log(formatEngineSection(result, paint));
 		}
-		console.log(formatSummary(results));
+		console.log(formatSummary(results, paint));
 	}
 	return results.some((result) => result.status !== "passed") ? 1 : 0;
 }

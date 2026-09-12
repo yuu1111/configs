@@ -44,6 +44,8 @@ export interface EngineResult {
 export interface RunOptions {
 	/** 適用するbaseline nullなら差分判定を行わない */
 	baseline: BaselineFile | null;
+	/** engine自身の出力へ色を付けるか */
+	color: boolean;
 	config: QualityConfig;
 	cwd: string;
 	/** コマンドラインから渡された起動条件の上書き */
@@ -188,6 +190,7 @@ async function runEngine(
 export async function runEngines(options: RunOptions): Promise<EngineResult[]> {
 	const runner = options.runner ?? runEngineProcess;
 	const context: EngineCommandContext = {
+		color: options.color,
 		config: options.config,
 		overrides: options.overrides,
 		rawBaseline: options.rawBaseline,

@@ -35,7 +35,7 @@ export default defineConfig({
 		"tsdoc-check": true,
 	},
 	config: {
-		"comment-check": { ignore: ["FFXIVReplayAnalyzer"] },
+		"comment-check": { ignore: ["another-project"] },
 		"tsdoc-check": { error: ["missing-doc"] },
 	},
 });
@@ -95,6 +95,10 @@ engineは `biome` → `typecheck` → `knip` → `comment-check` → `document-s
 ## Notes
 
 終了codeは0が全engine成功、1が失敗したengineあり、2が設定またはengine起動の失敗
+
+色は標準出力が端末のときだけ付ける `NO_COLOR` で無効にし、`FORCE_COLOR` で強制できる `--json` の出力には付けない
+
+色を扱えるengineへは自身の出力の色も許可する Biomeは `--colors=force`、tscは `--pretty` を受け取る
 
 engineが受け取らない条件を書いた場合は渡さず、その旨をそのengineのsectionへ出す
 
