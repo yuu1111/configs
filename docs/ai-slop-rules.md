@@ -157,6 +157,7 @@ Markdownでも、code fenceの言語指定、見出し構成、marketing表現�
 - `biome-config` の `no-meaningless-test` — 自己比較と空test
 - `code-style-check` — 隣接する定義の間の空行漏れ（anti-slopの `require-readable-spacing` に相当）
 - `comment-check` — placeholder、separator、directiveの記述漏れ
+- `document-style-check` — code fenceの言語指定と、一段を超えて飛んだ見出し
 
 未対応のものは次の通り
 
@@ -169,6 +170,3 @@ Markdownでも、code fenceの言語指定、見出し構成、marketing表現�
 - hardcoded URLやID
 - unreachable code
 - 複雑度のしきい値
-- Markdownのfence言語と見出し構成
-
-候補との重なりは `docs/rule-candidates.md` で扱う

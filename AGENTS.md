@@ -40,6 +40,7 @@ npm パッケージとして publish する
 
 - packageのREADMEは `templates/package-readme.style.md` の記法に従い、`templates/package-readme.template.md` をひな形にする
 - `README.md` を正本、`README.ja.md` を同じ見出し構成の日本語版として並べる
+- 見出し構成の一致は、テストで検査できるならテストへ寄せる
 
 ## 注意点
 
@@ -53,3 +54,6 @@ npm パッケージとして publish する
 - GitHub Release tag は `biome-config-vX.Y.Z`、`code-style-check-vX.Y.Z`、`comment-check-vX.Y.Z`、`document-style-check-vX.Y.Z`、`knip-config-vX.Y.Z`、`quality-check-vX.Y.Z`、`tsdoc-check-vX.Y.Z`、または `tsconfig-vX.Y.Z`
 - npm publish はローカルで実行せず、`.github/workflows/release.yml` に任せる
 - バージョン更新は `bun pm version` を使う (npm version は workspace の reify でエラーになる)
+- package を追加したら、次のすべてを同じ変更で更新する: root の `README.md` と `README.ja.md` の表、この `AGENTS.md` の構成、Release tag の一覧、root の `devDependencies` の `workspace:*`、`.github/workflows/release.yml` のtag pattern
+- engine を追加したら、`quality-check` の `ENGINE_NAMES`、README、設定表を同じ変更で更新する
+- `.grit` を追加したら `plugins-<layer>.json` へ列挙する (`custom-rules.test.ts` が一覧の一致を検査している)
