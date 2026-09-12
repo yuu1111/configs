@@ -16,18 +16,18 @@
     },
     "packages/biome-config": {
       "name": "@yuu1111/biome-config",
-      "version": "1.3.7",
+      "version": "1.3.9",
     },
     "packages/comment-check": {
       "name": "@yuu1111/comment-check",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "bin": {
         "comment-check": "src/cli.ts",
       },
     },
     "packages/knip-config": {
       "name": "@yuu1111/knip-config",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "devDependencies": {
         "knip": "^6.34.0",
       },
@@ -40,11 +40,11 @@
     },
     "packages/tsconfig": {
       "name": "@yuu1111/tsconfig",
-      "version": "1.0.4",
+      "version": "1.0.5",
     },
     "packages/tsdoc-check": {
       "name": "@yuu1111/tsdoc-check",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "bin": {
         "tsdoc-check": "src/cli.ts",
       },

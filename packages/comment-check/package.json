@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/comment-check",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Shared comment and suppression checker",
 	"license": "MIT",
 	"repository": {
