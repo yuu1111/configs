@@ -3,7 +3,10 @@ import type { Located, Severity } from "@yuu1111/shared/findings";
 /**
  * code-style-checkが報告するruleの識別子一覧
  */
-export const RULE_IDS = ["blank-line-between-definitions"] as const;
+export const RULE_IDS = [
+	"blank-line-between-class-members",
+	"blank-line-between-definitions",
+] as const;
 
 /**
  * RULE_IDSが定義するrule識別子のunion型
@@ -22,6 +25,7 @@ export type DefinitionKind =
 	| "interface"
 	| "method"
 	| "namespace"
+	| "property"
 	| "setter"
 	| "type"
 	| "variable";
@@ -52,6 +56,7 @@ const KIND_LABELS: Record<DefinitionKind, string> = {
 	interface: "interface definition",
 	method: "method definition",
 	namespace: "namespace definition",
+	property: "property declaration",
 	setter: "setter definition",
 	type: "type definition",
 	variable: "variable declaration",
@@ -71,17 +76,34 @@ export function describeDefinition(kind: DefinitionKind, name: string): string {
 
 /**
  * 隣り合う定義の組が空行を要求するか判定する
- * 変数宣言を並べた組だけは、まとまりとして書けるように要求しない
+ * 同じ種類の変数宣言とclass propertyを並べた組だけは、まとまりとして書けるように要求しない
  *
  * @param previous - 組の前にある定義の種類
  * @param next - 組の後ろにある定義の種類
- * @returns 空行を要求するならtrue、変数宣言だけの組ならfalse
+ * @returns 空行を要求するならtrue、まとめて書ける組ならfalse
  */
 export function requiresBlankLine(
 	previous: DefinitionKind,
 	next: DefinitionKind,
 ): boolean {
-	return previous !== "variable" || next !== "variable";
+	const groupable = previous === "variable" || previous === "property";
+	return previous !== next || !groupable;
+}
+
+/**
+ * 隣り合う定義の組を報告するruleの識別子を求める
+ *
+ * @param previous - 組の前にある定義の種類
+ * @param next - 組の後ろにある定義の種類
+ * @returns propertyが絡む組ならclass member用、それ以外はdefinition用の識別子
+ */
+export function ruleFor(
+	previous: DefinitionKind,
+	next: DefinitionKind,
+): RuleId {
+	return previous === "property" || next === "property"
+		? "blank-line-between-class-members"
+		: "blank-line-between-definitions";
 }
 
 /**

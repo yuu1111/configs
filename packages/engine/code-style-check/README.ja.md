@@ -27,6 +27,8 @@ Checked 42 files: 1 errors, 0 warnings
 
 | Rule | 重大度 | Default | 検出対象 |
 |------|----------|---------|---------|
+| `blank-line-between-class-members` | error | true | class propertyと隣のmemberの間に空行が無い |
+| `blank-line-between-class-members` | warning | true | class propertyと隣のmemberの間に空行が2行以上ある |
 | `blank-line-between-definitions` | error | true | 隣接する定義の間に空行が無い |
 | `blank-line-between-definitions` | warning | true | 隣接する定義の間に空行が2行以上ある |
 
@@ -37,16 +39,18 @@ Checked 42 files: 1 errors, 0 warnings
 - `type`、`interface`、`enum`、`namespace` の宣言
 - `const`、`let`、`var` の変数宣言
 - classのconstructor、method、getter、setter（privateを含む）
+- classのproperty（`#name`、`accessor`、`declare`、`abstract`を含む）
 
 次は定義として扱わない
 
 - overload signatureとabstract method（本体を持たない宣言）
 - interfaceのmethod signature
 - object literalのmethod
+- classのstatic block
 - import、再exportをはじめ、宣言以外の文
 - 間へ別の文がある定義の組（隣接しないため対象外）
 
-変数宣言と変数宣言の組には空行を要求しないため、変数宣言はまとめて書ける
+変数宣言と変数宣言の組、class property同士の組には空行を要求しないため、まとめて書ける
 
 ## 空行の数え方
 

@@ -27,6 +27,8 @@ Checked 42 files: 1 errors, 0 warnings
 
 | Rule | Severity | Default | Detects |
 |------|----------|---------|---------|
+| `blank-line-between-class-members` | error | true | A class property and the adjacent member have no blank line |
+| `blank-line-between-class-members` | warning | true | A class property and the adjacent member have more than one blank line |
 | `blank-line-between-definitions` | error | true | Adjacent definitions have no blank line |
 | `blank-line-between-definitions` | warning | true | Adjacent definitions have more than one blank line |
 
@@ -37,16 +39,18 @@ Checked 42 files: 1 errors, 0 warnings
 - `type`, `interface`, `enum`, and `namespace` declarations
 - `const`, `let`, and `var` declarations
 - Class constructors, methods, getters, and setters, private ones included
+- Class properties, including `#name`, `accessor`, `declare`, and `abstract` ones
 
 These are not treated as definitions:
 
 - Overload signatures and abstract methods (declarations without a body)
 - Interface method signatures
 - Object literal methods
+- Class static blocks
 - Imports, re-exports, and any other statement that is not a declaration
 - A pair with another statement between it, since it is not adjacent
 
-A pair of two variable declarations does not need a blank line, so variable declarations may be grouped.
+A pair of two variable declarations and a pair of two class properties do not need a blank line, so they may be grouped.
 
 ## How the blank line is counted
 

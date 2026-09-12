@@ -4,6 +4,7 @@ import {
 	countBlankLines,
 	describeDefinition,
 	requiresBlankLine,
+	ruleFor,
 } from "../src/rules";
 
 describe("countBlankLines", () => {
@@ -45,6 +46,15 @@ describe("requiresBlankLine", () => {
 	test("allows adjacent variable declarations", () => {
 		expect(requiresBlankLine("variable", "variable")).toBe(false);
 	});
+
+	test("allows adjacent class properties", () => {
+		expect(requiresBlankLine("property", "property")).toBe(false);
+	});
+
+	test("requires a blank line between a property and a method", () => {
+		expect(requiresBlankLine("property", "method")).toBe(true);
+		expect(requiresBlankLine("method", "property")).toBe(true);
+	});
 });
 
 describe("describeDefinition", () => {
@@ -55,12 +65,31 @@ describe("describeDefinition", () => {
 		expect(describeDefinition("variable", "value")).toBe(
 			"variable declaration value",
 		);
+		expect(describeDefinition("property", "baseUrl")).toBe(
+			"property declaration baseUrl",
+		);
 	});
 
 	test("names a constructor without repeating the name", () => {
 		expect(describeDefinition("constructor", "constructor")).toBe(
 			"constructor",
 		);
+	});
+});
+
+describe("ruleFor", () => {
+	test("uses the class member rule when a property is involved", () => {
+		expect(ruleFor("property", "method")).toBe(
+			"blank-line-between-class-members",
+		);
+		expect(ruleFor("method", "property")).toBe(
+			"blank-line-between-class-members",
+		);
+	});
+
+	test("uses the definition rule otherwise", () => {
+		expect(ruleFor("method", "method")).toBe("blank-line-between-definitions");
+		expect(ruleFor("variable", "type")).toBe("blank-line-between-definitions");
 	});
 });
 

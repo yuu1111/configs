@@ -8,6 +8,7 @@ import {
 	countBlankLines,
 	type Finding,
 	requiresBlankLine,
+	ruleFor,
 } from "./rules";
 
 /**
@@ -64,7 +65,7 @@ export function scanSource(source: string, file: string): Finding[] {
 			file,
 			line: pair.next.line,
 			message: classification.message,
-			rule: "blank-line-between-definitions",
+			rule: ruleFor(pair.previous.kind, pair.next.kind),
 			severity: classification.severity,
 		});
 	}

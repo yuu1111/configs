@@ -81,7 +81,7 @@ function isNode(value: unknown): value is Node {
 	);
 }
 
-function methodName(key: Expression | PrivateName): string {
+function memberName(key: Expression | PrivateName, fallback: string): string {
 	if (key.type === "Identifier") {
 		return key.name;
 	}
@@ -91,7 +91,7 @@ function methodName(key: Expression | PrivateName): string {
 	if (key.type === "StringLiteral" || key.type === "NumericLiteral") {
 		return String(key.value);
 	}
-	return "method";
+	return fallback;
 }
 
 function methodKind(node: ClassMethod | ClassPrivateMethod): DefinitionKind {
@@ -166,7 +166,21 @@ function candidateOf(node: Node): Candidate | null {
 		case "ClassPrivateMethod":
 			return node.body === null
 				? null
-				: { end, kind: methodKind(node), name: methodName(node.key), start };
+				: {
+						end,
+						kind: methodKind(node),
+						name: memberName(node.key, "method"),
+						start,
+					};
+		case "ClassAccessorProperty":
+		case "ClassPrivateProperty":
+		case "ClassProperty":
+			return {
+				end,
+				kind: "property",
+				name: memberName(node.key, "property"),
+				start,
+			};
 		default:
 			return null;
 	}
@@ -254,7 +268,10 @@ function walk(node: Node, source: string, pairs: DefinitionPair[]): void {
 }
 
 function parserPlugins(fileName: string): ParserPlugin[] {
-	const plugins: ParserPlugin[] = ["decorators-legacy"];
+	const plugins: ParserPlugin[] = [
+		"decoratorAutoAccessors",
+		"decorators-legacy",
+	];
 	if (fileName.endsWith(".tsx")) {
 		plugins.push("typescript", "jsx");
 	} else if (

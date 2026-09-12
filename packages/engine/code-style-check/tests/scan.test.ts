@@ -287,6 +287,7 @@ describe("class members", () => {
 		expect(findings[0]).toMatchObject({
 			line: 5,
 			message: "the method definition save needs a single blank line before it",
+			rule: "blank-line-between-definitions",
 		});
 	});
 
@@ -318,6 +319,108 @@ describe("class members", () => {
 }
 `);
 		expect(findings).toEqual([]);
+	});
+
+	test("reports a missing blank line between a property and a method", () => {
+		const findings = scan(`class Client {
+	baseUrl = "https://example.com"
+	load() {
+		return this.baseUrl
+	}
+}
+`);
+		expect(findings).toHaveLength(1);
+		expect(findings[0]).toMatchObject({
+			column: 2,
+			line: 3,
+			message: "the method definition load needs a single blank line before it",
+			rule: "blank-line-between-class-members",
+			severity: "error",
+		});
+	});
+
+	test("reports a missing blank line between a method and a property", () => {
+		const findings = scan(`class Client {
+	load() {
+		return 1
+	}
+	baseUrl = "https://example.com"
+}
+`);
+		expect(findings).toHaveLength(1);
+		expect(findings[0]).toMatchObject({
+			line: 5,
+			message:
+				"the property declaration baseUrl needs a single blank line before it",
+			rule: "blank-line-between-class-members",
+			severity: "error",
+		});
+	});
+
+	test("allows adjacent class properties", () => {
+		expect(
+			scan(`class Client {
+	first = 1
+	second = 2
+}
+`),
+		).toEqual([]);
+	});
+
+	test("accepts a blank line between a property and a method", () => {
+		expect(
+			scan(`class Client {
+	baseUrl = "https://example.com"
+
+	load() {
+		return this.baseUrl
+	}
+}
+`),
+		).toEqual([]);
+	});
+
+	test("names a private property", () => {
+		const findings = scan(`class Client {
+	load() {
+		return 1
+	}
+	#secret = 1
+	accessor title = "x"
+}
+`);
+		expect(findings).toHaveLength(1);
+		expect(findings[0]?.message).toBe(
+			"the property declaration #secret needs a single blank line before it",
+		);
+	});
+
+	test("treats accessor properties as properties", () => {
+		const findings = scan(`class Client {
+	load() {
+		return 1
+	}
+	accessor title = "x"
+}
+`);
+		expect(findings).toHaveLength(1);
+		expect(findings[0]?.message).toBe(
+			"the property declaration title needs a single blank line before it",
+		);
+	});
+
+	test("breaks adjacency at a static block", () => {
+		expect(
+			scan(`class Client {
+	static {
+		setup()
+	}
+	load() {
+		return 1
+	}
+}
+`),
+		).toEqual([]);
 	});
 
 	test("parses JSX in a tsx file", () => {
