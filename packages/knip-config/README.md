@@ -57,10 +57,6 @@ import { application } from "@yuu1111/knip-config/application"
 
 export default {
 	...application,
-	ignore: ["FFXIVReplayAnalyzer/**"]
+	ignore: ["another-project/**"]
 }
 ```
-
-On such a repository the preset alone took the unused exports from 48 to 41,
-and the nested project took the report down to the single unused type that the
-repository really has left.

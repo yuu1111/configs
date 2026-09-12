@@ -55,8 +55,6 @@ import { application } from "@yuu1111/knip-config/application"
 
 export default {
 	...application,
-	ignore: ["FFXIVReplayAnalyzer/**"]
+	ignore: ["another-project/**"]
 }
 ```
-
-そのrepositoryではpresetだけで未使用exportが48件から41件になり、入れ子Projectを外すとrepositoryに本当に残った未使用type 1件まで減った
