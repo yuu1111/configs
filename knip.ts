@@ -1,7 +1,13 @@
 import { library } from "@yuu1111/knip-config/library";
 
+const { entry, ...base } = library;
+
 export default {
-	...library,
+	...base,
+	// monorepoではtop levelのentryがconfiguration hintになるためroot workspaceへ置く
+	workspaces: {
+		".": { entry },
+	},
 	// quality-checkが実行時にnode_modules/.binから解決する
 	ignoreDependencies: [
 		"@yuu1111/code-style-check",
