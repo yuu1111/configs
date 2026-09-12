@@ -9,7 +9,10 @@ Shared configuration packages published to npm.
 | Package | Description |
 |---------|-------------|
 | [`@yuu1111/biome-config`](packages/biome-config) | Shared [Biome](https://biomejs.dev/) configuration |
+| [`@yuu1111/comment-check`](packages/comment-check) | Comment checker with a baseline |
+| [`@yuu1111/knip-config`](packages/knip-config) | Shared [Knip](https://knip.dev/) configuration |
 | [`@yuu1111/tsconfig`](packages/tsconfig) | Shared TypeScript configurations |
+| [`@yuu1111/tsdoc-check`](packages/tsdoc-check) | TSDoc checker for exported declarations |
 
 ## Development
 

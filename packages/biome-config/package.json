@@ -16,6 +16,7 @@
 		"./react": "./react.json"
 	},
 	"files": [
+		"README.ja.md",
 		"base.json",
 		"plugins",
 		"plugins-core.json",

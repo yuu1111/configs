@@ -9,7 +9,10 @@ npmへ公開する共有設定package
 | Package | Description |
 |---------|-------------|
 | [`@yuu1111/biome-config`](packages/biome-config) | 共有の [Biome](https://biomejs.dev/) 設定 |
+| [`@yuu1111/comment-check`](packages/comment-check) | baselineを持つcomment検査 |
+| [`@yuu1111/knip-config`](packages/knip-config) | 共有の [Knip](https://knip.dev/) 設定 |
 | [`@yuu1111/tsconfig`](packages/tsconfig) | 共有のTypeScript設定 |
+| [`@yuu1111/tsdoc-check`](packages/tsdoc-check) | exported宣言のTSDoc検査 |
 
 ## Development
 

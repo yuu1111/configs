@@ -15,6 +15,7 @@
 		"./library": "./library.ts"
 	},
 	"files": [
+		"README.ja.md",
 		"application.ts",
 		"base.ts",
 		"library.ts"

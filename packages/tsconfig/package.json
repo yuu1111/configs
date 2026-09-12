@@ -10,6 +10,7 @@
 	},
 	"tsconfig": "./base.json",
 	"files": [
+		"README.ja.md",
 		"base.json",
 		"bun.json",
 		"declaration-only.json",

@@ -16,6 +16,7 @@
 		".": "./src/scan.ts"
 	},
 	"files": [
+		"README.ja.md",
 		"src"
 	],
 	"keywords": [
