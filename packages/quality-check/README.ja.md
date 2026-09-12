@@ -109,6 +109,8 @@ biome: ignore skipped (biome.json holds its settings)
 
 Biome、型検査、Knipの設定は `biome.json`、`tsconfig.json`、`knip.ts` が持つ このCLIは同じfileからengineの起動と結果の集約だけを行う
 
+engineのbinaryは利用Projectの `node_modules/.bin` から実行時に解決する engineを自分のscriptから呼ばないProjectではKnipが `@yuu1111/comment-check` などを未使用依存として報告するため `knip.ts` の `ignoreDependencies` で理由付きに宣言する
+
 `comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する 新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す
 
 `typecheck` は `tsc --noEmit` を回すだけなので、tsconfigを複数持つProjectは対象のtsconfigごとに起動する必要がある

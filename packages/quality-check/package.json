@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/quality-check",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"description": "Integrated quality check runner",
 	"license": "MIT",
 	"repository": {

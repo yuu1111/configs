@@ -122,6 +122,11 @@ Biome, the type checker, and Knip keep their settings in `biome.json`,
 `tsconfig.json`, and `knip.ts`. This CLI starts the engines from one file and
 aggregates the results.
 
+An engine binary is resolved at run time from the `node_modules/.bin` of the
+project. A project that never calls an engine from its own scripts therefore
+sees Knip report `@yuu1111/comment-check` and its siblings as unused
+dependencies, so it declares them in `ignoreDependencies` with the reason.
+
 `comment-check` runs with an unwritten baseline path so that it reports every
 finding. The new-and-resolved diff is done by this CLI from a single baseline
 file, so an existing `comment-baseline.json` is moved over with
