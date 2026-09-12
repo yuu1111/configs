@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/document-style-check",
-	"version": "0.3.4",
+	"version": "0.4.0",
 	"description": "Shared document style checker and review ledger",
 	"repository": {
 		"type": "git",
