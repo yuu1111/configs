@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/tsdoc-check",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"description": "Shared TSDoc syntax and contract checker",
 	"license": "MIT",
 	"repository": {

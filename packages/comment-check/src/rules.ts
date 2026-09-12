@@ -1,4 +1,6 @@
-/** comment-checkが報告するruleの識別子一覧 */
+/**
+ * comment-checkが報告するruleの識別子一覧
+ */
 export const RULE_IDS = [
 	"broad-suppression",
 	"undocumented-directive",
@@ -6,10 +8,14 @@ export const RULE_IDS = [
 	"separator-comment",
 ] as const;
 
-/** RULE_IDSが定義するrule識別子のunion型 */
+/**
+ * RULE_IDSが定義するrule識別子のunion型
+ */
 export type RuleId = (typeof RULE_IDS)[number];
 
-/** 検出したcomment違反1件の内容と位置 */
+/**
+ * 検出したcomment違反1件の内容と位置
+ */
 export interface Finding {
 	rule: RuleId;
 	file: string;
@@ -22,7 +28,9 @@ const PLACEHOLDER_PATTERN = /\b(TODO|FIXME|XXX|HACK)\b/;
 const SEPARATOR_PATTERN = /^[-=*_#~+./\\|]{4,}$/;
 const DIRECTIVE_PATTERN = /^@ts-(?:ignore|expect-error)\b([\s\S]*)$/;
 
-/** block commentの記号を除いて空白を揃えた本文を返す */
+/**
+ * block commentの記号を除いて空白を揃えた本文を返す
+ */
 export function normalizeComment(body: string): string {
 	return body
 		.split("\n")
@@ -32,7 +40,9 @@ export function normalizeComment(body: string): string {
 		.trim();
 }
 
-/** comment本文を分類し、該当するruleがなければnullを返す */
+/**
+ * comment本文を分類し、該当するruleがなければnullを返す
+ */
 export function classifyComment(body: string): RuleId | null {
 	const text = normalizeComment(body);
 	if (text === "") {

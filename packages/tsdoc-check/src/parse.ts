@@ -1,25 +1,33 @@
 import { parse } from "@babel/parser";
 import type { Comment, Node } from "@babel/types";
 
-/** 1始まりの行と桁 */
+/**
+ * 1始まりの行と桁
+ */
 export interface Position {
 	column: number;
 	line: number;
 }
 
-/** TSDocとして解釈する block comment の位置と本文 */
+/**
+ * TSDocとして解釈する block comment の位置と本文
+ */
 export interface DocComment extends Position {
 	start: number;
 	text: string;
 }
 
-/** 宣言に付けた抑制comment 1行分 */
+/**
+ * 宣言に付けた抑制comment 1行分
+ */
 export interface Suppression extends Position {
 	reason: string;
 	rules: string[];
 }
 
-/** 検査対象のexported宣言1件の種別、名前、引数と付随comment */
+/**
+ * 検査対象のexported宣言1件の種別、名前、引数と付随comment
+ */
 export interface Declaration extends Position {
 	comment: DocComment | null;
 	kind: string;
@@ -36,7 +44,9 @@ interface DeclaredSymbol {
 	typeParameters: string[];
 }
 
-/** 0始まりのoffsetを1始まりの行と桁へ変換する */
+/**
+ * 0始まりのoffsetを1始まりの行と桁へ変換する
+ */
 export function positionAt(source: string, offset: number): Position {
 	const limit = Math.min(Math.max(offset, 0), source.length);
 	let line = 1;
@@ -96,7 +106,9 @@ function parseDirective(
 	};
 }
 
-/** 宣言の前にあるcommentから抑制commentを集める */
+/**
+ * 宣言の前にあるcommentから抑制commentを集める
+ */
 function suppressionsOf(node: Node, source: string): Suppression[] {
 	const suppressions: Suppression[] = [];
 	for (const comment of node.leadingComments ?? []) {
@@ -247,7 +259,9 @@ function symbolsOf(node: Node): DeclaredSymbol[] {
 	}
 }
 
-/** top-levelのexported宣言だけを集める */
+/**
+ * top-levelのexported宣言だけを集める
+ */
 export function collectDeclarations(
 	source: string,
 	fileName: string,

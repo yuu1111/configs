@@ -31,6 +31,7 @@ bunx tsdoc-check src
 | `tsdoc-tag` | warning | A tag that the TSDoc configuration does not define |
 | `type-param-mismatch` | error | `@typeParam` naming a type parameter that the declaration does not declare |
 | `missing-doc` | warning | An exported declaration without a TSDoc comment |
+| `single-line-doc` | warning | A TSDoc comment written on a single line |
 
 Only top-level exported declarations are checked. A file that does not parse is
 left to the TypeScript compiler and to Biome, so its declarations are not

@@ -16,6 +16,13 @@ describe("tsdoc checks", () => {
 		expect(scanSource(source, "src/sample.ts")).toEqual([]);
 	});
 
+	test("reports a TSDoc comment written on a single line", () => {
+		const source = "/** Runs the task */\nexport function run(): void {}\n";
+		const findings = scanSource(source, "src/sample.ts");
+		expect(rulesOf(source)).toEqual(["single-line-doc"]);
+		expect(findings[0]?.severity).toBe("warning");
+	});
+
 	test("reports a parameter that the signature does not declare", () => {
 		const source = [
 			"/** Runs the task",

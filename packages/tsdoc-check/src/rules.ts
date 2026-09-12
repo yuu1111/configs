@@ -6,22 +6,30 @@ import {
 } from "./parse";
 import { parseTsdoc } from "./tsdoc";
 
-/** tsdoc-checkが報告するruleの識別子 */
+/**
+ * tsdoc-checkが報告するruleの識別子
+ */
 export type TsdocRule =
 	| "missing-doc"
 	| "param-mismatch"
+	| "single-line-doc"
 	| "suppression"
 	| "suppression-unused"
 	| "tsdoc-syntax"
 	| "tsdoc-tag"
 	| "type-param-mismatch";
-/** 指摘の重大度 */
+/**
+ * 指摘の重大度
+ */
 export type Severity = "error" | "warning";
 
-/** 抑制commentと--errorで指定できるrule名の一覧 */
+/**
+ * 抑制commentと--errorで指定できるrule名の一覧
+ */
 export const KNOWN_RULE_NAMES = [
 	"missing-doc",
 	"param-mismatch",
+	"single-line-doc",
 	"suppression",
 	"suppression-unused",
 	"tsdoc-syntax",
@@ -31,10 +39,14 @@ export const KNOWN_RULE_NAMES = [
 
 const KNOWN_RULES = new Set<string>(KNOWN_RULE_NAMES);
 
-/** TSDocに定義がないtagは構文errorではなく報告に留める */
+/**
+ * TSDocに定義がないtagは構文errorではなく報告に留める
+ */
 const TAG_MESSAGE_IDS = new Set(["tsdoc-undefined-tag"]);
 
-/** 検出したTSDoc違反1件の内容と位置 */
+/**
+ * 検出したTSDoc違反1件の内容と位置
+ */
 export interface Finding {
 	column: number;
 	file: string;
@@ -61,7 +73,9 @@ function finding(
 	};
 }
 
-/** exported宣言1つ分のTSDocを検査する */
+/**
+ * exported宣言1つ分のTSDocを検査する
+ */
 function checkDeclaration(
 	declaration: Declaration,
 	file: string,
@@ -81,6 +95,17 @@ function checkDeclaration(
 	}
 	const parsed = parseTsdoc(comment.text);
 	const findings: Finding[] = [];
+	if (!comment.text.includes("\n")) {
+		findings.push(
+			finding(
+				"single-line-doc",
+				"warning",
+				file,
+				comment,
+				`${declaration.name} has a single-line TSDoc comment`,
+			),
+		);
+	}
 	for (const issue of parsed.issues) {
 		const position = positionAt(source, comment.start + issue.position);
 		const syntaxError = !TAG_MESSAGE_IDS.has(issue.messageId);
@@ -203,7 +228,9 @@ function suppressionFindings(
 	return findings;
 }
 
-/** 指定したruleの指摘をerrorへ引き上げる */
+/**
+ * 指定したruleの指摘をerrorへ引き上げる
+ */
 export function promoteFindings(
 	findings: Finding[],
 	rules: string[],
@@ -213,7 +240,9 @@ export function promoteFindings(
 	);
 }
 
-/** 宣言の指摘へ抑制commentを適用する */
+/**
+ * 宣言の指摘へ抑制commentを適用する
+ */
 export function classifyDeclaration(
 	declaration: Declaration,
 	file: string,

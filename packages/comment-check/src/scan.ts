@@ -22,7 +22,9 @@ const IGNORED_DIRECTORIES = new Set([
 	"vendor",
 ]);
 
-/** 区切り文字を統一し先頭の./と末尾の/を除いたpathを返す */
+/**
+ * 区切り文字を統一し先頭の./と末尾の/を除いたpathを返す
+ */
 export function normalizePath(path: string): string {
 	return path.split("\\").join("/").replace(/^\.\//, "").replace(/\/+$/, "");
 }
@@ -76,7 +78,9 @@ function walk(directory: string, files: Set<string>): void {
 	}
 }
 
-/** 対象pathを走査して検査対象のfile一覧を集める */
+/**
+ * 対象pathを走査して検査対象のfile一覧を集める
+ */
 export function collectFiles(
 	targets: string[],
 	cwd = process.cwd(),
@@ -107,7 +111,9 @@ export function collectFiles(
 		.sort();
 }
 
-/** source文字列を走査してcomment違反を検出する */
+/**
+ * source文字列を走査してcomment違反を検出する
+ */
 export function scanSource(source: string, file: string): Finding[] {
 	const findings: Finding[] = [];
 	for (const comment of extractComments(source)) {
@@ -127,7 +133,9 @@ export function scanSource(source: string, file: string): Finding[] {
 	return findings;
 }
 
-/** fileを読み込んでcomment違反を検出する */
+/**
+ * fileを読み込んでcomment違反を検出する
+ */
 export function scanFile(file: string, cwd = process.cwd()): Finding[] {
 	return scanSource(
 		readFileSync(file, "utf8"),
@@ -135,7 +143,9 @@ export function scanFile(file: string, cwd = process.cwd()): Finding[] {
 	);
 }
 
-/** 複数fileの違反をまとめて位置順に並べる */
+/**
+ * 複数fileの違反をまとめて位置順に並べる
+ */
 export function scanFiles(files: string[], cwd = process.cwd()): Finding[] {
 	const findings: Finding[] = [];
 	for (const file of files) {

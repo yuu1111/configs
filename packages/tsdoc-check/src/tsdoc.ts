@@ -1,13 +1,17 @@
 import { TSDocConfiguration, TSDocParser } from "@microsoft/tsdoc";
 
-/** TSDoc解析が報告した構文またはtagの指摘1件 */
+/**
+ * TSDoc解析が報告した構文またはtagの指摘1件
+ */
 export interface TsdocIssue {
 	message: string;
 	messageId: string;
 	position: number;
 }
 
-/** TSDoc解析の結果と検出した引数tagの名前 */
+/**
+ * TSDoc解析の結果と検出した引数tagの名前
+ */
 export interface TsdocResult {
 	issues: TsdocIssue[];
 	parameters: string[];
@@ -16,7 +20,9 @@ export interface TsdocResult {
 
 const parser = new TSDocParser(new TSDocConfiguration());
 
-/** comment本文をTSDocとして解析し、構文の指摘とtagの名前を返す */
+/**
+ * comment本文をTSDocとして解析し、構文の指摘とtagの名前を返す
+ */
 export function parseTsdoc(text: string): TsdocResult {
 	const context = parser.parseString(text);
 	return {

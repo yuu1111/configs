@@ -31,6 +31,7 @@ bunx tsdoc-check src
 | `tsdoc-tag` | warning | TSDoc設定が定義していないtag |
 | `type-param-mismatch` | error | 宣言に無いtype parameterを指す `@typeParam` |
 | `missing-doc` | warning | TSDoc commentの無いexported宣言 |
+| `single-line-doc` | warning | 1行で書いたTSDoc comment |
 
 検査対象はトップレベルのexported宣言だけ parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は検査しない
 
