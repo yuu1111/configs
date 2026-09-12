@@ -2,7 +2,7 @@
 
 # @yuu1111/quality-check
 
-Projectごとのscriptから個別に呼んでいたBiome、型検査、Knip、comment-check、document-style-check、TSDoc checkerを1つのCLIへまとめる baselineの差分判定もここで行う
+Projectごとのscriptから個別に呼んでいたBiome、型検査、Knip、code-style-check、comment-check、document-style-check、TSDoc checkerを1つのCLIへまとめる baselineの差分判定もここで行う
 
 ## Install
 
@@ -30,6 +30,7 @@ export default defineConfig({
 		biome: true,
 		typecheck: true,
 		knip: true,
+		"code-style-check": true,
 		"comment-check": true,
 		"document-style-check": true,
 		"tsdoc-check": true,
@@ -73,7 +74,7 @@ quality-check: 1 of 3 engines failed
 | `config` | engineごとの起動条件 |
 | `baseline` | baseline fileのpath `false` なら差分判定を行わない |
 
-engineは `biome` → `typecheck` → `knip` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
+engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
 
 `engines` は起動の委任だけを表し、起動条件は `config` のengineの下へ置く engineごとの条件は複数行のobjectとして書き、ruleやoptionを足しても他のengineの行が動かないようにする engineが受け取る条件は次のとおり
 
@@ -82,6 +83,7 @@ engineは `biome` → `typecheck` → `knip` → `comment-check` → `document-s
 | `biome` | `biome check` | `targets`、`args` 除外pathは `biome.json` が持つ |
 | `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
 | `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
+| `code-style-check` | `code-style-check --json` | `ignore`、`targets`、`args` |
 | `comment-check` | `comment-check --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名） |
 | `document-style-check` | `document-style-check lint --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名） |
 | `tsdoc-check` | `tsdoc-check --json` | `ignore`、`targets`、`args`、`error`（違反として扱うrule名） |

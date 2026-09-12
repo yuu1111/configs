@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
+	closesFence,
+	markdownLines,
 	proseBoundaries,
 	proseLineBreaks,
 	proseLongLines,
@@ -282,6 +284,46 @@ test("三点リーダーで閉じるfrontmatterとチルダのコードフェン
 		"---\ntitle: サンプル\n...\n\n本文A\n\n~~~markdown\n## コード内の見出し\n~~~\n\n本文B\n";
 
 	expect(proseBoundaries(text)).toEqual([]);
+});
+
+test("開きフェンスと同じ長さ以上の閉じフェンスだけを受理する", () => {
+	expect(closesFence("```", { char: "`", length: 3 })).toBe(true);
+	expect(closesFence("````", { char: "`", length: 3 })).toBe(true);
+	expect(closesFence("   ```  ", { char: "`", length: 3 })).toBe(true);
+	expect(closesFence("``", { char: "`", length: 3 })).toBe(false);
+	expect(closesFence("```text", { char: "`", length: 3 })).toBe(false);
+	expect(closesFence("~~~", { char: "`", length: 3 })).toBe(false);
+	expect(closesFence("~~~", { char: "~", length: 3 })).toBe(true);
+});
+
+test("閉じフェンスの後を本文として検査へ戻す", () => {
+	const text = "```text\nコードです。\n```\n\n本文Aです。\n\n本文Bです。\n";
+
+	expect(markdownLines(text).map((item) => item.region)).toEqual([
+		"fence-open",
+		"fence",
+		"fence-close",
+		"body",
+		"body",
+		"body",
+		"body",
+		"body",
+	]);
+	expect(proseBoundaries(text)).toHaveLength(1);
+});
+
+test("開きフェンスより長い閉じフェンスの後も本文を抽出する", () => {
+	const text = "```text\nコードです。\n````\n\n本文Aです。\n\n本文Bです。\n";
+
+	expect(proseBoundaries(text)).toHaveLength(1);
+});
+
+test("閉じられていないコードフェンスの後の本文を検査しない", () => {
+	const text = "```text\nコードです。\n\n本文Aです。\n\n本文Bです。\n";
+
+	expect(markdownLines(text).every((item) => item.region !== "body")).toBe(
+		true,
+	);
 });
 
 test("コードフェンス内の見出しを判断基準から除外する", () => {

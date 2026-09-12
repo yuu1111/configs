@@ -29,6 +29,7 @@ export type EngineRunner = (
  */
 export const ENGINE_BINS: Record<EngineName, string> = {
 	biome: "biome",
+	"code-style-check": "code-style-check",
 	"comment-check": "comment-check",
 	"document-style-check": "document-style-check",
 	knip: "knip",
@@ -76,6 +77,7 @@ export const ENGINE_LIMITS: Record<
 		ignore: "knip.ts holds its settings",
 		targets: "knip analyzes the whole project",
 	},
+	"code-style-check": {},
 	"comment-check": {},
 	"document-style-check": {},
 	"tsdoc-check": {},
@@ -107,6 +109,7 @@ export function skippedEngineOptions(
  */
 export function isFindingEngine(name: EngineName): boolean {
 	return (
+		name === "code-style-check" ||
 		name === "comment-check" ||
 		name === "document-style-check" ||
 		name === "tsdoc-check"
@@ -248,6 +251,9 @@ export function buildEngineCommand(
 			...ignoreArguments,
 			...extra,
 		];
+	}
+	if (name === "code-style-check") {
+		return [executable, "--json", ...targets, ...ignoreArguments, ...extra];
 	}
 	return [
 		executable,

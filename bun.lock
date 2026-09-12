@@ -8,6 +8,7 @@
         "@biomejs/biome": "^2.5.13",
         "@types/bun": "^1.4.2",
         "@yuu1111/biome-config": "workspace:*",
+        "@yuu1111/code-style-check": "workspace:*",
         "@yuu1111/comment-check": "workspace:*",
         "@yuu1111/document-style-check": "workspace:*",
         "@yuu1111/knip-config": "workspace:*",
@@ -22,9 +23,23 @@
       "name": "@yuu1111/biome-config",
       "version": "2.0.1",
     },
+    "packages/code-style-check": {
+      "name": "@yuu1111/code-style-check",
+      "version": "0.1.0",
+      "bin": {
+        "code-style-check": "bin/cli.js",
+      },
+      "dependencies": {
+        "@babel/parser": "^8.0.5",
+      },
+      "devDependencies": {
+        "@babel/types": "^8.0.5",
+        "@yuu1111/shared": "workspace:*",
+      },
+    },
     "packages/comment-check": {
       "name": "@yuu1111/comment-check",
-      "version": "2.0.0",
+      "version": "2.2.1",
       "bin": {
         "comment-check": "bin/cli.js",
       },
@@ -34,7 +49,7 @@
     },
     "packages/document-style-check": {
       "name": "@yuu1111/document-style-check",
-      "version": "0.2.0",
+      "version": "0.3.2",
       "bin": {
         "document-style-check": "bin/cli.js",
       },
@@ -57,7 +72,7 @@
     },
     "packages/quality-check": {
       "name": "@yuu1111/quality-check",
-      "version": "0.6.0",
+      "version": "0.7.1",
       "bin": {
         "quality-check": "bin/cli.js",
       },
@@ -75,7 +90,7 @@
     },
     "packages/tsdoc-check": {
       "name": "@yuu1111/tsdoc-check",
-      "version": "2.0.0",
+      "version": "2.0.2",
       "bin": {
         "tsdoc-check": "bin/cli.js",
       },
@@ -251,6 +266,8 @@
     "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g=="],
 
     "@yuu1111/biome-config": ["@yuu1111/biome-config@workspace:packages/biome-config"],
+
+    "@yuu1111/code-style-check": ["@yuu1111/code-style-check@workspace:packages/code-style-check"],
 
     "@yuu1111/comment-check": ["@yuu1111/comment-check@workspace:packages/comment-check"],
 

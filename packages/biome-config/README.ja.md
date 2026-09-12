@@ -57,7 +57,7 @@ Custom ruleはopt-in baseまたはReact設定の後ろに、必要な層のprese
 - `plugins/network` は `fetch` に `AbortSignal` を要求し、手動で予約したabort timeoutの後始末を検査する
 - `plugins/discord` は動的なDiscord messageに明示的なmention処理があるかを検査する
 
-presetは他の層を含まないため、Projectに必要な層をすべて並べる
+presetは他の層を含まないため、Projectに必要な層をすべて並べる [Project-scoped rule](#project-scoped-rules)はpresetではない 対象層を選ぶ `includes` を共有presetは持てないため、Project自身の設定で宣言する
 
 #### Core rules
 
@@ -105,9 +105,9 @@ cacheRequest.catch(() => null)
 
 `no-unsafe-dynamic-discord-message` は明示的な `allowedMentions` policy無しで動的なmessage内容を送るとwarningにする
 
-#### Project-scoped rule
+#### Project-scoped rules
 
-`no-adapter-import` は `integrations/` か `adapters/` を含むpathをmoduleがimportするとerrorにする 保護する層がProject固有のためpresetを持たない Project自身の設定で宣言し、`includes` で絞る
+`no-adapter-import` は `integrations/` か `adapters/` を含むpathをmoduleがimportするとerrorにする Project自身の設定で宣言し、`includes` で絞る
 
 ```json
 {
@@ -121,6 +121,8 @@ cacheRequest.catch(() => null)
 ```
 
 pluginは `includes` に一致したfileだけで走るため、同じimportはadapter側と統合層へ到達してよい層では有効なままになる pluginのpatternはfileのfull pathと照合されるため、`src/modules/authorization` のようなpathへ一致させるには `**/` から始める必要がある
+
+pluginの `path` はfile pathとして解決されるため、上記のように `node_modules` 経由で参照する package specifierはplugin packageとして解決され、`.grit` fileを指せない
 
 統合moduleへ到達してよい層はpatternから外す 自身のadapter実装を `adapters/` に置くmoduleはそのディレクトリを除外しないと、ruleがadapter自身を報告する
 

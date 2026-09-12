@@ -53,6 +53,10 @@ jobs:
               package_dir="packages/tsconfig"
               release_version="${RELEASE_TAG#tsconfig-v}"
               ;;
+            code-style-check-v*)
+              package_dir="packages/code-style-check"
+              release_version="${RELEASE_TAG#code-style-check-v}"
+              ;;
             comment-check-v*)
               package_dir="packages/comment-check"
               release_version="${RELEASE_TAG#comment-check-v}"

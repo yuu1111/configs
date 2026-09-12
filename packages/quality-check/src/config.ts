@@ -9,6 +9,7 @@ export const ENGINE_NAMES = [
 	"biome",
 	"typecheck",
 	"knip",
+	"code-style-check",
 	"comment-check",
 	"document-style-check",
 	"tsdoc-check",
@@ -70,6 +71,7 @@ export interface EngineConfigMap {
 	biome: EngineOptions;
 	typecheck: TypecheckOptions;
 	knip: EngineOptions;
+	"code-style-check": EngineOptions;
 	"comment-check": CommentCheckOptions;
 	"document-style-check": DocumentStyleCheckOptions;
 	"tsdoc-check": TsdocCheckOptions;
@@ -123,6 +125,7 @@ const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
 	biome: ["args", "ignore", "targets"],
 	typecheck: ["args", "ignore", "projects", "targets"],
 	knip: ["args", "ignore", "targets"],
+	"code-style-check": ["args", "ignore", "targets"],
 	"comment-check": ["args", "enable", "ignore", "targets"],
 	"document-style-check": ["args", "enable", "ignore", "targets"],
 	"tsdoc-check": ["args", "error", "ignore", "targets"],

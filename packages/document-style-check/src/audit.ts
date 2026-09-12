@@ -154,7 +154,7 @@ export function fenceStart(line: string): Fence | undefined {
  * 開いているMarkdownフェンスを閉じる行か判定する
  */
 export function closesFence(line: string, fence: Fence): boolean {
-	return new RegExp(`^ {0,3}${fence.char}${fence.length},}\\s*$`).test(line);
+	return new RegExp(`^ {0,3}${fence.char}{${fence.length},}\\s*$`).test(line);
 }
 
 /**

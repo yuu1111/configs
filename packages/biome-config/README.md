@@ -57,7 +57,7 @@ Custom rules are opt-in. Each preset holds one layer of rules; add the layers th
 - `plugins/network` requires an `AbortSignal` for `fetch` and checks cleanup for manually scheduled abort timeouts
 - `plugins/discord` checks dynamic Discord messages for explicit mention handling
 
-A preset does not include the other layers, so list every layer the project needs.
+A preset does not include the other layers, so list every layer the project needs. The [project-scoped rules](#project-scoped-rules) below are not presets: each needs `includes` to name the layer it protects, and a shared preset cannot carry that, so the project declares them in its own configuration.
 
 #### Core rules
 
@@ -105,9 +105,9 @@ cacheRequest.catch(() => null)
 
 `no-unsafe-dynamic-discord-message` warns when dynamic message content is sent without an explicit `allowedMentions` policy.
 
-#### Project-scoped rule
+#### Project-scoped rules
 
-`no-adapter-import` errors when a module imports a path that contains `integrations/` or `adapters/`. It has no preset because the layer it protects is specific to the project. Declare it in the project's own configuration and narrow it with `includes`:
+`no-adapter-import` errors when a module imports a path that contains `integrations/` or `adapters/`. Declare it in the project's own configuration and narrow it with `includes`:
 
 ```json
 {
@@ -121,6 +121,8 @@ cacheRequest.catch(() => null)
 ```
 
 The plugin runs only on the files that match `includes`, so the same import stays valid in the adapters and in the layers that are allowed to reach them. A plugin pattern is matched against the full file path, so it has to start with `**/` to match a path such as `src/modules/authorization`.
+
+Biome resolves a plugin `path` as a file path, so reference the rule through `node_modules` as shown above. A package specifier such as `@yuu1111/biome-config/plugins/scoped/no-adapter-import.grit` is resolved as a plugin package instead.
 
 Leave the layer that is allowed to reach the integration modules out of the pattern. A module that keeps its own adapter implementations under an `adapters/` directory has to exclude that directory, or the rule reports the adapters themselves:
 

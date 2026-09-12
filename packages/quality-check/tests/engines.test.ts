@@ -160,6 +160,24 @@ describe("engine commands", () => {
 		).toEqual(["document-style-check", "lint", "--json", "."]);
 	});
 
+	test("runs the source style checker on the targets", () => {
+		expect(
+			buildEngineCommand(
+				"code-style-check",
+				"code-style-check",
+				createContext(),
+			),
+		).toEqual(["code-style-check", "--json", "."]);
+	});
+
+	test("gives the source style checker the ignore list and the overrides", () => {
+		const context = createContext();
+		context.overrides = { ignore: ["dist"], targets: ["src"] };
+		expect(
+			buildEngineCommand("code-style-check", "code-style-check", context),
+		).toEqual(["code-style-check", "--json", "src", "--ignore", "dist"]);
+	});
+
 	test("passes the opt-in rules to the period engines", () => {
 		const context = createContext();
 		context.config = parseConfig(

@@ -42,7 +42,7 @@ function readStringArray(record: JsonObject, key: string): string[] {
 	}
 	throw new Error(`${key} is not a string array`);
 }
-function createConsumer(configExport: "biome" | "react") {
+function createConsumer(configExport: "biome" | "react", ...presets: string[]) {
 	const consumerDirectory = mkdtempSync(
 		join(tmpdir(), "biome-config-consumer-"),
 	);
@@ -72,7 +72,12 @@ function createConsumer(configExport: "biome" | "react") {
 
 	writeFileSync(
 		join(consumerDirectory, "biome.json"),
-		JSON.stringify({ extends: [`@yuu1111/biome-config/${configExport}`] }),
+		JSON.stringify({
+			extends: [
+				`@yuu1111/biome-config/${configExport}`,
+				...presets.map((preset) => `@yuu1111/biome-config/${preset}`),
+			],
+		}),
 	);
 	writeFileSync(join(consumerDirectory, ".gitignore"), "node_modules/\n");
 	const git = Bun.spawnSync(["git", "init", "--quiet", consumerDirectory]);
@@ -178,6 +183,42 @@ describe("published Biome configurations", () => {
 			}
 		});
 	}
+
+	test("plugin presets load and apply through extends", () => {
+		const cases = [
+			{
+				preset: "plugins/core",
+				file: "forwarding.ts",
+				source: "const forwarded = 1\nexport default forwarded\n",
+				diagnostic: "Re-export is prohibited",
+			},
+			{
+				preset: "plugins/network",
+				file: "load.ts",
+				source:
+					"export async function load(url: string) {\n\treturn fetch(url)\n}\n",
+				diagnostic: "Pass an AbortSignal to external fetch calls",
+			},
+			{
+				preset: "plugins/discord",
+				file: "update.ts",
+				source: "interaction.update(content)\n",
+				diagnostic:
+					"Wrap dynamic Discord content in a payload that disables mentions",
+			},
+		] as const;
+
+		for (const { preset, file, source, diagnostic } of cases) {
+			const consumerDirectory = createConsumer("biome", preset);
+			try {
+				writeFileSync(join(consumerDirectory, file), source);
+				const result = runBiome(consumerDirectory, "lint", file);
+				expect(result.output).toContain(diagnostic);
+			} finally {
+				rmSync(consumerDirectory, { recursive: true, force: true });
+			}
+		}
+	});
 
 	test("React export enables Tailwind CSS parsing", () => {
 		const consumerDirectory = createConsumer("react");

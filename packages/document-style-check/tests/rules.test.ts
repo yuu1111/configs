@@ -150,6 +150,12 @@ test("コードフェンスの句点を検出しない", () => {
 	expect(enabledRulesOf("```text\nコードです。\n```\n")).toEqual([]);
 });
 
+test("閉じたコードフェンスの後も句点を検出する", () => {
+	expect(enabledRulesOf("```text\nコードです。\n```\n\n本文です。\n")).toEqual([
+		"japanese-period",
+	]);
+});
+
 test("インラインコードの句点を検出しない", () => {
 	expect(enabledRulesOf("`コードです。` を説明する\n")).toEqual([]);
 });

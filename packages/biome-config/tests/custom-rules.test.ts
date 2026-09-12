@@ -348,6 +348,36 @@ describe("preset layers", () => {
 
 		expect(new Set(listed).size).toBe(listed.length);
 	});
+
+	test("project-scoped rules stay out of the presets", async () => {
+		const packageDirectory = resolve(import.meta.dir, "..");
+		const presetFiles = readdirSync(packageDirectory).filter((file) =>
+			/^plugins-.+\.json$/.test(file),
+		);
+		const manifest: { files: string[] } = await Bun.file(
+			resolve(packageDirectory, "package.json"),
+		).json();
+
+		expect(presetFiles.length).toBeGreaterThan(0);
+
+		for (const presetFile of presetFiles) {
+			const preset: { plugins: unknown[] } = await Bun.file(
+				resolve(packageDirectory, presetFile),
+			).json();
+			const plugins = preset.plugins.map((plugin) => {
+				expect(typeof plugin).toBe("string");
+				return typeof plugin === "string" ? plugin : "";
+			});
+
+			expect(manifest.files).toContain(presetFile);
+			expect(plugins.length).toBeGreaterThan(0);
+
+			for (const plugin of plugins) {
+				// A preset cannot carry the `includes` a project-scoped rule needs.
+				expect(plugin).not.toContain("/scoped/");
+			}
+		}
+	});
 });
 
 describe("scoped adapter boundary rule", () => {

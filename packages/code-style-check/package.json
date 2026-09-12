@@ -1,0 +1,37 @@
+{
+	"name": "@yuu1111/code-style-check",
+	"version": "0.1.0",
+	"description": "Shared source code style checker",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yuu1111/configs.git",
+		"directory": "packages/code-style-check"
+	},
+	"type": "module",
+	"bin": {
+		"code-style-check": "bin/cli.js"
+	},
+	"exports": {
+		".": "./dist/scan.js"
+	},
+	"files": [
+		"README.ja.md",
+		"bin",
+		"dist"
+	],
+	"scripts": {
+		"build": "bun build src/cli.ts src/scan.ts --target=bun --outdir=dist --external @babel/parser"
+	},
+	"keywords": [
+		"style",
+		"lint",
+		"source"
+	],
+	"dependencies": {
+		"@babel/parser": "^8.0.5"
+	},
+	"devDependencies": {
+		"@babel/types": "^8.0.5",
+		"@yuu1111/shared": "workspace:*"
+	}
+}

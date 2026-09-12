@@ -89,6 +89,41 @@ describe("engine findings", () => {
 		expect(parsed.errors[0]?.engine).toBe("document-style-check");
 	});
 
+	test("separates the errors and warnings of code-style-check", () => {
+		const parsed = parseFindings(
+			"code-style-check",
+			JSON.stringify({
+				errors: [
+					{
+						column: 1,
+						file: "src/c.ts",
+						line: 5,
+						message:
+							"the function definition save needs a single blank line before it",
+						rule: "blank-line-between-functions",
+						severity: "error",
+					},
+				],
+				warnings: [
+					{
+						column: 1,
+						file: "src/c.ts",
+						line: 12,
+						message:
+							"the function definition load has more than one blank line before it",
+						rule: "blank-line-between-functions",
+						severity: "warning",
+					},
+				],
+			}),
+		);
+		expect(parsed.errors.map((finding) => finding.severity)).toEqual(["error"]);
+		expect(parsed.warnings.map((finding) => finding.severity)).toEqual([
+			"warning",
+		]);
+		expect(parsed.errors[0]?.engine).toBe("code-style-check");
+	});
+
 	test("rejects output that is not JSON", () => {
 		expect(() => parseFindings("comment-check", "not json")).toThrow(
 			"did not print JSON",
