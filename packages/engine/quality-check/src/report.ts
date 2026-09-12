@@ -19,12 +19,24 @@ function describeCounts(result: EngineResult): string {
 	return `${result.reported.length} new, ${result.resolved} resolved, ${result.warnings.length} warnings`;
 }
 
+/**
+ * 所要時間をms表記にする
+ */
+function formatMillis(elapsedMs: number): string {
+	return `${Math.round(elapsedMs)}ms`;
+}
+
 function describeStatus(result: EngineResult, paint: Painter): string {
 	if (result.status === "error") {
-		return paint("error", "error");
+		const status = paint("error", "error");
+		return result.durationMs === null
+			? status
+			: `${status} (${formatMillis(result.durationMs)})`;
 	}
 	const tone = result.status === "passed" ? "pass" : "error";
-	return `${paint(result.status, tone)} (${describeCounts(result)})`;
+	const elapsed =
+		result.durationMs === null ? "" : `, ${formatMillis(result.durationMs)}`;
+	return `${paint(result.status, tone)} (${describeCounts(result)}${elapsed})`;
 }
 
 /**
@@ -55,13 +67,6 @@ export function formatEngineSection(
 }
 
 /**
- * 実行時間をsummaryへ添える表記にする
- */
-function formatElapsed(elapsedMs: number): string {
-	return ` (${Math.round(elapsedMs)}ms)`;
-}
-
-/**
  * 失敗したengineを列挙した集約summaryを組み立てる
  */
 export function formatSummary(
@@ -75,7 +80,7 @@ export function formatSummary(
 	const passed = results
 		.filter((result) => result.status === "passed")
 		.map((result) => result.name);
-	const elapsed = formatElapsed(elapsedMs);
+	const elapsed = ` (${formatMillis(elapsedMs)})`;
 	if (failed.length === 0) {
 		return paint(
 			`quality-check: ${results.length} engines passed${elapsed}`,
@@ -106,6 +111,8 @@ export function toJsonReport(
 		elapsedMs: Math.round(elapsedMs),
 		engines: results.map((result) => ({
 			detected: result.detected.length,
+			durationMs:
+				result.durationMs === null ? null : Math.round(result.durationMs),
 			exitCode: result.exitCode,
 			message: result.message ?? null,
 			name: result.name,

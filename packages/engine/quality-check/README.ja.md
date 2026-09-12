@@ -50,16 +50,16 @@ export default defineConfig({
 });
 ```
 
-engineごとの出力と集約summaryを並べて出し、どのengineが失敗したかと実行にかかった合計時間を1回の実行で示す
+engineごとの出力と所要時間、集約summaryを並べて出し、どのengineが失敗したかと実行にかかった合計時間を1回の実行で示す
 
 ```text
 == biome ==
 Checked 128 files in 260ms. No fixes applied.
-biome: passed (exit 0)
+biome: passed (exit 0, 296ms)
 
 == comment-check ==
 src/queue.ts:18:2 placeholder-comment placeholder comment should be resolved or tracked
-comment-check: failed (1 new, 0 resolved, 0 warnings)
+comment-check: failed (1 new, 0 resolved, 0 warnings, 118ms)
 
 quality-check: 1 of 3 engines failed (1250ms)
   failed: comment-check
@@ -109,6 +109,8 @@ engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment
 色は標準出力が端末のときだけ付ける `NO_COLOR` で無効にし、`FORCE_COLOR` で強制できる `--json` の出力には付けない
 
 色を扱えるengineへは自身の出力の色も許可する Biomeは `--colors=force`、tscは `--pretty` を受け取る
+
+engineの所要時間はengineの起動から結果の解釈までを計測し、状態行へ出す 起動しなかったengineには時間を出さない
 
 engineが受け取らない条件を書いた場合は渡さず、その旨をそのengineのsectionへ出す
 

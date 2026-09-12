@@ -11,9 +11,11 @@ function result(
 	name: EngineResult["name"],
 	status: EngineResult["status"],
 	skipped: string[] = [],
+	durationMs: number | null = null,
 ): EngineResult {
 	return {
 		detected: [],
+		durationMs,
 		exitCode: status === "passed" ? 0 : 1,
 		name,
 		output: "",
@@ -30,6 +32,30 @@ describe("quality report", () => {
 		const section = formatEngineSection(result("knip", "failed"));
 		expect(section).toContain("== knip ==");
 		expect(section).toContain("knip: failed (exit 1)");
+	});
+
+	test("adds the engine time to the status line", () => {
+		expect(formatEngineSection(result("biome", "passed", [], 74))).toContain(
+			"biome: passed (exit 0, 74ms)",
+		);
+	});
+
+	test("adds the engine time after the counts of a finding engine", () => {
+		expect(
+			formatEngineSection(result("comment-check", "failed", [], 118)),
+		).toContain("comment-check: failed (0 new, 0 resolved, 0 warnings, 118ms)");
+	});
+
+	test("adds the engine time to an error status", () => {
+		expect(formatEngineSection(result("knip", "error", [], 210))).toContain(
+			"knip: error (210ms)",
+		);
+	});
+
+	test("leaves the time off an engine that never started", () => {
+		const section = formatEngineSection(result("biome", "error"));
+		expect(section).toContain("biome: error");
+		expect(section).not.toContain("ms)");
 	});
 
 	test("reports a condition that the engine did not take", () => {
@@ -106,10 +132,24 @@ describe("quality report", () => {
 
 	test("reports the failed engines as JSON", () => {
 		const report = toJsonReport(
-			[result("biome", "passed"), result("knip", "failed")],
+			[result("biome", "passed", [], 74), result("knip", "failed", [], 210.4)],
 			4210,
-		) as { elapsedMs: number; failed: string[] };
+		) as {
+			elapsedMs: number;
+			engines: { durationMs: number | null }[];
+			failed: string[];
+		};
 		expect(report.failed).toEqual(["knip"]);
 		expect(report.elapsedMs).toBe(4210);
+		expect(report.engines.map((engine) => engine.durationMs)).toEqual([
+			74, 210,
+		]);
+	});
+
+	test("reports no duration for an engine that never started as JSON", () => {
+		const report = toJsonReport([result("biome", "error")], 4210) as {
+			engines: { durationMs: number | null }[];
+		};
+		expect(report.engines[0]?.durationMs).toBeNull();
 	});
 });

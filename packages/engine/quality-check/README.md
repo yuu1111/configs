@@ -53,17 +53,17 @@ export default defineConfig({
 });
 ```
 
-Each engine prints its own section, and the summary names the engines that
-failed and the total time the run took:
+Each engine prints its own section with its own time, and the summary names
+the engines that failed and the total time the run took:
 
 ```text
 == biome ==
 Checked 128 files in 260ms. No fixes applied.
-biome: passed (exit 0)
+biome: passed (exit 0, 296ms)
 
 == comment-check ==
 src/queue.ts:18:2 placeholder-comment placeholder comment should be resolved or tracked
-comment-check: failed (1 new, 0 resolved, 0 warnings)
+comment-check: failed (1 new, 0 resolved, 0 warnings, 118ms)
 
 quality-check: 1 of 3 engines failed (1250ms)
   failed: comment-check
@@ -120,6 +120,10 @@ Color is added only when stdout is a terminal. `NO_COLOR` turns it off and
 
 The engines that can color their own output receive the same permission: Biome
 gets `--colors=force` and tsc gets `--pretty`.
+
+An engine's time covers its start-up through reading its results, and the status
+line carries it. An engine that never started, such as one that is not
+installed, has no time.
 
 A condition that an engine does not take is not passed on, and the section says
 so:

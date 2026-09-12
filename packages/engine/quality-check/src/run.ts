@@ -29,6 +29,8 @@ export type EngineStatus = "error" | "failed" | "passed";
 export interface EngineResult {
 	/** baseline適用前の阻害する検出 */
 	detected: NormalizedFinding[];
+	/** engineの起動から結果の解釈までの所要ms 起動しなかった場合はnull */
+	durationMs: number | null;
 	exitCode: number | null;
 	message?: string;
 	name: EngineName;
@@ -41,6 +43,11 @@ export interface EngineResult {
 	status: EngineStatus;
 	warnings: NormalizedFinding[];
 }
+
+/**
+ * 実行時間を計測する前のengine1つ分の結果
+ */
+type EngineOutcome = Omit<EngineResult, "durationMs">;
 
 /**
  * engineをまとめて起動するための実行条件
@@ -65,7 +72,7 @@ function baseResult(
 	name: EngineName,
 	exitCode: number | null,
 	output: string,
-): Omit<EngineResult, "status"> {
+): Omit<EngineOutcome, "status"> {
 	return {
 		detected: [],
 		exitCode,
@@ -144,7 +151,7 @@ async function runFindingEngine(
 	executable: string,
 	context: EngineCommandContext,
 	runner: EngineRunner,
-): Promise<EngineResult> {
+): Promise<EngineOutcome> {
 	const result = await runner(buildEngineCommand(name, executable, context), {
 		cwd: options.cwd,
 	});
@@ -186,7 +193,7 @@ async function runProcessEngine(
 	executable: string,
 	context: EngineCommandContext,
 	runner: EngineRunner,
-): Promise<EngineResult> {
+): Promise<EngineOutcome> {
 	const commands = buildEngineCommands(name, executable, context);
 	const { exitCode, output } = await runCommands(
 		commands,
@@ -206,36 +213,31 @@ async function runProcessEngine(
 	};
 }
 
-async function executeEngine(
-	name: EngineName,
-	options: RunOptions,
-	context: EngineCommandContext,
-	runner: EngineRunner,
-): Promise<EngineResult> {
-	const executable = (options.resolve ?? resolveExecutable)(name, options.cwd);
-	if (executable === null) {
-		return {
-			...baseResult(name, null, ""),
-			message: `${ENGINE_BINS[name]} is not installed`,
-			status: "error",
-		};
-	}
-	if (isFindingEngine(name)) {
-		return await runFindingEngine(name, options, executable, context, runner);
-	}
-	return await runProcessEngine(name, options, executable, context, runner);
-}
-
 async function runEngine(
 	name: EngineName,
 	options: RunOptions,
 	context: EngineCommandContext,
 	runner: EngineRunner,
 ): Promise<EngineResult> {
-	const result = await executeEngine(name, options, context, runner);
+	const executable = (options.resolve ?? resolveExecutable)(name, options.cwd);
+	const skipped = skippedEngineOptions(name, options.config.config?.[name]);
+	if (executable === null) {
+		return {
+			...baseResult(name, null, ""),
+			durationMs: null,
+			message: `${ENGINE_BINS[name]} is not installed`,
+			skipped,
+			status: "error",
+		};
+	}
+	const startedAt = performance.now();
+	const result = isFindingEngine(name)
+		? await runFindingEngine(name, options, executable, context, runner)
+		: await runProcessEngine(name, options, executable, context, runner);
 	return {
 		...result,
-		skipped: skippedEngineOptions(name, options.config.config?.[name]),
+		durationMs: performance.now() - startedAt,
+		skipped,
 	};
 }
 

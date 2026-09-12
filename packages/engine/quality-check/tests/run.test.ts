@@ -94,6 +94,15 @@ describe("engine orchestration", () => {
 		expect(results[0]?.output).toBe("clean");
 	});
 
+	test("times an engine that ran", async () => {
+		const results = await runEngines(
+			createOptions({
+				runner: runnerFor({ exitCode: 0, stderr: "", stdout: "" }),
+			}),
+		);
+		expect(results[0]?.durationMs).toBeGreaterThanOrEqual(0);
+	});
+
 	test("fails a process engine that exits with 1", async () => {
 		const results = await runEngines(
 			createOptions({
@@ -169,6 +178,7 @@ describe("engine orchestration", () => {
 		const results = await runEngines(createOptions({ resolve: () => null }));
 		expect(results[0]?.status).toBe("error");
 		expect(results[0]?.message).toBe("biome is not installed");
+		expect(results[0]?.durationMs).toBeNull();
 	});
 
 	test("reports a condition that the engine could not take", async () => {
