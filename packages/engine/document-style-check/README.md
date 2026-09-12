@@ -24,10 +24,10 @@ AGENTS.md:18:1 hard-break-html error an HTML hard break adds spacing without mea
 Checked 14 files: 1 errors, 0 warnings
 ```
 
-A project that also keeps Japanese sentences free of a trailing `。` names the opt-in rule:
+A project that also keeps Japanese sentences free of a trailing `。`, of a half-width comma, and of full-width alphanumerics names the opt-in rules:
 
 ```bash
-document-style-check lint --enable japanese-period .
+document-style-check lint --enable japanese-period --enable japanese-comma --enable full-width-alphanumeric .
 ```
 
 Record the candidates that need a judgment, fill them in, then verify:
@@ -46,13 +46,17 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 |------|----------|---------|---------|
 | `consecutive-blank-lines` | error | true | runs of blank lines that add spacing without meaning |
 | `date-anchored-statement` | warning | true | a check date used in place of the subject's identity |
+| `full-width-alphanumeric` | error | false | a full-width alphanumeric such as `Ａ` or `１` |
 | `hard-break-html` | error | true | `<br>` in prose |
+| `japanese-comma` | error | false | a half-width comma inside Japanese text |
 | `japanese-period` | error | false | a Japanese sentence that ends with `。` |
+| `list-marker-consistency` | error | false | an unordered list marker that differs from the first one |
 | `trailing-backslash` | error | true | a backslash at the end of a prose line |
 | `trailing-whitespace` | error | true | whitespace at the end of a line |
 
 `consecutive-blank-lines`, `hard-break-html`, `trailing-backslash`, and `trailing-whitespace` are fixable, so `lint --write` clears them.
-`date-anchored-statement` is a warning for a human or a model to judge, and `japanese-period` remains an error after `--write`.
+`list-marker-consistency` is fixable too, but only once it is enabled, because it rewrites every list to the first marker it finds.
+`date-anchored-statement` is a warning for a human or a model to judge, and `full-width-alphanumeric`, `japanese-comma`, and `japanese-period` remain errors after `--write`.
 
 ## Commands
 

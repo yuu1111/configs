@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { fixSource, lintSource } from "../src/rules";
+import { fixSource, lintSource, type OptInRuleId } from "../src/rules";
 
 /**
  * 検出したrule名だけを位置順に返す
@@ -12,9 +12,17 @@ function rulesOf(source: string): string[] {
  * opt-in ruleを有効にした検出のrule名だけを位置順に返す
  */
 function enabledRulesOf(source: string): string[] {
-	return lintSource(source, "doc.md", ["japanese-period"]).map(
-		(finding) => finding.rule,
-	);
+	return optedRulesOf(source, ["japanese-period"]);
+}
+
+/**
+ * 指定したopt-in ruleを有効にした検出のrule名だけを位置順に返す
+ */
+function optedRulesOf(
+	source: string,
+	enabled: readonly OptInRuleId[],
+): string[] {
+	return lintSource(source, "doc.md", enabled).map((finding) => finding.rule);
 }
 
 test("行末の空白を検出して取り除く", () => {
@@ -183,4 +191,128 @@ test("整形しても句点を削除しない", () => {
 	expect(fixed).toBe("本文です。\n");
 	expect(rulesOf(fixed)).toEqual([]);
 	expect(enabledRulesOf(fixed)).toEqual(["japanese-period"]);
+});
+
+test("既定では日本語の半角カンマを検出しない", () => {
+	expect(rulesOf("日本語,テキスト\n")).toEqual([]);
+});
+
+test("日本語に隣接する半角カンマを検出する", () => {
+	expect(
+		lintSource("日本語,テキストです\n", "doc.md", ["japanese-comma"]),
+	).toEqual([
+		{
+			column: 4,
+			file: "doc.md",
+			line: 1,
+			message:
+				"a Japanese sentence does not separate clauses with a half-width comma",
+			rule: "japanese-comma",
+			severity: "error",
+		},
+	]);
+});
+
+test("英数字の並びの半角カンマは対象外にする", () => {
+	expect(optedRulesOf("a, b and c, d\n", ["japanese-comma"])).toEqual([]);
+});
+
+test("インラインコードの半角カンマは対象外にする", () => {
+	expect(
+		optedRulesOf("`日本語,テキスト` を説明する\n", ["japanese-comma"]),
+	).toEqual([]);
+});
+
+test("既定では全角英数字を検出しない", () => {
+	expect(rulesOf("値はＡＢＣ１２３です\n")).toEqual([]);
+});
+
+test("全角英数字を検出する", () => {
+	expect(
+		lintSource("値はＡＢＣ１２３です\n", "doc.md", ["full-width-alphanumeric"]),
+	).toEqual([
+		{
+			column: 3,
+			file: "doc.md",
+			line: 1,
+			message: "a full-width alphanumeric is not the ASCII character",
+			rule: "full-width-alphanumeric",
+			severity: "error",
+		},
+	]);
+});
+
+test("半角英数字は対象外にする", () => {
+	expect(optedRulesOf("値はABC123です\n", ["full-width-alphanumeric"])).toEqual(
+		[],
+	);
+});
+
+test("インラインコードの全角英数字は対象外にする", () => {
+	expect(
+		optedRulesOf("`ＡＢＣ１２３` を説明する\n", ["full-width-alphanumeric"]),
+	).toEqual([]);
+});
+
+test("既定では箇条書き記号の混在を検出しない", () => {
+	expect(rulesOf("- 一つ目\n* 二つ目\n")).toEqual([]);
+});
+
+test("最初の記号と違う箇条書き記号を検出する", () => {
+	expect(
+		lintSource("- 一つ目\n* 二つ目\n- 三つ目\n", "doc.md", [
+			"list-marker-consistency",
+		]),
+	).toEqual([
+		{
+			column: 1,
+			file: "doc.md",
+			line: 2,
+			message: "unordered list markers do not mix styles",
+			rule: "list-marker-consistency",
+			severity: "error",
+		},
+	]);
+});
+
+test("ネストした箇条書きも基準の記号と比べる", () => {
+	expect(
+		optedRulesOf("- 項目\n\t* 子項目\n", ["list-marker-consistency"]),
+	).toEqual(["list-marker-consistency"]);
+});
+
+test("記号が揃った箇条書きは検出しない", () => {
+	expect(
+		optedRulesOf("- 一つ目\n- 二つ目\n", ["list-marker-consistency"]),
+	).toEqual([]);
+});
+
+test("区切り線を箇条書きとして扱わない", () => {
+	expect(
+		optedRulesOf("- 一つ目\n\n---\n\n- 二つ目\n", ["list-marker-consistency"]),
+	).toEqual([]);
+});
+
+test("有効にしたときだけ箇条書き記号を揃える", () => {
+	const source = "- 一つ目\n* 二つ目\n";
+
+	expect(fixSource(source)).toBe(source);
+	expect(fixSource(source, ["list-marker-consistency"])).toBe(
+		"- 一つ目\n- 二つ目\n",
+	);
+});
+
+test("記号を揃えた本文を再度整形しても変わらない", () => {
+	const fixed = fixSource("- 一つ目\n* 二つ目\n", ["list-marker-consistency"]);
+
+	expect(fixSource(fixed, ["list-marker-consistency"])).toBe(fixed);
+});
+
+test("整形しても半角カンマと全角英数字を削除しない", () => {
+	const fixed = fixSource("日本語,ＡＢＣです  \n", [
+		"japanese-comma",
+		"full-width-alphanumeric",
+	]);
+
+	expect(fixed).toBe("日本語,ＡＢＣです\n");
 });

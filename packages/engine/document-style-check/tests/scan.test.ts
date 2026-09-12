@@ -156,3 +156,51 @@ test("--enableでopt-in ruleの検出を報告する", () => {
 		rmSync(root, { force: true, recursive: true });
 	}
 });
+
+test("lintの--enableを複数指定できる", () => {
+	expect(
+		parseArguments([
+			"lint",
+			"--enable",
+			"japanese-comma",
+			"--enable",
+			"list-marker-consistency",
+			".",
+		]).enabled,
+	).toEqual(["japanese-comma", "list-marker-consistency"]);
+});
+
+test("有効にしたopt-in ruleの整形を適用する", () => {
+	withTemporaryTree({ "mixed.md": "- 一つ目\n* 二つ目\n" }, (directory) => {
+		const file = join(directory, "mixed.md");
+
+		expect(fixFiles([file])).toEqual([]);
+		expect(fixFiles([file], ["list-marker-consistency"])).toEqual([file]);
+		expect(readFileSync(file, "utf8")).toBe("- 一つ目\n- 二つ目\n");
+	});
+});
+
+test("--writeで有効にしたopt-in ruleも整形する", () => {
+	const root = mkdtempSync(join(tmpdir(), "document-style-cli-"));
+	try {
+		const file = join(root, "doc.md");
+		writeFileSync(file, "- 一つ目\n* 二つ目\n", "utf8");
+
+		const skipped = runMain(["lint", "--write", root]);
+		expect(readFileSync(file, "utf8")).toBe("- 一つ目\n* 二つ目\n");
+		expect(skipped.output).not.toContain("Fixed");
+
+		const report = runMain([
+			"lint",
+			"--write",
+			"--enable",
+			"list-marker-consistency",
+			root,
+		]);
+		expect(readFileSync(file, "utf8")).toBe("- 一つ目\n- 二つ目\n");
+		expect(report.output).toContain("Fixed");
+		expect(report.code).toBe(0);
+	} finally {
+		rmSync(root, { force: true, recursive: true });
+	}
+});

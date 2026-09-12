@@ -56,11 +56,15 @@ export function lintFiles(
  * fileを整形し、writeした場合だけtrueを返す
  *
  * @param file - 整形するMarkdownのpath
+ * @param enabled - 整形に加えて適用するopt-in ruleの識別子
  * @returns 内容をwriteした場合はtrue 変化が無ければfalse
  */
-export function fixFile(file: string): boolean {
+export function fixFile(
+	file: string,
+	enabled: readonly OptInRuleId[] = [],
+): boolean {
 	const source = readFileSync(file, "utf8");
-	const fixed = fixSource(source);
+	const fixed = fixSource(source, enabled);
 	if (fixed === source) {
 		return false;
 	}
@@ -72,8 +76,12 @@ export function fixFile(file: string): boolean {
  * 複数fileを整形し、writeしたfile一覧を返す
  *
  * @param files - 整形するMarkdownのpath一覧
+ * @param enabled - 整形に加えて適用するopt-in ruleの識別子
  * @returns 実際にwriteしたfileのpath一覧
  */
-export function fixFiles(files: string[]): string[] {
-	return files.filter((file) => fixFile(file));
+export function fixFiles(
+	files: string[],
+	enabled: readonly OptInRuleId[] = [],
+): string[] {
+	return files.filter((file) => fixFile(file, enabled));
 }

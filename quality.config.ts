@@ -15,7 +15,12 @@ export default defineConfig({
 			enable: ["cramped-comment", "japanese-period"],
 		},
 		"document-style-check": {
-			enable: ["japanese-period"],
+			enable: [
+				"full-width-alphanumeric",
+				"japanese-comma",
+				"japanese-period",
+				"list-marker-consistency",
+			],
 		},
 		"tsdoc-check": {
 			enable: ["deprecated-without-guidance", "missing-returns", "param-order"],

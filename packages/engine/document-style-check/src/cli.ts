@@ -184,7 +184,7 @@ function runLint(options: Options): number {
 		ignores: options.ignores,
 	});
 	if (options.write) {
-		for (const file of fixFiles(files)) {
+		for (const file of fixFiles(files, options.enabled)) {
 			console.log(`Fixed ${normalizePath(relative(process.cwd(), file))}`);
 		}
 	}
