@@ -8,36 +8,7 @@
 - 誤検知が無いものだけを既定で有効にし、意見が分かれるものは `--enable` のopt-inにする
 - 機械的に修正できるものはfixable、人間かモデルの判断が要るものはwarningとして分ける
 - 新しいruleを書く前に、Biome組み込みと既存engineに同じ検査が無いか確認する
-
-## tsdoc-check
-
-`packages/engine/tsdoc-check/src/rules.ts` の `param-mismatch` はタグからシグネチャ方向の照合だけで、宣言側の引数がタグを持つかを見ていない
-逆向きの照合を追加する
-
-| Rule | 検出 | 既定 |
-|------|------|------|
-| `param-untagged` | 引数を持つが `@param` が無い | warning / on |
-| `type-param-untagged` | 型引数を持つが `@typeParam` が無い | warning / on |
-| `param-order` | `@param` の並びが宣言順と違う | warning / opt-in |
-| `missing-returns` | 値を返す関数に `@returns` が無い | warning / opt-in |
-| `deprecated-without-guidance` | `@deprecated` に代替の案内が無い | warning / opt-in |
-
-`param-untagged` は `declaration.parameters` を回す分岐を足すだけで済む
-既存の `promoteFindings` により `--error` での昇格もそのまま使える
-
-## comment-check
-
-| Rule | 検出 | 既定 |
-|------|------|------|
-| `undocumented-suppression` | `biome-ignore` に `: 理由` が無い | error / on |
-| `dated-comment` | コメント中の日付アンカー | warning / on |
-| `unowned-todo` | `TODO` や `FIXME` にissueやownerの参照が無い | opt-in |
-
-`undocumented-suppression` は tsdoc-check の「理由の無い抑制はerror」と対になる基準で、`biome-ignore` に理由を要求する
-Biome CLIの `--suppress` には理由を必須にするオプションが無いため、組み込みruleとは重複しない
-既存の `undocumented-directive` の対象を `biome-ignore-all` へ広げる形でも実装できる
-
-`dated-comment` は document-style-check の `date-anchored-statement` と同じ基準をコメントへ適用し、engine間で判断を揃える
+- `biome-ignore` の理由は Biome の suppression parser が必須なので、抑制コメントへの理由付けはruleにしない
 
 ## document-style-check
 
@@ -58,20 +29,15 @@ Biome CLIの `--suppress` には理由を必須にするオプションが無い
 
 ## biome-config
 
-`packages/config/biome-config/base.json` は recommended と4つのruleだけを有効にしている
+`packages/config/biome-config/base.json` で無効のまま残っている組み込みruleを候補にする
 新しいプラグインを書く前に、実装済みで無効の組み込みを有効にする
 
 | Rule | 分類 | 提案 |
 |------|------|------|
-| `noFloatingPromises` | `lint/nursery` | warn |
-| `useErrorCause` | `lint/style` | warn |
 | `useExplicitType` | `lint/nursery` | 公開境界の契約を強制するopt-in |
 | `noConsole` | `lint/suspicious` | ライブラリではscopedで有効にする |
 | `noImplicitCoercions` | `lint/complexity` | 好みが分かれるためopt-in |
 | `noProcessEnv` | `lint/style` | 設定モジュールを強制するscoped向け |
-
-`noFloatingPromises` は未処理のPromiseを報告し、実害が出るため最初に有効にする
-`useErrorCause` はcatchで包み直して元の原因を捨てる記述を報告する
 
 ## Gritプラグイン候補
 
@@ -96,7 +62,4 @@ Biome組み込みに対応が無いものだけをプラグインにする
 
 ## 着手する順序
 
-1. `tsdoc-check` の `param-untagged` — 変更が小さく、検査の穴が明確
-2. `comment-check` の `undocumented-suppression` — 抑制に理由を要求する基準が揃う
-3. `document-style-check` の `code-fence-language` と `heading-level-jump` — 抽出済みの見出しとフェンスを使える
-4. `base.json` の `noFloatingPromises` — 組み込みの有効化だけで実害を減らせる
+1. `document-style-check` の `code-fence-language` と `heading-level-jump` — 抽出済みの見出しとフェンスを使える
