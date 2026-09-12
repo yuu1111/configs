@@ -8,13 +8,13 @@ Shared configuration packages published to npm.
 
 | Package | Description |
 |---------|-------------|
-| [`@yuu1111/biome-config`](packages/biome-config) | Shared [Biome](https://biomejs.dev/) configuration |
-| [`@yuu1111/comment-check`](packages/comment-check) | Comment checker with a baseline |
-| [`@yuu1111/document-style-check`](packages/document-style-check) | Markdown checker with a review ledger |
-| [`@yuu1111/knip-config`](packages/knip-config) | Shared [Knip](https://knip.dev/) configuration |
-| [`@yuu1111/quality-check`](packages/quality-check) | Integrated CLI that runs the quality engines |
-| [`@yuu1111/tsconfig`](packages/tsconfig) | Shared TypeScript configurations |
-| [`@yuu1111/tsdoc-check`](packages/tsdoc-check) | TSDoc checker for exported declarations |
+| [`@yuu1111/biome-config`](packages/config/biome-config) | Shared [Biome](https://biomejs.dev/) configuration |
+| [`@yuu1111/comment-check`](packages/engine/comment-check) | Comment checker with a baseline |
+| [`@yuu1111/document-style-check`](packages/engine/document-style-check) | Markdown checker with a review ledger |
+| [`@yuu1111/knip-config`](packages/config/knip-config) | Shared [Knip](https://knip.dev/) configuration |
+| [`@yuu1111/quality-check`](packages/engine/quality-check) | Integrated CLI that runs the quality engines |
+| [`@yuu1111/tsconfig`](packages/config/tsconfig) | Shared TypeScript configurations |
+| [`@yuu1111/tsdoc-check`](packages/engine/tsdoc-check) | TSDoc checker for exported declarations |
 
 ## Development
 
@@ -33,7 +33,7 @@ Publishing runs through npm Trusted Publisher when a GitHub Release is published
 Use a package-specific tag whose version matches the selected package.
 
 ```bash
-cd packages/biome-config
+cd packages/config/biome-config
 npm version patch --no-git-tag-version
 # Commit and push the version change, then publish biome-config-vX.Y.Z on GitHub.
 ```

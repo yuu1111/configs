@@ -14,7 +14,7 @@ import { join, resolve } from "node:path";
 const packageDirectory = resolve(import.meta.dir, "..");
 const biomeExecutable = resolve(
 	import.meta.dir,
-	"../../../node_modules/.bin",
+	"../../../../node_modules/.bin",
 	process.platform === "win32" ? "biome.exe" : "biome",
 );
 

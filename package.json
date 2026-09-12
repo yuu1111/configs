@@ -8,7 +8,8 @@
 		"check:quality": "bun run build && quality-check"
 	},
 	"workspaces": [
-		"packages/*"
+		"packages/config/*",
+		"packages/engine/*"
 	],
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.13",

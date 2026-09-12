@@ -17,7 +17,7 @@ const fixturePackageDirectory = resolve(
 const packageDirectory = resolve(import.meta.dir, "..");
 const tscExecutable = resolve(
 	import.meta.dir,
-	"../../../node_modules/.bin",
+	"../../../../node_modules/.bin",
 	process.platform === "win32" ? "tsc.exe" : "tsc",
 );
 

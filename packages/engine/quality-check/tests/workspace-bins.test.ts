@@ -3,17 +3,20 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { isJsonObject } from "@yuu1111/shared/json";
 
-const repositoryRoot = join(import.meta.dir, "..", "..", "..");
+const repositoryRoot = join(import.meta.dir, "..", "..", "..", "..");
 const packagesRoot = join(repositoryRoot, "packages");
+const packageGroups = ["config", "engine"];
 
 /**
  * packages配下のworkspace packageのディレクトリを返す
  */
 function packageDirectories(): string[] {
-	return readdirSync(packagesRoot, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory())
-		.map((entry) => join(packagesRoot, entry.name))
-		.filter((directory) => existsSync(join(directory, "package.json")));
+	return packageGroups.flatMap((group) =>
+		readdirSync(join(packagesRoot, group), { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => join(packagesRoot, group, entry.name))
+			.filter((directory) => existsSync(join(directory, "package.json"))),
+	);
 }
 
 /**

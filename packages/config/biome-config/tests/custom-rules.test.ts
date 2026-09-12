@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 const temporaryDirectory = mkdtempSync(resolve(tmpdir(), "biome-config-"));
 const biomeExecutable = resolve(
 	import.meta.dir,
-	"../../../node_modules/.bin",
+	"../../../../node_modules/.bin",
 	process.platform === "win32" ? "biome.exe" : "biome",
 );
 afterAll(() => {

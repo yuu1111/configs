@@ -46,35 +46,35 @@ jobs:
         run: |
           case "$RELEASE_TAG" in
             biome-config-v*)
-              package_dir="packages/biome-config"
+              package_dir="packages/config/biome-config"
               release_version="${RELEASE_TAG#biome-config-v}"
               ;;
             tsconfig-v*)
-              package_dir="packages/tsconfig"
+              package_dir="packages/config/tsconfig"
               release_version="${RELEASE_TAG#tsconfig-v}"
               ;;
             code-style-check-v*)
-              package_dir="packages/code-style-check"
+              package_dir="packages/engine/code-style-check"
               release_version="${RELEASE_TAG#code-style-check-v}"
               ;;
             comment-check-v*)
-              package_dir="packages/comment-check"
+              package_dir="packages/engine/comment-check"
               release_version="${RELEASE_TAG#comment-check-v}"
               ;;
             tsdoc-check-v*)
-              package_dir="packages/tsdoc-check"
+              package_dir="packages/engine/tsdoc-check"
               release_version="${RELEASE_TAG#tsdoc-check-v}"
               ;;
             document-style-check-v*)
-              package_dir="packages/document-style-check"
+              package_dir="packages/engine/document-style-check"
               release_version="${RELEASE_TAG#document-style-check-v}"
               ;;
             quality-check-v*)
-              package_dir="packages/quality-check"
+              package_dir="packages/engine/quality-check"
               release_version="${RELEASE_TAG#quality-check-v}"
               ;;
             knip-config-v*)
-              package_dir="packages/knip-config"
+              package_dir="packages/config/knip-config"
               release_version="${RELEASE_TAG#knip-config-v}"
               ;;
             *)

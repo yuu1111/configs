@@ -5,15 +5,20 @@ npm パッケージとして publish する
 
 ## 構成
 
-- `packages/biome-config` - @yuu1111/biome-config (共有 Biome 設定)
-- `packages/tsconfig` - @yuu1111/tsconfig (共有 TypeScript 設定)
-- `packages/code-style-check` - @yuu1111/code-style-check (関数定義の間隔の検査)
-- `packages/comment-check` - @yuu1111/comment-check (comment と抑制の検査)
-- `packages/document-style-check` - @yuu1111/document-style-check (Markdownの機械的違反の検査と文体判断の検証記録)
-- `packages/knip-config` - @yuu1111/knip-config (共有 Knip 設定)
-- `packages/tsdoc-check` - @yuu1111/tsdoc-check (TSDoc の構文と公開契約の検査)
-- `packages/quality-check` - @yuu1111/quality-check (engine 起動と baseline の統合 CLI)
-- `packages/shared` - @yuu1111/shared (検査engineの共通処理、privateでpublishしない)
+### config
+
+- `packages/config/biome-config` - @yuu1111/biome-config (共有 Biome 設定)
+- `packages/config/tsconfig` - @yuu1111/tsconfig (共有 TypeScript 設定)
+- `packages/config/knip-config` - @yuu1111/knip-config (共有 Knip 設定)
+
+### engine
+
+- `packages/engine/code-style-check` - @yuu1111/code-style-check (関数定義の間隔の検査)
+- `packages/engine/comment-check` - @yuu1111/comment-check (comment と抑制の検査)
+- `packages/engine/document-style-check` - @yuu1111/document-style-check (Markdownの機械的違反の検査と文体判断の検証記録)
+- `packages/engine/tsdoc-check` - @yuu1111/tsdoc-check (TSDoc の構文と公開契約の検査)
+- `packages/engine/quality-check` - @yuu1111/quality-check (engine 起動と baseline の統合 CLI)
+- `packages/engine/shared` - @yuu1111/shared (検査engineの共通処理、privateでpublishしない)
 
 ## ツールチェーン
 
@@ -32,6 +37,7 @@ npm パッケージとして publish する
 
 ## 注意点
 
+- package の配置は `packages/config/` (共有設定) と `packages/engine/` (検査engine) に分ける
 - Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
 - check engine は @yuu1111/shared を build 時に bundle して配布する (shared は private なので publish しない)

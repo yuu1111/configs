@@ -19,11 +19,11 @@
         "typescript": "^7.0.2",
       },
     },
-    "packages/biome-config": {
+    "packages/config/biome-config": {
       "name": "@yuu1111/biome-config",
       "version": "2.0.1",
     },
-    "packages/code-style-check": {
+    "packages/engine/code-style-check": {
       "name": "@yuu1111/code-style-check",
       "version": "0.1.0",
       "bin": {
@@ -37,7 +37,7 @@
         "@yuu1111/shared": "workspace:*",
       },
     },
-    "packages/comment-check": {
+    "packages/engine/comment-check": {
       "name": "@yuu1111/comment-check",
       "version": "2.2.1",
       "bin": {
@@ -47,7 +47,7 @@
         "@yuu1111/shared": "workspace:*",
       },
     },
-    "packages/document-style-check": {
+    "packages/engine/document-style-check": {
       "name": "@yuu1111/document-style-check",
       "version": "0.3.2",
       "bin": {
@@ -57,7 +57,7 @@
         "@yuu1111/shared": "workspace:*",
       },
     },
-    "packages/knip-config": {
+    "packages/config/knip-config": {
       "name": "@yuu1111/knip-config",
       "version": "1.0.6",
       "devDependencies": {
@@ -70,7 +70,7 @@
         "knip",
       ],
     },
-    "packages/quality-check": {
+    "packages/engine/quality-check": {
       "name": "@yuu1111/quality-check",
       "version": "0.7.1",
       "bin": {
@@ -80,15 +80,15 @@
         "@yuu1111/shared": "workspace:*",
       },
     },
-    "packages/shared": {
+    "packages/engine/shared": {
       "name": "@yuu1111/shared",
       "version": "0.0.0",
     },
-    "packages/tsconfig": {
+    "packages/config/tsconfig": {
       "name": "@yuu1111/tsconfig",
       "version": "1.0.6",
     },
-    "packages/tsdoc-check": {
+    "packages/engine/tsdoc-check": {
       "name": "@yuu1111/tsdoc-check",
       "version": "2.0.2",
       "bin": {
@@ -265,23 +265,23 @@
 
     "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g=="],
 
-    "@yuu1111/biome-config": ["@yuu1111/biome-config@workspace:packages/biome-config"],
+    "@yuu1111/biome-config": ["@yuu1111/biome-config@workspace:packages/config/biome-config"],
 
-    "@yuu1111/code-style-check": ["@yuu1111/code-style-check@workspace:packages/code-style-check"],
+    "@yuu1111/code-style-check": ["@yuu1111/code-style-check@workspace:packages/engine/code-style-check"],
 
-    "@yuu1111/comment-check": ["@yuu1111/comment-check@workspace:packages/comment-check"],
+    "@yuu1111/comment-check": ["@yuu1111/comment-check@workspace:packages/engine/comment-check"],
 
-    "@yuu1111/document-style-check": ["@yuu1111/document-style-check@workspace:packages/document-style-check"],
+    "@yuu1111/document-style-check": ["@yuu1111/document-style-check@workspace:packages/engine/document-style-check"],
 
-    "@yuu1111/knip-config": ["@yuu1111/knip-config@workspace:packages/knip-config"],
+    "@yuu1111/knip-config": ["@yuu1111/knip-config@workspace:packages/config/knip-config"],
 
-    "@yuu1111/quality-check": ["@yuu1111/quality-check@workspace:packages/quality-check"],
+    "@yuu1111/quality-check": ["@yuu1111/quality-check@workspace:packages/engine/quality-check"],
 
-    "@yuu1111/shared": ["@yuu1111/shared@workspace:packages/shared"],
+    "@yuu1111/shared": ["@yuu1111/shared@workspace:packages/engine/shared"],
 
-    "@yuu1111/tsconfig": ["@yuu1111/tsconfig@workspace:packages/tsconfig"],
+    "@yuu1111/tsconfig": ["@yuu1111/tsconfig@workspace:packages/config/tsconfig"],
 
-    "@yuu1111/tsdoc-check": ["@yuu1111/tsdoc-check@workspace:packages/tsdoc-check"],
+    "@yuu1111/tsdoc-check": ["@yuu1111/tsdoc-check@workspace:packages/engine/tsdoc-check"],
 
     "bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
 

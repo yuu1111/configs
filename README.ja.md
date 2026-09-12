@@ -8,13 +8,13 @@ npmへ公開する共有設定package
 
 | Package | Description |
 |---------|-------------|
-| [`@yuu1111/biome-config`](packages/biome-config) | 共有の [Biome](https://biomejs.dev/) 設定 |
-| [`@yuu1111/comment-check`](packages/comment-check) | baselineを持つcomment検査 |
-| [`@yuu1111/document-style-check`](packages/document-style-check) | 判断記録を持つMarkdown検査 |
-| [`@yuu1111/knip-config`](packages/knip-config) | 共有の [Knip](https://knip.dev/) 設定 |
-| [`@yuu1111/quality-check`](packages/quality-check) | engineをまとめて起動する統合CLI |
-| [`@yuu1111/tsconfig`](packages/tsconfig) | 共有のTypeScript設定 |
-| [`@yuu1111/tsdoc-check`](packages/tsdoc-check) | exported宣言のTSDoc検査 |
+| [`@yuu1111/biome-config`](packages/config/biome-config) | 共有の [Biome](https://biomejs.dev/) 設定 |
+| [`@yuu1111/comment-check`](packages/engine/comment-check) | baselineを持つcomment検査 |
+| [`@yuu1111/document-style-check`](packages/engine/document-style-check) | 判断記録を持つMarkdown検査 |
+| [`@yuu1111/knip-config`](packages/config/knip-config) | 共有の [Knip](https://knip.dev/) 設定 |
+| [`@yuu1111/quality-check`](packages/engine/quality-check) | engineをまとめて起動する統合CLI |
+| [`@yuu1111/tsconfig`](packages/config/tsconfig) | 共有のTypeScript設定 |
+| [`@yuu1111/tsdoc-check`](packages/engine/tsdoc-check) | exported宣言のTSDoc検査 |
 
 ## Development
 
@@ -32,7 +32,7 @@ bunx biome check --write .   # auto-fix
 公開はGitHub Releaseの作成時にnpm Trusted Publisher経由で走る 選んだpackageのversionと一致するpackage固有のtagを使う
 
 ```bash
-cd packages/biome-config
+cd packages/config/biome-config
 npm version patch --no-git-tag-version
 # Commit and push the version change, then publish biome-config-vX.Y.Z on GitHub.
 ```
