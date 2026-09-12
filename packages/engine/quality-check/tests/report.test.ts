@@ -44,19 +44,28 @@ describe("quality report", () => {
 	});
 
 	test("lists the failed and passed engines", () => {
-		const summary = formatSummary([
-			result("biome", "passed"),
-			result("knip", "failed"),
-			result("comment-check", "error"),
-		]);
-		expect(summary).toContain("2 of 3 engines failed");
+		const summary = formatSummary(
+			[
+				result("biome", "passed"),
+				result("knip", "failed"),
+				result("comment-check", "error"),
+			],
+			4210,
+		);
+		expect(summary).toContain("2 of 3 engines failed (4210ms)");
 		expect(summary).toContain("failed: knip, comment-check");
 		expect(summary).toContain("passed: biome");
 	});
 
 	test("reports a clean run", () => {
-		expect(formatSummary([result("biome", "passed")])).toBe(
-			"quality-check: 1 engines passed",
+		expect(formatSummary([result("biome", "passed")], 1500)).toBe(
+			"quality-check: 1 engines passed (1500ms)",
+		);
+	});
+
+	test("rounds the elapsed time to whole milliseconds", () => {
+		expect(formatSummary([result("biome", "passed")], 12.6)).toBe(
+			"quality-check: 1 engines passed (13ms)",
 		);
 	});
 
@@ -87,15 +96,20 @@ describe("quality report", () => {
 	});
 
 	test("paints the failed summary", () => {
-		const summary = formatSummary([result("biome", "failed")], ansiPainter());
+		const summary = formatSummary(
+			[result("biome", "failed")],
+			4210,
+			ansiPainter(),
+		);
 		expect(summary).toContain("\u001b[31m");
 	});
 
 	test("reports the failed engines as JSON", () => {
-		const report = toJsonReport([
-			result("biome", "passed"),
-			result("knip", "failed"),
-		]) as { failed: string[] };
+		const report = toJsonReport(
+			[result("biome", "passed"), result("knip", "failed")],
+			4210,
+		) as { elapsedMs: number; failed: string[] };
 		expect(report.failed).toEqual(["knip"]);
+		expect(report.elapsedMs).toBe(4210);
 	});
 });

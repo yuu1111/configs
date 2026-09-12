@@ -50,7 +50,7 @@ export default defineConfig({
 });
 ```
 
-engineごとの出力と集約summaryを並べて出し、どのengineが失敗したかを1回の実行で示す
+engineごとの出力と集約summaryを並べて出し、どのengineが失敗したかと実行にかかった合計時間を1回の実行で示す
 
 ```text
 == biome ==
@@ -61,7 +61,7 @@ biome: passed (exit 0)
 src/queue.ts:18:2 placeholder-comment placeholder comment should be resolved or tracked
 comment-check: failed (1 new, 0 resolved, 0 warnings)
 
-quality-check: 1 of 3 engines failed
+quality-check: 1 of 3 engines failed (1250ms)
   failed: comment-check
   passed: biome, tsdoc-check
 ```

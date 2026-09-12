@@ -55,10 +55,18 @@ export function formatEngineSection(
 }
 
 /**
+ * 実行時間をsummaryへ添える表記にする
+ */
+function formatElapsed(elapsedMs: number): string {
+	return ` (${Math.round(elapsedMs)}ms)`;
+}
+
+/**
  * 失敗したengineを列挙した集約summaryを組み立てる
  */
 export function formatSummary(
 	results: EngineResult[],
+	elapsedMs: number,
 	paint: Painter = plainPainter,
 ): string {
 	const failed = results
@@ -67,12 +75,16 @@ export function formatSummary(
 	const passed = results
 		.filter((result) => result.status === "passed")
 		.map((result) => result.name);
+	const elapsed = formatElapsed(elapsedMs);
 	if (failed.length === 0) {
-		return paint(`quality-check: ${results.length} engines passed`, "pass");
+		return paint(
+			`quality-check: ${results.length} engines passed${elapsed}`,
+			"pass",
+		);
 	}
 	const lines = [
 		paint(
-			`quality-check: ${failed.length} of ${results.length} engines failed`,
+			`quality-check: ${failed.length} of ${results.length} engines failed${elapsed}`,
 			"error",
 		),
 		`  ${paint("failed:", "error")} ${failed.join(", ")}`,
@@ -86,8 +98,12 @@ export function formatSummary(
 /**
  * engineの結果をJSONへ変換する
  */
-export function toJsonReport(results: EngineResult[]): unknown {
+export function toJsonReport(
+	results: EngineResult[],
+	elapsedMs: number,
+): unknown {
 	return {
+		elapsedMs: Math.round(elapsedMs),
 		engines: results.map((result) => ({
 			detected: result.detected.length,
 			exitCode: result.exitCode,

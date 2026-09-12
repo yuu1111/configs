@@ -81,6 +81,7 @@ async function main(argv: string[]): Promise<number> {
 	}
 	const config = await loadConfig(configPath);
 	const baselinePath = resolveBaselinePath(options, config, cwd);
+	const startedAt = performance.now();
 	const results = await runEngines({
 		baseline:
 			options.update || baselinePath === null
@@ -92,6 +93,7 @@ async function main(argv: string[]): Promise<number> {
 		overrides: { ignore: options.ignores, targets: options.targets },
 		rawBaseline: join(tmpdir(), `quality-check-raw-${process.pid}.json`),
 	});
+	const elapsedMs = performance.now() - startedAt;
 	if (options.update) {
 		if (baselinePath === null) {
 			console.error("baseline is disabled by the configuration");
@@ -110,12 +112,12 @@ async function main(argv: string[]): Promise<number> {
 		return 0;
 	}
 	if (options.json) {
-		console.log(JSON.stringify(toJsonReport(results), null, "\t"));
+		console.log(JSON.stringify(toJsonReport(results, elapsedMs), null, "\t"));
 	} else {
 		for (const result of results) {
 			console.log(formatEngineSection(result, paint));
 		}
-		console.log(formatSummary(results, paint));
+		console.log(formatSummary(results, elapsedMs, paint));
 	}
 	return results.some((result) => result.status !== "passed") ? 1 : 0;
 }

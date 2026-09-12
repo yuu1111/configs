@@ -54,7 +54,7 @@ export default defineConfig({
 ```
 
 Each engine prints its own section, and the summary names the engines that
-failed:
+failed and the total time the run took:
 
 ```text
 == biome ==
@@ -65,7 +65,7 @@ biome: passed (exit 0)
 src/queue.ts:18:2 placeholder-comment placeholder comment should be resolved or tracked
 comment-check: failed (1 new, 0 resolved, 0 warnings)
 
-quality-check: 1 of 3 engines failed
+quality-check: 1 of 3 engines failed (1250ms)
   failed: comment-check
   passed: biome, tsdoc-check
 ```
