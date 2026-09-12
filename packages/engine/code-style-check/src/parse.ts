@@ -1,5 +1,13 @@
 import { type ParserPlugin, parse } from "@babel/parser";
-import type { Expression, Node, PrivateName } from "@babel/types";
+import type {
+	ClassMethod,
+	ClassPrivateMethod,
+	Expression,
+	Node,
+	PrivateName,
+	VariableDeclarator,
+} from "@babel/types";
+import type { DefinitionKind } from "./rules";
 
 /**
  * 1始まりの行と桁
@@ -10,16 +18,17 @@ export interface Position {
 }
 
 /**
- * 空行で区切る対象になる関数定義1件の名前と原文上の範囲
+ * 空行で区切る対象になる定義1件の種類と名前と原文上の範囲
  */
 export interface Definition extends Position {
 	end: number;
+	kind: DefinitionKind;
 	name: string;
 	start: number;
 }
 
 /**
- * 同じ並びの中で隣接する関数定義の組
+ * 同じ並びの中で隣接する定義の組
  */
 export interface DefinitionPair {
 	next: Definition;
@@ -28,6 +37,7 @@ export interface DefinitionPair {
 
 interface Candidate {
 	end: number;
+	kind: DefinitionKind;
 	name: string;
 	start: number;
 }
@@ -84,24 +94,82 @@ function methodName(key: Expression | PrivateName): string {
 	return "method";
 }
 
+function methodKind(node: ClassMethod | ClassPrivateMethod): DefinitionKind {
+	if (node.kind === "constructor") {
+		return "constructor";
+	}
+	if (node.kind === "get") {
+		return "getter";
+	}
+	if (node.kind === "set") {
+		return "setter";
+	}
+	return "method";
+}
+
+function entityName(id: Node): string {
+	if (id.type === "Identifier") {
+		return id.name;
+	}
+	if (id.type === "ThisExpression") {
+		return "this";
+	}
+	if (id.type === "TSQualifiedName") {
+		return `${entityName(id.left)}.${id.right.name}`;
+	}
+	return "namespace";
+}
+
+function moduleName(id: Node): string {
+	return id.type === "StringLiteral" ? id.value : entityName(id);
+}
+
+function variableName(declarations: readonly VariableDeclarator[]): string {
+	const names: string[] = [];
+	for (const declaration of declarations) {
+		if (declaration.id.type !== "Identifier") {
+			return "variable";
+		}
+		names.push(declaration.id.name);
+	}
+	return names.length > 0 ? names.join(", ") : "variable";
+}
+
 function candidateOf(node: Node): Candidate | null {
 	const start = node.start ?? 0;
 	const end = node.end ?? start;
-	if (node.type === "FunctionDeclaration") {
-		if (node.body === null) {
+	switch (node.type) {
+		case "FunctionDeclaration":
+			return node.body === null
+				? null
+				: { end, kind: "function", name: node.id?.name ?? "default", start };
+		case "ClassDeclaration":
+			return { end, kind: "class", name: node.id?.name ?? "default", start };
+		case "VariableDeclaration":
+			return {
+				end,
+				kind: "variable",
+				name: variableName(node.declarations),
+				start,
+			};
+		case "TSTypeAliasDeclaration":
+			return { end, kind: "type", name: node.id.name, start };
+		case "TSInterfaceDeclaration":
+			return { end, kind: "interface", name: node.id.name, start };
+		case "TSEnumDeclaration":
+			return { end, kind: "enum", name: node.id.name, start };
+		case "TSModuleDeclaration":
+			return node.body === undefined || node.body === null
+				? null
+				: { end, kind: "namespace", name: moduleName(node.id), start };
+		case "ClassMethod":
+		case "ClassPrivateMethod":
+			return node.body === null
+				? null
+				: { end, kind: methodKind(node), name: methodName(node.key), start };
+		default:
 			return null;
-		}
-		return { end, name: node.id?.name ?? "default", start };
 	}
-	if (node.type === "ClassMethod" || node.type === "ClassPrivateMethod") {
-		if (node.body === null) {
-			return null;
-		}
-		const name =
-			node.kind === "constructor" ? "constructor" : methodName(node.key);
-		return { end, name, start };
-	}
-	return null;
 }
 
 function elementCandidate(node: Node): Candidate | null {
@@ -125,6 +193,7 @@ function elementCandidate(node: Node): Candidate | null {
 	}
 	return {
 		end: node.end ?? inner.end,
+		kind: inner.kind,
 		name: inner.name,
 		start: node.start ?? inner.start,
 	};
@@ -201,11 +270,11 @@ function parserPlugins(fileName: string): ParserPlugin[] {
 }
 
 /**
- * 同じ並びの中で隣接する関数定義の組を集める
+ * 同じ並びの中で隣接する定義の組を集める
  *
- * @param source - 関数定義を解析するsource文字列
+ * @param source - 定義を解析するsource文字列
  * @param fileName - 使用するparser pluginをfile名から決めるためのpath
- * @returns 同じ並びで隣接する関数定義の組
+ * @returns 同じ並びで隣接する定義の組
  */
 export function collectAdjacentDefinitions(
 	source: string,

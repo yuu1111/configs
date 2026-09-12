@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { classifyGap, countBlankLines } from "../src/rules";
+import {
+	classifyGap,
+	countBlankLines,
+	describeDefinition,
+	requiresBlankLine,
+} from "../src/rules";
 
 describe("countBlankLines", () => {
 	test("counts the empty lines between two definitions", () => {
@@ -24,21 +29,64 @@ describe("countBlankLines", () => {
 	});
 });
 
+describe("requiresBlankLine", () => {
+	test("requires a blank line between definitions of the same kind", () => {
+		expect(requiresBlankLine("function", "function")).toBe(true);
+		expect(requiresBlankLine("type", "type")).toBe(true);
+		expect(requiresBlankLine("method", "method")).toBe(true);
+	});
+
+	test("requires a blank line between definitions of different kinds", () => {
+		expect(requiresBlankLine("variable", "type")).toBe(true);
+		expect(requiresBlankLine("interface", "variable")).toBe(true);
+		expect(requiresBlankLine("function", "variable")).toBe(true);
+	});
+
+	test("allows adjacent variable declarations", () => {
+		expect(requiresBlankLine("variable", "variable")).toBe(false);
+	});
+});
+
+describe("describeDefinition", () => {
+	test("combines the kind and the name", () => {
+		expect(describeDefinition("type", "ExportResult")).toBe(
+			"type definition ExportResult",
+		);
+		expect(describeDefinition("variable", "value")).toBe(
+			"variable declaration value",
+		);
+	});
+
+	test("names a constructor without repeating the name", () => {
+		expect(describeDefinition("constructor", "constructor")).toBe(
+			"constructor",
+		);
+	});
+});
+
 describe("classifyGap", () => {
 	test("accepts a single blank line", () => {
-		expect(classifyGap(1, "load")).toBeNull();
+		expect(classifyGap(1, "function", "load")).toBeNull();
 	});
 
 	test("requires a blank line when it is missing", () => {
-		expect(classifyGap(0, "load")).toEqual({
+		expect(classifyGap(0, "function", "load")).toEqual({
 			message:
 				"the function definition load needs a single blank line before it",
 			severity: "error",
 		});
 	});
 
+	test("names the kind of the following definition", () => {
+		expect(classifyGap(0, "type", "ExportResult")).toEqual({
+			message:
+				"the type definition ExportResult needs a single blank line before it",
+			severity: "error",
+		});
+	});
+
 	test("warns about more than one blank line", () => {
-		expect(classifyGap(2, "load")).toEqual({
+		expect(classifyGap(2, "function", "load")).toEqual({
 			message:
 				"the function definition load has more than one blank line before it",
 			severity: "warning",

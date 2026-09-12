@@ -3,7 +3,7 @@
 # @yuu1111/code-style-check
 
 A small source style checker without a baseline.
-It keeps one blank line between adjacent function definitions.
+It keeps one blank line between adjacent definitions.
 
 ## Install
 
@@ -19,7 +19,7 @@ code-style-check --ignore generated src
 ```
 
 ```text
-src/worker.ts:8:1 blank-line-between-functions error the function definition submitRootMessage needs a single blank line before it
+src/worker.ts:8:1 blank-line-between-definitions error the function definition submitRootMessage needs a single blank line before it
 Checked 42 files: 1 errors, 0 warnings
 ```
 
@@ -27,12 +27,15 @@ Checked 42 files: 1 errors, 0 warnings
 
 | Rule | Severity | Default | Detects |
 |------|----------|---------|---------|
-| `blank-line-between-functions` | error | true | Adjacent function definitions have no blank line |
-| `blank-line-between-functions` | warning | true | Adjacent function definitions have more than one blank line |
+| `blank-line-between-definitions` | error | true | Adjacent definitions have no blank line |
+| `blank-line-between-definitions` | warning | true | Adjacent definitions have more than one blank line |
 
 ## Definitions that are checked
 
 - `function` declarations, including `export`, `async`, and generators
+- `class` declarations
+- `type`, `interface`, `enum`, and `namespace` declarations
+- `const`, `let`, and `var` declarations
 - Class constructors, methods, getters, and setters, private ones included
 
 These are not treated as definitions:
@@ -40,21 +43,16 @@ These are not treated as definitions:
 - Overload signatures and abstract methods (declarations without a body)
 - Interface method signatures
 - Object literal methods
-- Arrow functions assigned to variables
+- Imports, re-exports, and any other statement that is not a declaration
 - A pair with another statement between it, since it is not adjacent
+
+A pair of two variable declarations does not need a blank line, so variable declarations may be grouped.
 
 ## How the blank line is counted
 
 The rule requires exactly one consecutive whitespace-only line between the end of a definition and the start of the next one.
 
 A comment line in between is not counted as a blank line and breaks the run, so the blank line may sit above or below the comment.
-
-## Relation to other linters
-
-- Like Ruby's RuboCop `Layout/EmptyLineBetweenDefs`, only adjacent definitions are checked
-- Python's pycodestyle E302 and E305 require blank lines around every top-level definition, while this rule stays with adjacent pairs
-- Like Java's Checkstyle `EmptyLineSeparator`, class members count as definitions
-- The warning for too many blank lines follows pycodestyle E303 and rustfmt's `blank_lines_upper_bound`
 
 ## Options
 

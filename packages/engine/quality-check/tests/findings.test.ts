@@ -100,7 +100,7 @@ describe("engine findings", () => {
 						line: 5,
 						message:
 							"the function definition save needs a single blank line before it",
-						rule: "blank-line-between-functions",
+						rule: "blank-line-between-definitions",
 						severity: "error",
 					},
 				],
@@ -111,7 +111,7 @@ describe("engine findings", () => {
 						line: 12,
 						message:
 							"the function definition load has more than one blank line before it",
-						rule: "blank-line-between-functions",
+						rule: "blank-line-between-definitions",
 						severity: "warning",
 					},
 				],

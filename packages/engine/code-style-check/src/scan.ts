@@ -3,7 +3,12 @@ import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { collectAdjacentDefinitions, type DefinitionPair } from "./parse";
-import { classifyGap, countBlankLines, type Finding } from "./rules";
+import {
+	classifyGap,
+	countBlankLines,
+	type Finding,
+	requiresBlankLine,
+} from "./rules";
 
 /**
  * code-style-checkが検査する拡張子
@@ -29,21 +34,28 @@ function definitionsOf(source: string, file: string): DefinitionPair[] {
 }
 
 /**
- * source文字列の関数定義の間隔を検査する
+ * source文字列の定義の間隔を検査する
  *
- * @param source - 関数定義の間隔を検査するsource文字列
+ * @param source - 定義の間隔を検査するsource文字列
  * @param file - 指摘に載せるfileのpath
- * @returns 検出した関数定義の間隔の違反
+ * @returns 検出した定義の間隔の違反
  */
 export function scanSource(source: string, file: string): Finding[] {
 	const findings: Finding[] = [];
 	for (const pair of definitionsOf(source, file)) {
+		if (!requiresBlankLine(pair.previous.kind, pair.next.kind)) {
+			continue;
+		}
 		const blankLines = countBlankLines(
 			source,
 			pair.previous.end,
 			pair.next.start,
 		);
-		const classification = classifyGap(blankLines, pair.next.name);
+		const classification = classifyGap(
+			blankLines,
+			pair.next.kind,
+			pair.next.name,
+		);
 		if (classification === null) {
 			continue;
 		}
@@ -52,7 +64,7 @@ export function scanSource(source: string, file: string): Finding[] {
 			file,
 			line: pair.next.line,
 			message: classification.message,
-			rule: "blank-line-between-functions",
+			rule: "blank-line-between-definitions",
 			severity: classification.severity,
 		});
 	}
@@ -60,11 +72,11 @@ export function scanSource(source: string, file: string): Finding[] {
 }
 
 /**
- * fileを読み込んで関数定義の間隔を検査する
+ * fileを読み込んで定義の間隔を検査する
  *
  * @param file - 読み込んで検査するfileのpath
  * @param cwd - 指摘に載せる相対pathの基準directory
- * @returns 検出した関数定義の間隔の違反
+ * @returns 検出した定義の間隔の違反
  */
 export function scanFile(file: string, cwd = process.cwd()): Finding[] {
 	return scanSource(
@@ -78,7 +90,7 @@ export function scanFile(file: string, cwd = process.cwd()): Finding[] {
  *
  * @param files - 検査するfileのpath一覧
  * @param cwd - 指摘に載せる相対pathの基準directory
- * @returns 位置順に並べた関数定義の間隔の違反
+ * @returns 位置順に並べた定義の間隔の違反
  */
 export function scanFiles(files: string[], cwd = process.cwd()): Finding[] {
 	const findings: Finding[] = [];
