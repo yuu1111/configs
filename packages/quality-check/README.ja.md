@@ -35,9 +35,16 @@ export default defineConfig({
 		"tsdoc-check": true,
 	},
 	config: {
-		"comment-check": { enable: ["japanese-period"], ignore: ["another-project"] },
-		"document-style-check": { enable: ["japanese-period"] },
-		"tsdoc-check": { error: ["missing-doc"] },
+		"comment-check": {
+			enable: ["japanese-period"],
+			ignore: ["another-project"],
+		},
+		"document-style-check": {
+			enable: ["japanese-period"],
+		},
+		"tsdoc-check": {
+			error: ["missing-doc"],
+		},
 	},
 });
 ```
@@ -68,7 +75,7 @@ quality-check: 1 of 3 engines failed
 
 engineは `biome` → `typecheck` → `knip` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
 
-`engines` は起動の委任だけを表し、起動条件は `config` のengineの下へ置く engineが受け取る条件は次のとおり
+`engines` は起動の委任だけを表し、起動条件は `config` のengineの下へ置く engineごとの条件は複数行のobjectとして書き、ruleやoptionを足しても他のengineの行が動かないようにする engineが受け取る条件は次のとおり
 
 | engine | 起動するcommand | 受け取る条件 |
 |--------|-----------------|--------------|

@@ -38,9 +38,16 @@ export default defineConfig({
 		"tsdoc-check": true,
 	},
 	config: {
-		"comment-check": { enable: ["japanese-period"], ignore: ["another-project"] },
-		"document-style-check": { enable: ["japanese-period"] },
-		"tsdoc-check": { error: ["missing-doc"] },
+		"comment-check": {
+			enable: ["japanese-period"],
+			ignore: ["another-project"],
+		},
+		"document-style-check": {
+			enable: ["japanese-period"],
+		},
+		"tsdoc-check": {
+			error: ["missing-doc"],
+		},
 	},
 });
 ```
@@ -74,7 +81,8 @@ Engines run in the order `biome`, `typecheck`, `knip`, `comment-check`,
 `document-style-check`, `tsdoc-check`.
 
 `engines` only delegates the start-up, and the conditions belong under the
-engine in `config`. Each engine runs:
+engine in `config`. Write an engine's conditions as a multi-line object, so a
+new rule or option changes one engine's block alone. Each engine runs:
 
 | Engine | Command | Conditions |
 |--------|---------|------------|
