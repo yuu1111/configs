@@ -4,12 +4,7 @@
 	"scripts": {
 		"test": "bun test packages",
 		"format": "biome check --write --unsafe .",
-		"check:quality": "quality-check",
-		"knip": "knip",
-		"comment-check": "comment-check .",
-		"document-style-check": "document-style-check lint .",
-		"tsdoc-check": "tsdoc-check --error single-line-doc .",
-		"typecheck": "tsc --noEmit"
+		"check:quality": "quality-check"
 	},
 	"workspaces": [
 		"packages/*"
