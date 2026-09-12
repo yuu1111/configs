@@ -7,13 +7,13 @@
 	},
 	"plugins": [
 		{
-			"path": "../plugins/no-adapter-import.grit",
+			"path": "../plugins/scoped/no-adapter-import.grit",
 			"includes": [
 				"**/scoped-*.ts"
 			]
 		},
 		{
-			"path": "../plugins/no-direct-response.grit",
+			"path": "../plugins/scoped/no-direct-response.grit",
 			"includes": [
 				"**/response-*.ts"
 			]

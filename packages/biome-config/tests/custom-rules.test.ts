@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
@@ -326,30 +326,27 @@ crypto.createHash("sha256").update(content)
 	});
 });
 
-describe("preset hierarchy", () => {
-	test("child presets repeat every parent plugin", async () => {
-		const testConfig = await Bun.file(
-			resolve(import.meta.dir, "core.json"),
-		).json();
-		const core = await Bun.file(
-			resolve(import.meta.dir, "../plugins-core.json"),
-		).json();
-		const network = await Bun.file(
-			resolve(import.meta.dir, "../plugins-network.json"),
-		).json();
-		const discord = await Bun.file(
-			resolve(import.meta.dir, "../plugins-discord.json"),
-		).json();
+describe("preset layers", () => {
+	test("each preset lists only its own directory and the layers do not overlap", async () => {
+		const layers = ["core", "network", "discord"] as const;
+		const listed: string[] = [];
 
-		const pluginNames = (plugins: string[]) =>
-			plugins.map((plugin) => plugin.split("/").at(-1));
+		for (const layer of layers) {
+			const preset: { plugins: string[] } = await Bun.file(
+				resolve(import.meta.dir, `../plugins-${layer}.json`),
+			).json();
+			const names = preset.plugins
+				.map((plugin) => plugin.split("/").at(-1) ?? "")
+				.sort();
+			const files = readdirSync(resolve(import.meta.dir, `../plugins/${layer}`))
+				.filter((file) => file.endsWith(".grit"))
+				.sort();
 
-		expect(pluginNames(core.plugins)).toEqual(pluginNames(testConfig.plugins));
-		expect(network.plugins).toEqual(expect.arrayContaining(core.plugins));
-		expect(discord.plugins).toEqual(expect.arrayContaining(network.plugins));
-		expect(new Set(core.plugins).size).toBe(core.plugins.length);
-		expect(new Set(network.plugins).size).toBe(network.plugins.length);
-		expect(new Set(discord.plugins).size).toBe(discord.plugins.length);
+			expect(names).toEqual(files);
+			listed.push(...names);
+		}
+
+		expect(new Set(listed).size).toBe(listed.length);
 	});
 });
 

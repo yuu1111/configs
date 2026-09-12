@@ -40,25 +40,24 @@ CSS/Tailwind support included.
 
 ### Custom rule presets
 
-Custom rules are opt-in. Add one preset after the base or React configuration:
+Custom rules are opt-in. Each preset holds one layer of rules; add the layers the project needs after the base or React configuration:
 
 ```json
 {
   "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
   "extends": [
     "@yuu1111/biome-config/biome",
+    "@yuu1111/biome-config/plugins/core",
     "@yuu1111/biome-config/plugins/network"
   ]
 }
 ```
 
-Choose the most specific preset needed by the project:
-
 - `plugins/core` checks forwarding exports, incomplete implementations, type-safety bypasses, unsafe errno assertions, meaningless tests, pass-through wrappers, and ternaries used for side effects
-- `plugins/network` includes `core`, requires an `AbortSignal` for `fetch`, and checks cleanup for manually scheduled abort timeouts
-- `plugins/discord` includes `network` and checks dynamic Discord messages for explicit mention handling
+- `plugins/network` requires an `AbortSignal` for `fetch` and checks cleanup for manually scheduled abort timeouts
+- `plugins/discord` checks dynamic Discord messages for explicit mention handling
 
-Do not list parent presets separately. Each child preset includes its parent rules.
+A preset does not include the other layers, so list every layer the project needs.
 
 #### Core rules
 
@@ -114,7 +113,7 @@ cacheRequest.catch(() => null)
 {
 	"plugins": [
 		{
-			"path": "./node_modules/@yuu1111/biome-config/plugins/no-adapter-import.grit",
+			"path": "./node_modules/@yuu1111/biome-config/plugins/scoped/no-adapter-import.grit",
 			"includes": ["**/src/modules/authorization/**"]
 		}
 	]
@@ -140,7 +139,7 @@ Leave the layer that is allowed to reach the integration modules out of the patt
 {
 	"plugins": [
 		{
-			"path": "./node_modules/@yuu1111/biome-config/plugins/no-direct-response.grit",
+			"path": "./node_modules/@yuu1111/biome-config/plugins/scoped/no-direct-response.grit",
 			"includes": ["**/src/worker/routes/**"]
 		}
 	]

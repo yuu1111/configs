@@ -40,25 +40,24 @@ CSS/Tailwind対応を含む
 
 ### Custom rule presets
 
-Custom ruleはopt-in baseまたはReact設定の後ろにpresetを1つ足す
+Custom ruleはopt-in baseまたはReact設定の後ろに、必要な層のpresetを並べる
 
 ```json
 {
   "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
   "extends": [
     "@yuu1111/biome-config/biome",
+    "@yuu1111/biome-config/plugins/core",
     "@yuu1111/biome-config/plugins/network"
   ]
 }
 ```
 
-Projectに必要な最も具体的なpresetを選ぶ
-
 - `plugins/core` はforwarding export、未完成実装、型安全の迂回、安全でないerrno assertion、無意味なtest、pass-through wrapper、副作用目的のternaryを検査する
-- `plugins/network` は `core` を含み、`fetch` に `AbortSignal` を要求し、手動で予約したabort timeoutの後始末を検査する
-- `plugins/discord` は `network` を含み、動的なDiscord messageに明示的なmention処理があるかを検査する
+- `plugins/network` は `fetch` に `AbortSignal` を要求し、手動で予約したabort timeoutの後始末を検査する
+- `plugins/discord` は動的なDiscord messageに明示的なmention処理があるかを検査する
 
-親presetを別に並べない 子presetは親のruleを含む
+presetは他の層を含まないため、Projectに必要な層をすべて並べる
 
 #### Core rules
 
@@ -114,7 +113,7 @@ cacheRequest.catch(() => null)
 {
 	"plugins": [
 		{
-			"path": "./node_modules/@yuu1111/biome-config/plugins/no-adapter-import.grit",
+			"path": "./node_modules/@yuu1111/biome-config/plugins/scoped/no-adapter-import.grit",
 			"includes": ["**/src/modules/authorization/**"]
 		}
 	]
@@ -140,7 +139,7 @@ pluginは `includes` に一致したfileだけで走るため、同じimportはa
 {
 	"plugins": [
 		{
-			"path": "./node_modules/@yuu1111/biome-config/plugins/no-direct-response.grit",
+			"path": "./node_modules/@yuu1111/biome-config/plugins/scoped/no-direct-response.grit",
 			"includes": ["**/src/worker/routes/**"]
 		}
 	]

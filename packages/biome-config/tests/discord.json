@@ -6,6 +6,6 @@
 		}
 	},
 	"plugins": [
-		"../plugins/no-unsafe-dynamic-discord-message.grit"
+		"../plugins/discord/no-unsafe-dynamic-discord-message.grit"
 	]
 }

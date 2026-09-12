@@ -1,14 +1,7 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
 	"plugins": [
-		"./node_modules/@yuu1111/biome-config/plugins/no-reexports.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/no-incomplete-implementation.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/no-type-safety-bypass.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/no-unsafe-errno-assertion.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/no-meaningless-test.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/no-useless-abstraction.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/no-ternary-statement.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/require-fetch-abort-signal.grit",
-		"./node_modules/@yuu1111/biome-config/plugins/require-abort-timeout-cleanup.grit"
+		"./node_modules/@yuu1111/biome-config/plugins/network/require-fetch-abort-signal.grit",
+		"./node_modules/@yuu1111/biome-config/plugins/network/require-abort-timeout-cleanup.grit"
 	]
 }
