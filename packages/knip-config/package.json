@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/knip-config",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "Shared Knip configuration",
 	"repository": {
 		"type": "git",
