@@ -35,6 +35,11 @@ npm パッケージとして publish する
 - `bunx biome check --write .` - 自動修正
 - `bun pm version patch/minor/major --no-git-tag-version` - バージョン更新 (各パッケージディレクトリで実行)
 
+## ドキュメント
+
+- packageのREADMEは `templates/package-readme.style.md` の記法に従い、`templates/package-readme.template.md` をひな形にする
+- `README.md` を正本、`README.ja.md` を同じ見出し構成の日本語版として並べる
+
 ## 注意点
 
 - package の配置は `packages/config/` (共有設定) と `packages/engine/` (検査engine) に分ける
