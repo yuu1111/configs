@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ansiPainter } from "../src/color";
+import { ansiPainter } from "@yuu1111/shared/color";
 import {
 	formatEngineSection,
 	formatSummary,

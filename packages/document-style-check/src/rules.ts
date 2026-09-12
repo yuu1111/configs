@@ -1,3 +1,4 @@
+import type { Located, Severity } from "@yuu1111/shared/findings";
 import { type MarkdownLine, markdownLines } from "./audit";
 
 /**
@@ -17,17 +18,9 @@ export const RULE_IDS = [
 export type RuleId = (typeof RULE_IDS)[number];
 
 /**
- * 指摘の重大度
- */
-export type Severity = "error" | "warning";
-
-/**
  * 検出した違反1件の内容と位置
  */
-export interface Finding {
-	column: number;
-	file: string;
-	line: number;
+export interface Finding extends Located {
 	message: string;
 	rule: RuleId;
 	severity: Severity;

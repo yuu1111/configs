@@ -22,6 +22,7 @@ Bun workspaceのmonorepo Biomeは自分の設定で自分をlintするself-hosti
 
 ```bash
 bun install            # install + link workspaces
+bun run build          # 公開するcheck packageへ @yuu1111/shared を同梱する
 bunx biome check .     # lint / format check
 bunx biome check --write .   # auto-fix
 ```
@@ -42,7 +43,4 @@ npm version patch --no-git-tag-version
 
 - biome-configのpreset file名は `base.json` / `react.json` にし、Biomeのnested config検出を避けるため `biome.json` にはしない
 - ルートの `devDependencies` はworkspace packageを `workspace:*` で参照し、symlink経由で自分の設定をdogfoodする
-
-## License
-
-MIT
+- `@yuu1111/shared` はprivateにし、公開するcheck packageへbuild時に同梱する 公開物にruntime依存として残さない

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { parseConfig } from "../src/config";
 import {
 	buildEngineCommand,
+	buildEngineCommands,
 	type EngineCommandContext,
 	resolveExecutable,
 	skippedEngineOptions,
@@ -67,6 +68,28 @@ describe("engine commands", () => {
 		expect(buildEngineCommand("typecheck", "tsc", createContext())).toEqual([
 			"tsc",
 			"--noEmit",
+		]);
+	});
+
+	test("runs the type checker once per tsconfig", () => {
+		const context = createContext();
+		context.color = true;
+		context.config = parseConfig(
+			{
+				config: { typecheck: { projects: [".", "examples/client"] } },
+				engines: { typecheck: true },
+			},
+			"test",
+		);
+		expect(buildEngineCommands("typecheck", "tsc", context)).toEqual([
+			["tsc", "--noEmit", "--project", ".", "--pretty"],
+			["tsc", "--noEmit", "--project", "examples/client", "--pretty"],
+		]);
+	});
+
+	test("runs the type checker on the current tsconfig without projects", () => {
+		expect(buildEngineCommands("typecheck", "tsc", createContext())).toEqual([
+			["tsc", "--noEmit"],
 		]);
 	});
 
@@ -176,7 +199,7 @@ describe("engine limits", () => {
 			"targets skipped (knip analyzes the whole project)",
 		]);
 		expect(skippedEngineOptions("typecheck", { targets: ["src"] })).toEqual([
-			"targets skipped (tsc checks the project named by tsconfig.json)",
+			"targets skipped (tsconfig.json and projects hold its settings)",
 		]);
 	});
 

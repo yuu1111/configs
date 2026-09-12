@@ -1,3 +1,4 @@
+import type { Located, Severity } from "@yuu1111/shared/findings";
 import {
 	type Declaration,
 	type Position,
@@ -18,11 +19,6 @@ export type TsdocRule =
 	| "tsdoc-syntax"
 	| "tsdoc-tag"
 	| "type-param-mismatch";
-/**
- * 指摘の重大度
- */
-export type Severity = "error" | "warning";
-
 /**
  * 抑制commentと--errorで指定できるrule名の一覧
  */
@@ -47,10 +43,7 @@ const TAG_MESSAGE_IDS = new Set(["tsdoc-undefined-tag"]);
 /**
  * 検出したTSDoc違反1件の内容と位置
  */
-export interface Finding {
-	column: number;
-	file: string;
-	line: number;
+export interface Finding extends Located {
 	message: string;
 	rule: TsdocRule;
 	severity: Severity;

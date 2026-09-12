@@ -1,12 +1,13 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import type { NormalizedFinding } from "./findings";
+import { isJsonObject } from "./json";
 
 /**
  * baselineへ記録する検出1件の識別情報と件数
  */
 export interface BaselineEntry {
 	count: number;
-	engine: string;
+	/** 検出元のengine 単一engineのbaselineでは省略する */
+	engine?: string;
 	file: string;
 	rule: string;
 	text: string;
@@ -23,42 +24,28 @@ export interface BaselineFile {
 /**
  * baselineと現在の検出を比較した結果
  */
-export interface BaselineComparison {
-	added: NormalizedFinding[];
+export interface BaselineComparison<TFinding> {
+	added: TFinding[];
 	resolved: BaselineEntry[];
 }
 
-type JsonObject = Record<string, unknown>;
-
 /**
- * 検出をbaseline上で一意に識別するkeyに使う項目
+ * 検出をbaseline上で一意に識別する項目
  */
 export interface BaselineKey {
-	engine: string;
+	engine?: string;
 	file: string;
 	rule: string;
 	text: string;
 }
 
-function isJsonObject(value: unknown): value is JsonObject {
-	return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isBaselineEntry(value: unknown): value is BaselineEntry {
-	if (!isJsonObject(value)) {
-		return false;
-	}
-	return (
-		typeof value.engine === "string" &&
-		typeof value.rule === "string" &&
-		typeof value.file === "string" &&
-		typeof value.text === "string" &&
-		typeof value.count === "number"
+/**
+ * entryをbaseline上で一意に識別するkeyを返す
+ */
+export function entryKey(entry: BaselineKey): string {
+	return [entry.engine ?? "", entry.rule, entry.file, entry.text].join(
+		"\u0000",
 	);
-}
-
-function entryKey(entry: BaselineKey): string {
-	return [entry.engine, entry.rule, entry.file, entry.text].join("\u0000");
 }
 
 function compareEntries(left: BaselineEntry, right: BaselineEntry): number {
@@ -70,10 +57,23 @@ function compareEntries(left: BaselineEntry, right: BaselineEntry): number {
 	return leftKey < rightKey ? -1 : 1;
 }
 
+function toEntry(finding: BaselineKey): BaselineEntry {
+	const entry: BaselineEntry = {
+		count: 1,
+		file: finding.file,
+		rule: finding.rule,
+		text: finding.text,
+	};
+	if (finding.engine !== undefined) {
+		entry.engine = finding.engine;
+	}
+	return entry;
+}
+
 /**
- * 検出をengineとruleとfileと本文で集計してbaselineを作る
+ * 検出を識別項目ごとに件数付きで集計してbaselineを作る
  */
-export function createBaseline(findings: NormalizedFinding[]): BaselineFile {
+export function createBaseline(findings: readonly BaselineKey[]): BaselineFile {
 	const entries = new Map<string, BaselineEntry>();
 	for (const finding of findings) {
 		const key = entryKey(finding);
@@ -82,13 +82,7 @@ export function createBaseline(findings: NormalizedFinding[]): BaselineFile {
 			existing.count += 1;
 			continue;
 		}
-		entries.set(key, {
-			count: 1,
-			engine: finding.engine,
-			file: finding.file,
-			rule: finding.rule,
-			text: finding.text,
-		});
+		entries.set(key, toEntry(finding));
 	}
 	return { entries: [...entries.values()].sort(compareEntries), version: 1 };
 }
@@ -96,16 +90,16 @@ export function createBaseline(findings: NormalizedFinding[]): BaselineFile {
 /**
  * 現在の検出からbaseline済みを除き、解消済みentryを求める
  */
-export function compareWithBaseline(
-	findings: NormalizedFinding[],
+export function compareWithBaseline<TFinding extends BaselineKey>(
+	findings: readonly TFinding[],
 	baseline: BaselineFile,
-): BaselineComparison {
+): BaselineComparison<TFinding> {
 	const remaining = new Map<string, number>();
 	for (const entry of baseline.entries) {
 		const key = entryKey(entry);
 		remaining.set(key, (remaining.get(key) ?? 0) + entry.count);
 	}
-	const added: NormalizedFinding[] = [];
+	const added: TFinding[] = [];
 	for (const finding of findings) {
 		const key = entryKey(finding);
 		const count = remaining.get(key) ?? 0;
@@ -121,10 +115,23 @@ export function compareWithBaseline(
 	return { added, resolved };
 }
 
+function isBaselineEntry(value: unknown): value is BaselineEntry {
+	if (!isJsonObject(value)) {
+		return false;
+	}
+	return (
+		(value.engine === undefined || typeof value.engine === "string") &&
+		typeof value.file === "string" &&
+		typeof value.rule === "string" &&
+		typeof value.text === "string" &&
+		typeof value.count === "number"
+	);
+}
+
 /**
  * baseline fileを読み込む 存在しない場合は空のbaselineを返す
  */
-export function readBaseline(path: string): BaselineFile {
+export function readBaseline(path: string, label: string): BaselineFile {
 	if (!existsSync(path)) {
 		return { entries: [], version: 1 };
 	}
@@ -134,7 +141,7 @@ export function readBaseline(path: string): BaselineFile {
 		!Array.isArray(value.entries) ||
 		!value.entries.every(isBaselineEntry)
 	) {
-		throw new Error(`${path} is not a quality baseline`);
+		throw new Error(`${path} is not a ${label} baseline`);
 	}
 	return { entries: value.entries, version: 1 };
 }

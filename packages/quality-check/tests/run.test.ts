@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createBaseline } from "../src/baseline";
+import { createBaseline } from "@yuu1111/shared/baseline";
 import { parseConfig } from "../src/config";
 import type { EngineProcessResult, EngineRunner } from "../src/engines";
 import type { NormalizedFinding } from "../src/findings";
@@ -102,6 +102,57 @@ describe("engine orchestration", () => {
 		);
 		expect(results[0]?.status).toBe("error");
 		expect(results[0]?.message).toBe("biome could not finish");
+	});
+
+	test("runs the type checker once per project and keeps every output", async () => {
+		const commands: string[][] = [];
+		const results = await runEngines(
+			createOptions({
+				config: parseConfig(
+					{
+						config: { typecheck: { projects: [".", "examples/client"] } },
+						engines: { typecheck: true },
+					},
+					"test",
+				),
+				runner: async (command) => {
+					commands.push(command);
+					return {
+						exitCode: command.includes("examples/client") ? 1 : 0,
+						stderr: "",
+						stdout: "checked",
+					};
+				},
+			}),
+		);
+		expect(commands).toHaveLength(2);
+		expect(results[0]?.exitCode).toBe(1);
+		expect(results[0]?.status).toBe("failed");
+		expect(results[0]?.output).toBe(
+			[
+				"$ /fake/bin --noEmit --project .",
+				"checked",
+				"",
+				"$ /fake/bin --noEmit --project examples/client",
+				"checked",
+			].join("\n"),
+		);
+	});
+
+	test("keeps a single project output free of a command header", async () => {
+		const results = await runEngines(
+			createOptions({
+				config: parseConfig(
+					{
+						config: { typecheck: { projects: ["."] } },
+						engines: { typecheck: true },
+					},
+					"test",
+				),
+				runner: runnerFor({ exitCode: 0, stderr: "", stdout: "checked" }),
+			}),
+		);
+		expect(results[0]?.output).toBe("checked");
 	});
 
 	test("reports an engine that is not installed", async () => {

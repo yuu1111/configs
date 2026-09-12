@@ -48,9 +48,3 @@ export const value = 1
 
 A suppression without a reason, with an unknown rule, or without any rule is
 an error, and a suppression that covers nothing is a warning.
-
-## Notes
-
-The TSDoc parser reads the comment bodies and the checker reads the
-declarations with `@babel/parser`, because the compiler API of TypeScript 7 is
-not available to a standalone tool.

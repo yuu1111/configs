@@ -2,7 +2,6 @@
 	"name": "@yuu1111/biome-config",
 	"version": "2.0.0",
 	"description": "Shared Biome configuration",
-	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",

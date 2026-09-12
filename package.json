@@ -4,7 +4,8 @@
 	"scripts": {
 		"test": "bun test packages",
 		"format": "biome check --write --unsafe .",
-		"check:quality": "quality-check"
+		"build": "bun run --filter '@yuu1111/comment-check' build && bun run --filter '@yuu1111/tsdoc-check' build && bun run --filter '@yuu1111/document-style-check' build && bun run --filter '@yuu1111/quality-check' build",
+		"check:quality": "bun run build && quality-check"
 	},
 	"workspaces": [
 		"packages/*"

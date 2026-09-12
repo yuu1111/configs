@@ -1,7 +1,11 @@
-import { type BaselineFile, compareWithBaseline } from "./baseline";
+import {
+	type BaselineFile,
+	compareWithBaseline,
+} from "@yuu1111/shared/baseline";
 import { type EngineName, enabledEngines, type QualityConfig } from "./config";
 import {
 	buildEngineCommand,
+	buildEngineCommands,
 	ENGINE_BINS,
 	type EngineCommandContext,
 	type EngineProcessResult,
@@ -85,6 +89,55 @@ function describeError(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * 起動ごとの終了codeを1つへ寄せる 2は起動そのものの失敗として扱う
+ */
+function combineExitCode(codes: (number | null)[]): number | null {
+	if (codes.some((code) => code === 2)) {
+		return 2;
+	}
+	const failed = codes.find((code) => code !== 0);
+	return failed === undefined ? 0 : failed;
+}
+
+/**
+ * 1つのengineのために起動したコマンドとその結果
+ */
+interface ExecutedCommand {
+	command: string[];
+	result: EngineProcessResult;
+}
+
+/**
+ * engineのコマンドを順に起動して出力をまとめる
+ */
+async function runCommands(
+	commands: string[][],
+	options: { cwd: string },
+	runner: EngineRunner,
+): Promise<{ exitCode: number | null; output: string }> {
+	const executed: ExecutedCommand[] = [];
+	for (const command of commands) {
+		executed.push({ command, result: await runner(command, options) });
+	}
+	const labeled = commands.length > 1;
+	const output = executed
+		.map(({ command, result }) => {
+			const text = joinOutput(result);
+			if (!labeled) {
+				return text;
+			}
+			const header = `$ ${command.join(" ")}`;
+			return text === "" ? header : `${header}\n${text}`;
+		})
+		.filter((block) => block !== "")
+		.join("\n\n");
+	const exitCode = combineExitCode(
+		executed.map((entry) => entry.result.exitCode),
+	);
+	return { exitCode, output };
+}
+
 async function runFindingEngine(
 	name: EngineName,
 	options: RunOptions,
@@ -134,11 +187,13 @@ async function runProcessEngine(
 	context: EngineCommandContext,
 	runner: EngineRunner,
 ): Promise<EngineResult> {
-	const result = await runner(buildEngineCommand(name, executable, context), {
-		cwd: options.cwd,
-	});
-	const output = joinOutput(result);
-	if (result.exitCode === 2) {
+	const commands = buildEngineCommands(name, executable, context);
+	const { exitCode, output } = await runCommands(
+		commands,
+		{ cwd: options.cwd },
+		runner,
+	);
+	if (exitCode === 2) {
 		return {
 			...baseResult(name, 2, output),
 			message: `${name} could not finish`,
@@ -146,8 +201,8 @@ async function runProcessEngine(
 		};
 	}
 	return {
-		...baseResult(name, result.exitCode, output),
-		status: result.exitCode === 0 ? "passed" : "failed",
+		...baseResult(name, exitCode, output),
+		status: exitCode === 0 ? "passed" : "failed",
 	};
 }
 

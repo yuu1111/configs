@@ -1,4 +1,5 @@
-import { type Painter, plainPainter } from "./color";
+import { type Painter, plainPainter } from "@yuu1111/shared/color";
+import { formatLocation } from "@yuu1111/shared/findings";
 import { isFindingEngine } from "./engines";
 import type { NormalizedFinding } from "./findings";
 import type { EngineResult } from "./run";
@@ -8,7 +9,7 @@ function describeFinding(
 	paint: Painter,
 	tone: "error" | "warn",
 ): string {
-	return `${finding.file}:${finding.line}:${finding.column} ${finding.rule} ${paint(finding.severity, tone)} ${finding.text}`;
+	return `${formatLocation(finding)} ${finding.rule} ${paint(finding.severity, tone)} ${finding.text}`;
 }
 
 function describeCounts(result: EngineResult): string {

@@ -78,7 +78,7 @@ engine in `config`. Each engine runs:
 | Engine | Command | Conditions |
 |--------|---------|------------|
 | `biome` | `biome check` | `targets`, `args`; `biome.json` holds the excluded paths |
-| `typecheck` | `tsc --noEmit` | `args`; `tsconfig.json` holds the settings |
+| `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
 | `comment-check` | `comment-check --json` | `ignore`, `targets`, `args` |
 | `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args` |
@@ -132,9 +132,6 @@ finding. The new-and-resolved diff is done by this CLI from a single baseline
 file, so an existing `comment-baseline.json` is moved over with
 `--update-baseline`.
 
-`typecheck` only runs `tsc --noEmit`, so a project with more than one tsconfig
-has to start it once per target.
-
-## License
-
-MIT
+`typecheck` starts `tsc --noEmit -p <path>` once per path in `projects`. Without
+it the current `tsconfig.json` is read once, and `args` are added to every
+start.

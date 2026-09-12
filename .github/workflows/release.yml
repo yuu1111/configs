@@ -83,6 +83,13 @@ jobs:
           test "$package_version" = "$release_version"
           echo "package-dir=$package_dir" >> "$GITHUB_OUTPUT"
 
+      - name: Build package
+        env:
+          PACKAGE_DIR: ${{ steps.package.outputs.package-dir }}
+        run: |
+          cd "$PACKAGE_DIR"
+          bun run --if-present build
+
       - name: Verify package contents
         env:
           PACKAGE_DIR: ${{ steps.package.outputs.package-dir }}

@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { collectFiles, scanSource } from "../src/scan";
+import { collectFiles } from "@yuu1111/shared/files";
+import { SUPPORTED_EXTENSIONS, scanSource } from "../src/scan";
 
 describe("file collection", () => {
 	test("skips an ignored path", () => {
@@ -14,7 +15,11 @@ describe("file collection", () => {
 				join(root, "src", "generated", "b.ts"),
 				"// TODO: generated\n",
 			);
-			const files = collectFiles(["."], root, ["src/generated"]);
+			const files = collectFiles(["."], {
+				cwd: root,
+				extensions: SUPPORTED_EXTENSIONS,
+				ignores: ["src/generated"],
+			});
 			expect(
 				files.map((file) => file.replace(root, "").split("\\").join("/")),
 			).toEqual(["/src/a.ts"]);

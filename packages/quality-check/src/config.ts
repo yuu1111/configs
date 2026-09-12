@@ -40,11 +40,19 @@ export interface TsdocCheckOptions extends EngineOptions {
 }
 
 /**
+ * 型検査へ渡す起動条件
+ */
+export interface TypecheckOptions extends EngineOptions {
+	/** 型検査するtsconfigのpath 省略時はカレントのtsconfig.jsonを1回だけ読む */
+	projects?: string[];
+}
+
+/**
  * engine名ごとの起動条件
  */
 export interface EngineConfigMap {
 	biome: EngineOptions;
-	typecheck: EngineOptions;
+	typecheck: TypecheckOptions;
 	knip: EngineOptions;
 	"comment-check": EngineOptions;
 	"document-style-check": EngineOptions;
@@ -97,7 +105,7 @@ function isEngineName(value: string): value is EngineName {
 
 const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
 	biome: ["args", "ignore", "targets"],
-	typecheck: ["args", "ignore", "targets"],
+	typecheck: ["args", "ignore", "projects", "targets"],
 	knip: ["args", "ignore", "targets"],
 	"comment-check": ["args", "ignore", "targets"],
 	"document-style-check": ["args", "ignore", "targets"],
@@ -155,11 +163,16 @@ function parseEngines(
 	return engines;
 }
 
+type ParsedEngineOptions = EngineOptions & {
+	error?: string[];
+	projects?: string[];
+};
+
 function parseEngineOptions(
 	value: JsonObject,
 	source: string,
 	name: EngineName,
-): TsdocCheckOptions {
+): ParsedEngineOptions {
 	const unknown = Object.keys(value).filter(
 		(key) => !ENGINE_OPTION_KEYS[name].includes(key),
 	);
@@ -168,7 +181,7 @@ function parseEngineOptions(
 			`${source}: config.${name} has an unknown option: ${unknown[0]}`,
 		);
 	}
-	const options: TsdocCheckOptions = {};
+	const options: ParsedEngineOptions = {};
 	const ignore = readStringArray(
 		value.ignore,
 		`${source}: config.${name}.ignore`,
@@ -194,6 +207,18 @@ function parseEngineOptions(
 		);
 		if (error !== undefined) {
 			options.error = error;
+		}
+	}
+	if (name === "typecheck") {
+		const projects = readStringArray(
+			value.projects,
+			`${source}: config.${name}.projects`,
+		);
+		if (projects !== undefined) {
+			if (projects.length === 0) {
+				throw new Error(`${source}: config.${name}.projects must not be empty`);
+			}
+			options.projects = projects;
 		}
 	}
 	return options;

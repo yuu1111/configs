@@ -72,7 +72,7 @@ engineは `biome` → `typecheck` → `knip` → `comment-check` → `document-s
 | engine | 起動するcommand | 受け取る条件 |
 |--------|-----------------|--------------|
 | `biome` | `biome check` | `targets`、`args` 除外pathは `biome.json` が持つ |
-| `typecheck` | `tsc --noEmit` | `args` 設定は `tsconfig.json` が持つ |
+| `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
 | `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
 | `comment-check` | `comment-check --json` | `ignore`、`targets`、`args` |
 | `document-style-check` | `document-style-check lint --json` | `ignore`、`targets`、`args` |
@@ -113,8 +113,5 @@ engineのbinaryは利用Projectの `node_modules/.bin` から実行時に解決�
 
 `comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する 新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す
 
-`typecheck` は `tsc --noEmit` を回すだけなので、tsconfigを複数持つProjectは対象のtsconfigごとに起動する必要がある
+`typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する 省略時はカレントの `tsconfig.json` を1回だけ読み、`args` はすべての起動へ足す
 
-## License
-
-MIT

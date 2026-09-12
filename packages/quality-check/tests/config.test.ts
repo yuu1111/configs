@@ -24,6 +24,40 @@ describe("quality config", () => {
 		});
 	});
 
+	test("reads the tsconfig paths of the type checker", () => {
+		const config = parseConfig(
+			{
+				config: { typecheck: { projects: [".", "examples/client"] } },
+				engines: { typecheck: true },
+			},
+			"test",
+		);
+		expect(engineConfig(config, "typecheck")).toEqual({
+			projects: [".", "examples/client"],
+		});
+	});
+
+	test("rejects the project paths outside the type checker", () => {
+		expect(() =>
+			parseConfig(
+				{ config: { biome: { projects: ["."] } }, engines: { biome: true } },
+				"test",
+			),
+		).toThrow("unknown option");
+	});
+
+	test("rejects an empty project list", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: { typecheck: { projects: [] } },
+					engines: { typecheck: true },
+				},
+				"test",
+			),
+		).toThrow("must not be empty");
+	});
+
 	test("gives an enabled engine without conditions an empty object", () => {
 		const config = parseConfig({ engines: { biome: true } }, "test");
 		expect(engineConfig(config, "biome")).toEqual({});

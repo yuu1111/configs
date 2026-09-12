@@ -22,6 +22,7 @@ Bun workspace monorepo. Biome is self-hosted (the repo lints itself with its own
 
 ```bash
 bun install            # install + link workspaces
+bun run build          # bundle @yuu1111/shared into the published check packages
 bunx biome check .     # lint / format check
 bunx biome check --write .   # auto-fix
 ```
@@ -44,7 +45,4 @@ Use `biome-config-vX.Y.Z` for `@yuu1111/biome-config` and
 
 - The biome-config preset filename is `base.json` / `react.json` (not `biome.json`) to avoid Biome's nested-config detection.
 - The root `devDependencies` reference the workspace packages with `workspace:*` so the repo dogfoods its own configs via symlinks.
-
-## License
-
-MIT
+- `@yuu1111/shared` is private and its code is bundled into each check package at build time, so the published packages have no runtime dependency on it.

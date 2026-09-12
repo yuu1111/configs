@@ -2,7 +2,6 @@
 	"name": "@yuu1111/document-style-check",
 	"version": "0.1.1",
 	"description": "Shared document style checker and review ledger",
-	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",
@@ -10,20 +9,26 @@
 	},
 	"type": "module",
 	"bin": {
-		"document-style-check": "src/cli.ts"
+		"document-style-check": "dist/cli.js"
 	},
 	"exports": {
-		".": "./src/scan.ts",
-		"./audit": "./src/audit.ts"
+		".": "./dist/scan.js",
+		"./audit": "./dist/audit.js"
 	},
 	"files": [
 		"README.ja.md",
-		"src"
+		"dist"
 	],
+	"scripts": {
+		"build": "bun build src/cli.ts src/scan.ts src/audit.ts --target=bun --outdir=dist"
+	},
 	"keywords": [
 		"documentation",
 		"lint",
 		"markdown",
 		"style"
-	]
+	],
+	"devDependencies": {
+		"@yuu1111/shared": "workspace:*"
+	}
 }

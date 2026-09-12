@@ -33,29 +33,44 @@ biome: ignore skipped (biome.json holds its settings)
 
 `typecheck` は `tsc --noEmit` を回す 型検査の設定は `tsconfig.json` が持つため、いまは `args` 以外の起動条件を持たない
 
-理想は、`tsconfig.json` を複数持つProjectでも1つのengineで全部を検査することである いまの実装はこれを表せず、`auth-platform` は example 側の1本を `check:quality` の script に残している
+理想は、`tsconfig.json` を複数持つProjectでも1つのengineで全部を検査することである 実装する前は2本目を `&&` で繋ぐか `check:quality` の script へ足していた
 
 ### projects で複数のtsconfigを回す
 
-`config.typecheck.projects` に `tsconfig.json` を持つpathを並べ、pathごとに `tsc --noEmit -p <path>` を起動する
+`config.typecheck.projects` に `tsc -p` が解釈できるpathを並べ、pathごとに `tsc --noEmit -p <path>` を起動する
 
 - `projects` を省略したときは `tsc --noEmit` を1回だけ起動する このときはカレントの `tsconfig.json` を使う
-- `projects` は `tsc -p` が解釈できるpathだけを受ける `tsconfig.json` を指すfileと、それを含むディレクトリの両方
+- `projects` のpathは `tsconfig.json` を指すfileと、それを含むディレクトリの両方を受ける
 - `ignore` と `targets` は受け取らない 型検査の対象は `tsconfig.json` の `include` と `exclude` が決める
 - 起動ごとの出力をすべて残し、sectionの終了codeは最も重いものへ寄せる 1本でも型errorを出せば `failed` になる
+- `args` はすべての起動へ同じものを足す
 
 ```ts
 export default defineConfig({
 	engines: { typecheck: true },
-	config: { typecheck: { projects: [".", "examples/reference-client"] } },
+	config: { typecheck: { projects: [".", "examples/client"] } },
 });
 ```
 
-### いま実装しない理由
+### 保留していた理由
 
 - engineごとの起動条件が増えるほど、quality-checkがengineの設定を写すことになる
 - 複数起動を一般化すると、`args` を各起動へ配る規則や、失敗した起動だけを報告する規則も決める必要がある
-- 2本のtsconfigを持つのは `auth-platform` だけである 3 Project以上が同じ形を必要としたときに実装する
+- 実装を決めた時点では、複数のtsconfigを持つProjectが1つだけだった
+
+### 実装する条件
+
+同じ形の複数起動が3 Project以上にあること その条件は既に満たしている
+
+| 形 | いまの起動 |
+|---|---|
+| 本体と、入れ子の別Project | `tsc --noEmit && tsc --noEmit -p examples/client/tsconfig.json` |
+| 本体と、test用のtsconfig | `tsc --noEmit && tsc -p tsconfig.test.json` |
+| 本体と、別の実行環境向けのtsconfig | `tsc --noEmit && tsc --noEmit -p tsconfig.client.json` |
+
+2本目の `noEmit` は2本目の `tsconfig.json` 側が持つ場合もあり、どちらも `tsc --noEmit -p <path>` へ置き換わる
+
+`tsc -b` で複数のtsconfigを1回で読むProjectは `projects` を必要としない
 
 ## engineが自分の設定を持つようになったら
 
@@ -68,5 +83,4 @@ export default defineConfig({
 | 理想 | いまの実装 |
 |---|---|
 | engineが設定fileの解決順を持つ | quality-checkがengineごとの起動条件を組み立てる |
-| 1 engineで複数のtsconfigを検査する | `typecheck` は1回だけ起動し、2本目はProjectのscriptへ残る |
 | engineの追加がengine側だけで済む | `ENGINE_NAMES` と受け取り能力の表をquality-checkへ足す |

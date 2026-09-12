@@ -1,12 +1,19 @@
 import { describe, expect, test } from "bun:test";
-import { compareWithBaseline, createBaseline } from "../src/baseline";
-import type { Finding } from "../src/rules";
+import {
+	type BaselineKey,
+	compareWithBaseline,
+	createBaseline,
+} from "../src/baseline";
 
-function finding(file: string, text: string): Finding {
-	return { column: 1, file, line: 1, rule: "placeholder-comment", text };
+function finding(file: string, text: string, engine?: string): BaselineKey {
+	const entry: BaselineKey = { file, rule: "placeholder-comment", text };
+	if (engine !== undefined) {
+		entry.engine = engine;
+	}
+	return entry;
 }
 
-describe("comment baseline", () => {
+describe("baseline", () => {
 	test("keeps a baselined finding out of the report", () => {
 		const baseline = createBaseline([finding("src/a.ts", "TODO: one")]);
 		const comparison = compareWithBaseline(
@@ -29,6 +36,17 @@ describe("comment baseline", () => {
 		const baseline = createBaseline([finding("src/a.ts", "TODO: one")]);
 		const comparison = compareWithBaseline(
 			[finding("src/a.ts", "TODO: one"), finding("src/a.ts", "TODO: one")],
+			baseline,
+		);
+		expect(comparison.added).toHaveLength(1);
+	});
+
+	test("keys on the engine as well as the rule and text", () => {
+		const baseline = createBaseline([
+			finding("src/a.ts", "TODO: one", "comment-check"),
+		]);
+		const comparison = compareWithBaseline(
+			[finding("src/a.ts", "TODO: one", "tsdoc-check")],
 			baseline,
 		);
 		expect(comparison.added).toHaveLength(1);

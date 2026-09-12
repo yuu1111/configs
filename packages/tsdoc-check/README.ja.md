@@ -45,7 +45,3 @@ export const value = 1
 ```
 
 理由の無い抑制、未知のrule、ruleを書いていない抑制はerror 何も抑制しない抑制はwarning
-
-## Notes
-
-TSDoc parserがcomment本文を読み、checkerが `@babel/parser` で宣言を読むのは、TypeScript 7のcompiler APIが単体のtoolから使えないため

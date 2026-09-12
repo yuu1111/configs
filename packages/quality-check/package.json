@@ -2,7 +2,6 @@
 	"name": "@yuu1111/quality-check",
 	"version": "0.5.1",
 	"description": "Integrated quality check runner",
-	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",
@@ -10,7 +9,7 @@
 	},
 	"type": "module",
 	"bin": {
-		"quality-check": "src/cli.ts"
+		"quality-check": "dist/cli.js"
 	},
 	"exports": {
 		".": "./src/config.ts",
@@ -18,10 +17,18 @@
 	},
 	"files": [
 		"README.ja.md",
-		"src"
+		"src/config.ts",
+		"src/engines.ts",
+		"dist"
 	],
+	"scripts": {
+		"build": "bun build src/cli.ts --target=bun --outdir=dist"
+	},
 	"keywords": [
 		"quality",
 		"lint"
-	]
+	],
+	"devDependencies": {
+		"@yuu1111/shared": "workspace:*"
+	}
 }

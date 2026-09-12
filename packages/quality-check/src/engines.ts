@@ -70,7 +70,7 @@ export const ENGINE_LIMITS: Record<
 	biome: { ignore: "biome.json holds its settings" },
 	typecheck: {
 		ignore: "tsconfig.json holds its settings",
-		targets: "tsc checks the project named by tsconfig.json",
+		targets: "tsconfig.json and projects hold its settings",
 	},
 	knip: {
 		ignore: "knip.ts holds its settings",
@@ -162,6 +162,24 @@ function colorArguments(name: EngineName, color: boolean): string[] {
 }
 
 /**
+ * 型検査のコマンドを組み立てる projectを渡すとそのtsconfigを読む
+ */
+function buildTypecheckCommand(
+	executable: string,
+	context: EngineCommandContext,
+	project: string | undefined,
+): string[] {
+	const options = engineConfig(context.config, "typecheck") ?? {};
+	return [
+		executable,
+		"--noEmit",
+		...(project === undefined ? [] : ["--project", project]),
+		...colorArguments("typecheck", context.color),
+		...(options.args ?? []),
+	];
+}
+
+/**
  * engineへ渡すコマンドを組み立てる
  */
 export function buildEngineCommand(
@@ -194,12 +212,7 @@ export function buildEngineCommand(
 		];
 	}
 	if (name === "typecheck") {
-		return [
-			executable,
-			"--noEmit",
-			...colorArguments(name, context.color),
-			...extra,
-		];
+		return buildTypecheckCommand(executable, context, undefined);
 	}
 	if (name === "knip") {
 		return [executable, ...extra];
@@ -233,6 +246,26 @@ export function buildEngineCommand(
 		...ignoreArguments,
 		...extra,
 	];
+}
+
+/**
+ * engineの起動コマンドを順番に返す 型検査だけはprojectsごとに起動する
+ */
+export function buildEngineCommands(
+	name: EngineName,
+	executable: string,
+	context: EngineCommandContext,
+): string[][] {
+	const projects =
+		name === "typecheck"
+			? (engineConfig(context.config, "typecheck")?.projects ?? [])
+			: [];
+	if (projects.length === 0) {
+		return [buildEngineCommand(name, executable, context)];
+	}
+	return projects.map((project) =>
+		buildTypecheckCommand(executable, context, project),
+	);
 }
 
 /**

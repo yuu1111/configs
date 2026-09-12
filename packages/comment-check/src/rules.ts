@@ -1,3 +1,5 @@
+import type { Located } from "@yuu1111/shared/findings";
+
 /**
  * comment-checkが報告するruleの識別子一覧
  */
@@ -16,11 +18,8 @@ export type RuleId = (typeof RULE_IDS)[number];
 /**
  * 検出したcomment違反1件の内容と位置
  */
-export interface Finding {
+export interface Finding extends Located {
 	rule: RuleId;
-	file: string;
-	line: number;
-	column: number;
 	text: string;
 }
 

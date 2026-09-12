@@ -2,7 +2,6 @@
 	"name": "@yuu1111/knip-config",
 	"version": "1.0.5",
 	"description": "Shared Knip configuration",
-	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",

@@ -8,7 +8,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
-import { collectFiles, fixFiles, lintFiles } from "../src/scan";
+import { collectFiles } from "@yuu1111/shared/files";
+import { DOCUMENT_EXTENSIONS, fixFiles, lintFiles } from "../src/scan";
 
 /**
  * 一時ディレクトリへfile一式を作り、後片付けする
@@ -41,9 +42,10 @@ test("対象ディレクトリからMarkdownだけを集める", () => {
 			".hidden/f.md": "本文\n",
 		},
 		(directory) => {
-			const files = collectFiles([directory], directory).map((file) =>
-				relative(directory, file).split("\\").join("/"),
-			);
+			const files = collectFiles([directory], {
+				cwd: directory,
+				extensions: DOCUMENT_EXTENSIONS,
+			}).map((file) => relative(directory, file).split("\\").join("/"));
 
 			expect(files).toEqual(["a.md", "b.markdown", "sub/d.md"]);
 		},
@@ -52,9 +54,11 @@ test("対象ディレクトリからMarkdownだけを集める", () => {
 
 test("指定したpathを検査から外す", () => {
 	withTemporaryTree({ "a.md": "本文\n", "sub/d.md": "本文\n" }, (directory) => {
-		const files = collectFiles([directory], directory, ["sub"]).map((file) =>
-			relative(directory, file).split("\\").join("/"),
-		);
+		const files = collectFiles([directory], {
+			cwd: directory,
+			extensions: DOCUMENT_EXTENSIONS,
+			ignores: ["sub"],
+		}).map((file) => relative(directory, file).split("\\").join("/"));
 
 		expect(files).toEqual(["a.md"]);
 	});
@@ -68,7 +72,10 @@ test("違反をfile順と位置順に並べる", () => {
 		},
 		(directory) => {
 			const findings = lintFiles(
-				collectFiles([directory], directory),
+				collectFiles([directory], {
+					cwd: directory,
+					extensions: DOCUMENT_EXTENSIONS,
+				}),
 				directory,
 			);
 

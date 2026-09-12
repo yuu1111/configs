@@ -2,7 +2,6 @@
 	"name": "@yuu1111/comment-check",
 	"version": "1.0.1",
 	"description": "Shared comment and suppression checker",
-	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",
@@ -10,18 +9,24 @@
 	},
 	"type": "module",
 	"bin": {
-		"comment-check": "src/cli.ts"
+		"comment-check": "dist/cli.js"
 	},
 	"exports": {
-		".": "./src/scan.ts"
+		".": "./dist/scan.js"
 	},
 	"files": [
 		"README.ja.md",
-		"src"
+		"dist"
 	],
+	"scripts": {
+		"build": "bun build src/cli.ts src/scan.ts --target=bun --outdir=dist"
+	},
 	"keywords": [
 		"comment",
 		"lint",
 		"suppression"
-	]
+	],
+	"devDependencies": {
+		"@yuu1111/shared": "workspace:*"
+	}
 }

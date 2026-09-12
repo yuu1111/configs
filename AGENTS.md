@@ -1,6 +1,7 @@
 # configs
 
-プロジェクト横断で使う共有設定の monorepo。npm パッケージとして publish する。
+プロジェクト横断で使う共有設定の monorepo
+npm パッケージとして publish する
 
 ## 構成
 
@@ -11,6 +12,7 @@
 - `packages/knip-config` - @yuu1111/knip-config (共有 Knip 設定)
 - `packages/tsdoc-check` - @yuu1111/tsdoc-check (TSDoc の構文と公開契約の検査)
 - `packages/quality-check` - @yuu1111/quality-check (engine 起動と baseline の統合 CLI)
+- `packages/shared` - @yuu1111/shared (検査engineの共通処理、privateでpublishしない)
 
 ## ツールチェーン
 
@@ -22,6 +24,7 @@
 ## コマンド
 
 - `bun install` - 依存インストール + workspace リンク
+- `bun run build` - 公開する check package へ @yuu1111/shared を同梱する
 - `bunx biome check .` - lint/format チェック
 - `bunx biome check --write .` - 自動修正
 - `bun pm version patch/minor/major --no-git-tag-version` - バージョン更新 (各パッケージディレクトリで実行)
@@ -30,6 +33,7 @@
 
 - Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
+- check engine は @yuu1111/shared を build 時に bundle して配布する (shared は private なので publish しない)
 - GitHub Release tag は `biome-config-vX.Y.Z`、`comment-check-vX.Y.Z`、`document-style-check-vX.Y.Z`、`knip-config-vX.Y.Z`、`quality-check-vX.Y.Z`、`tsdoc-check-vX.Y.Z`、または `tsconfig-vX.Y.Z`
 - npm publish はローカルで実行せず、`.github/workflows/release.yml` に任せる
 - バージョン更新は `bun pm version` を使う (npm version は workspace の reify でエラーになる)

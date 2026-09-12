@@ -1,91 +1,19 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { extname, join, relative, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { relative } from "node:path";
+import { normalizePath } from "@yuu1111/shared/files";
+import { compareFindings } from "@yuu1111/shared/findings";
 import { collectDeclarations } from "./parse";
 import { classifyDeclaration, type Finding } from "./rules";
 
-const EXTENSIONS = new Set([".cts", ".mts", ".ts", ".tsx"]);
-const IGNORED_DIRECTORIES = new Set([
-	"build",
-	"coverage",
-	"dist",
-	"node_modules",
-	"out",
-	"vendor",
+/**
+ * 検査するTypeScriptの拡張子
+ */
+export const TYPESCRIPT_EXTENSIONS: ReadonlySet<string> = new Set([
+	".cts",
+	".mts",
+	".ts",
+	".tsx",
 ]);
-
-/**
- * 区切り文字を統一し先頭の./と末尾の/を除いたpathを返す
- */
-export function normalizePath(path: string): string {
-	return path.split("\\").join("/").replace(/^\.\//, "").replace(/\/+$/, "");
-}
-
-function isIgnored(path: string, ignores: string[]): boolean {
-	return ignores.some(
-		(ignore) => path === ignore || path.startsWith(`${ignore}/`),
-	);
-}
-
-function compareFindings(left: Finding, right: Finding): number {
-	if (left.file !== right.file) {
-		return left.file < right.file ? -1 : 1;
-	}
-	if (left.line !== right.line) {
-		return left.line - right.line;
-	}
-	return left.column - right.column;
-}
-
-function walk(directory: string, files: Set<string>): void {
-	for (const entry of readdirSync(directory, { withFileTypes: true })) {
-		if (entry.name.startsWith(".")) {
-			continue;
-		}
-		const path = join(directory, entry.name);
-		if (entry.isDirectory()) {
-			if (!IGNORED_DIRECTORIES.has(entry.name)) {
-				walk(path, files);
-			}
-			continue;
-		}
-		if (entry.isFile() && EXTENSIONS.has(extname(entry.name))) {
-			files.add(path);
-		}
-	}
-}
-
-/**
- * 対象pathを走査して検査対象のfile一覧を集める
- */
-export function collectFiles(
-	targets: string[],
-	cwd = process.cwd(),
-	ignores: string[] = [],
-): string[] {
-	const files = new Set<string>();
-	for (const target of targets) {
-		const absolute = resolve(cwd, target);
-		let stats: ReturnType<typeof statSync>;
-		try {
-			stats = statSync(absolute);
-		} catch {
-			continue;
-		}
-		if (stats.isFile()) {
-			if (
-				EXTENSIONS.has(extname(absolute)) &&
-				!isIgnored(normalizePath(target), ignores)
-			) {
-				files.add(absolute);
-			}
-			continue;
-		}
-		walk(absolute, files);
-	}
-	return [...files]
-		.filter((file) => !isIgnored(normalizePath(relative(cwd, file)), ignores))
-		.sort();
-}
 
 /**
  * source文字列の宣言を解析してTSDoc違反を検出する

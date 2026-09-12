@@ -1,20 +1,14 @@
+import type { Located, Severity } from "@yuu1111/shared/findings";
+import { isJsonObject } from "@yuu1111/shared/json";
 import type { EngineName } from "./config";
-
-/**
- * 検出の重大度
- */
-export type FindingSeverity = "error" | "warning";
 
 /**
  * engine間の差を吸収した検出1件
  */
-export interface NormalizedFinding {
-	column: number;
+export interface NormalizedFinding extends Located {
 	engine: EngineName;
-	file: string;
-	line: number;
 	rule: string;
-	severity: FindingSeverity;
+	severity: Severity;
 	text: string;
 }
 
@@ -26,16 +20,10 @@ export interface ParsedFindings {
 	warnings: NormalizedFinding[];
 }
 
-type JsonObject = Record<string, unknown>;
-
-function isJsonObject(value: unknown): value is JsonObject {
-	return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function readFinding(
 	engine: EngineName,
 	value: unknown,
-	severity: FindingSeverity,
+	severity: Severity,
 	textField: "message" | "text",
 ): NormalizedFinding {
 	if (!isJsonObject(value)) {
@@ -66,7 +54,10 @@ function readEntries(
 	return value;
 }
 
-function parseJson(engine: EngineName, stdout: string): JsonObject {
+function parseJson(
+	engine: EngineName,
+	stdout: string,
+): Record<string, unknown> {
 	let value: unknown;
 	try {
 		value = JSON.parse(stdout);
