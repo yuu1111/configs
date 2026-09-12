@@ -5,10 +5,13 @@ import { type MarkdownLine, markdownLines } from "./audit";
  * document-style-checkが報告するruleの識別子一覧
  */
 export const RULE_IDS = [
+	"code-fence-language",
 	"consecutive-blank-lines",
 	"date-anchored-statement",
+	"empty-link",
 	"full-width-alphanumeric",
 	"hard-break-html",
+	"heading-level-jump",
 	"japanese-comma",
 	"japanese-period",
 	"list-marker-consistency",
@@ -46,12 +49,16 @@ export interface Finding extends Located {
 }
 
 const MESSAGES: Record<RuleId, string> = {
+	"code-fence-language":
+		"a code fence without a language renders without highlighting",
 	"consecutive-blank-lines":
 		"consecutive blank lines add spacing without meaning",
 	"date-anchored-statement": "a check date is not the identity of the subject",
+	"empty-link": "a link has no text or no destination",
 	"full-width-alphanumeric":
 		"a full-width alphanumeric is not the ASCII character",
 	"hard-break-html": "an HTML hard break adds spacing without meaning",
+	"heading-level-jump": "a heading level skips a step",
 	"japanese-comma":
 		"a Japanese sentence does not separate clauses with a half-width comma",
 	"japanese-period": "a Japanese sentence does not end with a period",
@@ -70,6 +77,9 @@ const JAPANESE_CHARACTER = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/;
 const FULL_WIDTH_ALPHANUMERIC = /[\uff10-\uff19\uff21-\uff3a\uff41-\uff5a]/;
 const THEMATIC_BREAK = /^\s*(?:[-*_]\s*){3,}$/;
 const UNORDERED_LIST_MARKER = /^([ \t]*)([-+*])(?=[ \t]+\S)/;
+const FENCE_OPEN = /^ {0,3}(?:`{3,}|~{3,})/;
+const HEADING = /^(#{1,6})(?:\s|$)/;
+const EMPTY_LINK = /\[([^\]]*)\]\(([^)]*)\)/g;
 
 /**
  * --enableの値を検証して重複を除く 未知のrule名は設定errorにする
@@ -132,6 +142,51 @@ export function findFullWidthAlphanumeric(line: string): number {
 }
 
 /**
+ * フェンス開始行の言語指定を返す
+ *
+ * @param line - 言語指定を読むフェンス開始行
+ * @returns フェンス記号の後ろの言語指定 指定が無ければ空文字
+ */
+export function fenceLanguage(line: string): string {
+	return line.replace(FENCE_OPEN, "").trim();
+}
+
+/**
+ * 本文行の見出しレベルを返す 見出しでなければundefined
+ *
+ * @param line - 見出しレベルを読む本文の1行
+ * @returns 見出しの`#`の数 見出しでなければundefined
+ */
+export function headingLevel(line: string): number | undefined {
+	const hashes = HEADING.exec(line)?.[1];
+	return hashes === undefined ? undefined : hashes.length;
+}
+
+/**
+ * 空のリンクラベルまたは空のリンク先を持つリンクの位置を返す 無ければundefined
+ *
+ * @param line - 空リンクを探す本文の1行
+ * @returns 最初の空リンクの0始まりの位置 見つからなければundefined
+ */
+export function findEmptyLink(line: string): number | undefined {
+	const spans = inlineCodeSpans(line);
+	for (const match of line.matchAll(EMPTY_LINK)) {
+		if (spans.some(([from, to]) => match.index >= from && match.index < to)) {
+			continue;
+		}
+		if (match.index > 0 && line[match.index - 1] === "!") {
+			continue;
+		}
+		const label = match[1] ?? "";
+		const target = match[2] ?? "";
+		if (label.trim() === "" || target.trim() === "") {
+			return match.index;
+		}
+	}
+	return undefined;
+}
+
+/**
  * 本文行の箇条書き記号と位置を返す 箇条書きでなければundefined
  *
  * @param line - 箇条書き記号を探す本文の1行
@@ -186,6 +241,46 @@ function alignListMarker(line: string, state: MarkerState): string {
 }
 
 /**
+ * 直前の見出しレベルを保持する
+ */
+interface HeadingState {
+	level: number;
+}
+
+/**
+ * 言語指定の無いフェンスを違反として返す
+ */
+function fenceLanguageFinding(item: MarkdownLine, file: string): Finding[] {
+	if (fenceLanguage(item.line) !== "") {
+		return [];
+	}
+	const indent = /^ */.exec(item.line)?.[0].length ?? 0;
+	return [
+		finding("code-fence-language", "error", file, item.number, indent + 1),
+	];
+}
+
+/**
+ * 一段を超えて飛んだ見出しを違反として返す
+ */
+function headingJumpFinding(
+	item: MarkdownLine,
+	state: HeadingState,
+	file: string,
+): Finding[] {
+	const level = headingLevel(item.line);
+	if (level === undefined) {
+		return [];
+	}
+	const previous = state.level;
+	state.level = level;
+	if (previous === 0 || level <= previous + 1) {
+		return [];
+	}
+	return [finding("heading-level-jump", "warning", file, item.number, 1)];
+}
+
+/**
  * 最初の記号と違う箇条書き記号を違反として返す
  */
 function markerFinding(
@@ -226,6 +321,17 @@ function finding(
 	column: number,
 ): Finding {
 	return { column, file, line, message: MESSAGES[rule], rule, severity };
+}
+
+/**
+ * インラインコードの範囲を返す
+ */
+function inlineCodeSpans(line: string): [number, number][] {
+	const spans: [number, number][] = [];
+	for (const match of line.matchAll(INLINE_CODE)) {
+		spans.push([match.index, match.index + match[0].length]);
+	}
+	return spans;
 }
 
 /**
@@ -343,6 +449,12 @@ function lintBodyLine(
 			),
 		);
 	}
+	const emptyLink = findEmptyLink(item.line);
+	if (emptyLink !== undefined) {
+		findings.push(
+			finding("empty-link", "error", file, item.number, emptyLink + 1),
+		);
+	}
 	return findings;
 }
 
@@ -362,9 +474,13 @@ export function lintSource(
 	const findings: Finding[] = [];
 	let blankStreak = 0;
 	const markers: MarkerState = { marker: undefined };
+	const headings: HeadingState = { level: 0 };
 	for (const item of markdownLines(source)) {
 		if (item.region !== "body") {
 			blankStreak = 0;
+			if (item.region === "fence-open") {
+				findings.push(...fenceLanguageFinding(item, file));
+			}
 			continue;
 		}
 		if (item.blank) {
@@ -378,6 +494,7 @@ export function lintSource(
 		}
 		blankStreak = 0;
 		findings.push(...lintBodyLine(item, file, enabled));
+		findings.push(...headingJumpFinding(item, headings, file));
 		if (enabled.includes("list-marker-consistency")) {
 			findings.push(...markerFinding(item, markers, file));
 		}

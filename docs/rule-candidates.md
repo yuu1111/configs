@@ -10,18 +10,6 @@
 - 新しいruleを書く前に、Biome組み込みと既存engineに同じ検査が無いか確認する
 - `biome-ignore` の理由は Biome の suppression parser が必須なので、抑制コメントへの理由付けはruleにしない
 
-## document-style-check
-
-`packages/engine/document-style-check/src/audit.ts` に `markdownHeadings` と `fenceStart` があるため、見出しとフェンスの候補は追加コストが小さい
-
-| Rule | 検出 | 既定 | 元の基準 |
-|------|------|------|----------|
-| `code-fence-language` | 言語指定の無いコードフェンス | error / on | MD040 |
-| `heading-level-jump` | h2からh4のような見出しレベルの飛び | warning / on | MD001 |
-| `empty-link` | `[]()` のような空リンク | error / on | MD042 |
-| `bare-url` | 本文中の裸のURL | error / on (fixable) | MD034 |
-| `image-alt-text` | altの無い画像 | error / on | MD045 |
-
 ## biome-config
 
 `packages/config/biome-config/base.json` で無効のまま残っている組み込みruleを候補にする
@@ -54,7 +42,3 @@ Biome組み込みに対応が無いものだけをプラグインにする
 - engineを追加したら、`quality-check` の `ENGINE_NAMES`、README、設定表を更新する
 - `.grit` を追加したら `plugins-<layer>.json` へ列挙する（`custom-rules.test.ts` が一覧の一致を検査している）
 - `README.md` と `README.ja.md` の見出し構成の一致は、テストで検査できるならテストへ寄せる
-
-## 着手する順序
-
-1. `document-style-check` の `code-fence-language` と `heading-level-jump` — 抽出済みの見出しとフェンスを使える

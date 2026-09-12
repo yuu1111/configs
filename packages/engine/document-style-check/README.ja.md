@@ -43,17 +43,20 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 
 | Rule | 重大度 | Default | 検出対象 |
 |------|----------|---------|---------|
+| `code-fence-language` | error | true | 言語指定の無いコードフェンス |
 | `consecutive-blank-lines` | error | true | 意味を持たない連続空行 |
 | `date-anchored-statement` | warning | true | 対象の識別を確認日で代用した記述 |
+| `empty-link` | error | true | ラベルまたはリンク先が空のリンク |
 | `full-width-alphanumeric` | error | false | `Ａ` や `１` のような全角英数字 |
 | `hard-break-html` | error | true | 本文中の `<br>` |
+| `heading-level-jump` | warning | true | 一段を超えて飛んだ見出し |
 | `japanese-comma` | error | false | 日本語に隣接する半角カンマ |
 | `japanese-period` | error | false | 日本語の文を終える `。` |
 | `list-marker-consistency` | error | false | 最初の記号と違う箇条書き記号 |
 | `trailing-backslash` | error | true | 本文行の末尾のバックスラッシュ |
 | `trailing-whitespace` | error | true | 行末の空白 |
 
-`consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため`lint --write`で解消する `list-marker-consistency`も整形できるが、有効にしたときだけ最初に見つけた記号へ揃える `date-anchored-statement`は人またはモデルが判断するwarningで、`full-width-alphanumeric`、`japanese-comma`、`japanese-period`は`--write`の後にもerrorとして残る
+`consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため`lint --write`で解消する `list-marker-consistency`も整形できるが、有効にしたときだけ最初に見つけた記号へ揃える `code-fence-language`、`empty-link`、`full-width-alphanumeric`、`japanese-comma`、`japanese-period`は`--write`の後にもerrorとして残る `date-anchored-statement`と`heading-level-jump`は人またはモデルが判断するwarningになる
 
 ## Commands
 

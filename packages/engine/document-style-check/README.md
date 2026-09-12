@@ -44,10 +44,13 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 
 | Rule | Severity | Default | Detects |
 |------|----------|---------|---------|
+| `code-fence-language` | error | true | a code fence with no language |
 | `consecutive-blank-lines` | error | true | runs of blank lines that add spacing without meaning |
 | `date-anchored-statement` | warning | true | a check date used in place of the subject's identity |
+| `empty-link` | error | true | a link with no text or no destination |
 | `full-width-alphanumeric` | error | false | a full-width alphanumeric such as `Ａ` or `１` |
 | `hard-break-html` | error | true | `<br>` in prose |
+| `heading-level-jump` | warning | true | a heading level that skips a step |
 | `japanese-comma` | error | false | a half-width comma inside Japanese text |
 | `japanese-period` | error | false | a Japanese sentence that ends with `。` |
 | `list-marker-consistency` | error | false | an unordered list marker that differs from the first one |
@@ -56,7 +59,8 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 
 `consecutive-blank-lines`, `hard-break-html`, `trailing-backslash`, and `trailing-whitespace` are fixable, so `lint --write` clears them.
 `list-marker-consistency` is fixable too, but only once it is enabled, because it rewrites every list to the first marker it finds.
-`date-anchored-statement` is a warning for a human or a model to judge, and `full-width-alphanumeric`, `japanese-comma`, and `japanese-period` remain errors after `--write`.
+`code-fence-language`, `empty-link`, `full-width-alphanumeric`, `japanese-comma`, and `japanese-period` stay errors after `--write`.
+`date-anchored-statement` and `heading-level-jump` are warnings for a human or a model to judge.
 
 ## Commands
 

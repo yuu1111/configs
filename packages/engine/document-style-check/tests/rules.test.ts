@@ -316,3 +316,84 @@ test("整形しても半角カンマと全角英数字を削除しない", () =>
 
 	expect(fixed).toBe("日本語,ＡＢＣです\n");
 });
+test("言語指定の無いフェンスを検出する", () => {
+	expect(lintSource("```\nコード\n```\n", "doc.md")).toEqual([
+		{
+			column: 1,
+			file: "doc.md",
+			line: 1,
+			message: "a code fence without a language renders without highlighting",
+			rule: "code-fence-language",
+			severity: "error",
+		},
+	]);
+});
+
+test("言語指定のあるフェンスは検出しない", () => {
+	expect(rulesOf("```text\nコード\n```\n")).toEqual([]);
+	expect(rulesOf("~~~bash\nコード\n~~~\n")).toEqual([]);
+});
+
+test("閉じるフェンスを言語指定の欠落として扱わない", () => {
+	expect(rulesOf("```\nコード\n```\n")).toEqual(["code-fence-language"]);
+});
+
+test("frontmatterをフェンスとして扱わない", () => {
+	expect(rulesOf("---\ntitle: 例\n---\n\n本文\n")).toEqual([]);
+});
+
+test("見出しレベルの飛びを検出する", () => {
+	expect(lintSource("## 見出し\n\n#### 飛んだ見出し\n", "doc.md")).toEqual([
+		{
+			column: 1,
+			file: "doc.md",
+			line: 3,
+			message: "a heading level skips a step",
+			rule: "heading-level-jump",
+			severity: "warning",
+		},
+	]);
+});
+
+test("一段ずつ増える見出しは検出しない", () => {
+	expect(rulesOf("# 見出し\n\n## 見出し\n\n### 見出し\n")).toEqual([]);
+});
+
+test("最初の見出しを飛びとして扱わない", () => {
+	expect(rulesOf("### 見出し\n")).toEqual([]);
+});
+
+test("コードフェンス内の見出しを飛びとして扱わない", () => {
+	expect(rulesOf("## 見出し\n\n```text\n#### コード\n```\n")).toEqual([]);
+});
+
+test("空のリンクラベルまたはリンク先を検出する", () => {
+	expect(rulesOf("[説明](url)\n")).toEqual([]);
+	expect(rulesOf("[](url)\n")).toEqual(["empty-link"]);
+	expect(rulesOf("[説明]()\n")).toEqual(["empty-link"]);
+});
+
+test("空リンクの位置を行と桁で報告する", () => {
+	expect(lintSource("本文 [](url)\n", "doc.md")).toEqual([
+		{
+			column: 4,
+			file: "doc.md",
+			line: 1,
+			message: "a link has no text or no destination",
+			rule: "empty-link",
+			severity: "error",
+		},
+	]);
+});
+
+test("インラインコードの空リンクは対象外にする", () => {
+	expect(rulesOf("`[]()` の形を説明する\n")).toEqual([]);
+});
+
+test("画像の空のラベルは対象外にする", () => {
+	expect(rulesOf("![](image.png)\n")).toEqual([]);
+});
+
+test("ラベルがインラインコードだけのリンクは対象外にする", () => {
+	expect(rulesOf("[`label`](url)\n")).toEqual([]);
+});
