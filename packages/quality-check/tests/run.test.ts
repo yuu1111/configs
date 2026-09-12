@@ -5,6 +5,16 @@ import type { EngineProcessResult, EngineRunner } from "../src/engines";
 import type { NormalizedFinding } from "../src/findings";
 import { type RunOptions, runEngines } from "../src/run";
 
+const documentFinding: NormalizedFinding = {
+	column: 12,
+	engine: "document-style-check",
+	file: "README.md",
+	line: 18,
+	rule: "hard-break-html",
+	severity: "error",
+	text: "an HTML hard break adds spacing without meaning",
+};
+
 const commentFinding: NormalizedFinding = {
 	column: 3,
 	engine: "comment-check",
@@ -17,6 +27,19 @@ const commentFinding: NormalizedFinding = {
 
 function commentOutput(findings: unknown[]): string {
 	return JSON.stringify({ added: findings, resolved: [] });
+}
+
+function documentOutput(findings: NormalizedFinding[]): string {
+	return JSON.stringify({
+		errors: findings.map((finding) => ({
+			column: finding.column,
+			file: finding.file,
+			line: finding.line,
+			message: finding.text,
+			rule: finding.rule,
+		})),
+		warnings: [],
+	});
 }
 
 function runnerFor(result: EngineProcessResult): EngineRunner {
@@ -85,6 +108,24 @@ describe("engine orchestration", () => {
 		);
 		expect(results[0]?.status).toBe("failed");
 		expect(results[0]?.reported).toHaveLength(1);
+	});
+
+	test("treats document-style-check as a finding engine", async () => {
+		const results = await runEngines(
+			createOptions({
+				config: parseConfig(
+					{ engines: { "document-style-check": true } },
+					"test",
+				),
+				runner: runnerFor({
+					exitCode: 1,
+					stderr: "",
+					stdout: documentOutput([documentFinding]),
+				}),
+			}),
+		);
+		expect(results[0]?.status).toBe("failed");
+		expect(results[0]?.reported).toEqual([documentFinding]);
 	});
 
 	test("keeps a baselined finding out of the report", async () => {

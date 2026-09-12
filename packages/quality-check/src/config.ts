@@ -9,6 +9,7 @@ export const ENGINE_NAMES = [
 	"biome",
 	"knip",
 	"comment-check",
+	"document-style-check",
 	"tsdoc-check",
 ] as const;
 

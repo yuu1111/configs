@@ -25,6 +25,7 @@ export type EngineRunner = (
 export const ENGINE_BINS: Record<EngineName, string> = {
 	biome: "biome",
 	"comment-check": "comment-check",
+	"document-style-check": "document-style-check",
 	knip: "knip",
 	"tsdoc-check": "tsdoc-check",
 };
@@ -47,7 +48,11 @@ export interface EngineCommandContext {
  * 検出をJSONで返すengineか
  */
 export function isFindingEngine(name: EngineName): boolean {
-	return name === "comment-check" || name === "tsdoc-check";
+	return (
+		name === "comment-check" ||
+		name === "document-style-check" ||
+		name === "tsdoc-check"
+	);
 }
 
 /**
@@ -107,6 +112,16 @@ export function buildEngineCommand(
 			"--json",
 			"--baseline",
 			context.rawBaseline,
+			...context.targets,
+			...ignoreArguments,
+			...extra,
+		];
+	}
+	if (name === "document-style-check") {
+		return [
+			executable,
+			"lint",
+			"--json",
 			...context.targets,
 			...ignoreArguments,
 			...extra,

@@ -66,6 +66,29 @@ describe("engine findings", () => {
 		]);
 	});
 
+	test("separates the errors and warnings of document-style-check", () => {
+		const parsed = parseFindings(
+			"document-style-check",
+			JSON.stringify({
+				errors: [
+					{
+						column: 12,
+						file: "README.md",
+						line: 18,
+						message: "an HTML hard break adds spacing without meaning",
+						rule: "hard-break-html",
+						severity: "error",
+					},
+				],
+				warnings: [],
+			}),
+		);
+		expect(parsed.errors.map((finding) => finding.rule)).toEqual([
+			"hard-break-html",
+		]);
+		expect(parsed.errors[0]?.engine).toBe("document-style-check");
+	});
+
 	test("rejects output that is not JSON", () => {
 		expect(() => parseFindings("comment-check", "not json")).toThrow(
 			"did not print JSON",

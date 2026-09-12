@@ -75,6 +75,23 @@ describe("engine commands", () => {
 		]);
 	});
 
+	test("runs the document linter on the targets", () => {
+		expect(
+			buildEngineCommand(
+				"document-style-check",
+				"document-style-check",
+				createContext(),
+			),
+		).toEqual([
+			"document-style-check",
+			"lint",
+			"--json",
+			".",
+			"--ignore",
+			"src/generated",
+		]);
+	});
+
 	test("appends the configured arguments after the engine defaults", () => {
 		expect(
 			buildEngineCommand("tsdoc-check", "tsdoc-check", createContext()),

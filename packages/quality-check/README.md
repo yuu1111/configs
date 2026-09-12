@@ -2,8 +2,8 @@
 
 # @yuu1111/quality-check
 
-Runs Biome, Knip, comment-check, and the TSDoc checker from one CLI instead of
-one script per project. The baseline diff lives here too.
+Runs Biome, Knip, comment-check, document-style-check, and the TSDoc checker
+from one CLI instead of one script per project. The baseline diff lives here too.
 
 ## Install
 
@@ -32,6 +32,7 @@ export default defineConfig({
     biome: true,
     knip: true,
     "comment-check": true,
+    "document-style-check": true,
     "tsdoc-check": { args: ["--error", "missing-doc"] },
   },
   ignore: ["FFXIVReplayAnalyzer"],
@@ -64,7 +65,7 @@ quality-check: 1 of 3 engines failed
 | `baseline` | Baseline file path; `false` disables the diff |
 | `targets` | Targets passed to the file-scanning engines |
 
-Engines run in the order `biome`, `knip`, `comment-check`, `tsdoc-check`.
+Engines run in the order `biome`, `knip`, `comment-check`, `document-style-check`, `tsdoc-check`.
 `args` is appended after the engine defaults, so engine-specific flags such as
 `--error` for `tsdoc-check` belong there.
 

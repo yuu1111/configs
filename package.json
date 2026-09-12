@@ -4,7 +4,7 @@
 	"scripts": {
 		"test": "bun test packages",
 		"format": "biome check --write --unsafe .",
-		"check:quality": "quality-check && bun run document-style-check",
+		"check:quality": "quality-check",
 		"comment-check": "comment-check .",
 		"document-style-check": "document-style-check lint .",
 		"tsdoc-check": "tsdoc-check --error single-line-doc .",

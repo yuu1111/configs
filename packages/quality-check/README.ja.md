@@ -2,7 +2,7 @@
 
 # @yuu1111/quality-check
 
-Projectごとのscriptから個別に呼んでいたBiome、Knip、comment-check、TSDoc checkerを1つのCLIへまとめる baselineの差分判定もここで行う
+Projectごとのscriptから個別に呼んでいたBiome、Knip、comment-check、document-style-check、TSDoc checkerを1つのCLIへまとめる baselineの差分判定もここで行う
 
 ## Install
 
@@ -30,6 +30,7 @@ export default defineConfig({
     biome: true,
     knip: true,
     "comment-check": true,
+    "document-style-check": true,
     "tsdoc-check": { args: ["--error", "missing-doc"] },
   },
   ignore: ["FFXIVReplayAnalyzer"],
@@ -61,7 +62,7 @@ quality-check: 1 of 3 engines failed
 | `baseline` | baseline fileのpath `false` なら差分判定を行わない |
 | `targets` | file走査engineへ渡す対象path |
 
-engineは `biome` → `knip` → `comment-check` → `tsdoc-check` の順に実行する
+engineは `biome` → `knip` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
 `args` はengineの既定引数の後ろへ足すため、`tsdoc-check` の `--error` のようなengine固有の指定はここへ置く
 
 ## Options
