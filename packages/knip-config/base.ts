@@ -6,4 +6,6 @@ import type { KnipConfig } from "knip";
 export const base = {
 	// 同一file内で参照しているexportは内部利用とみなす
 	ignoreExportsUsedInFile: true,
+	// quality-checkが実行時に読み込むため、Projectのsourceとして報告しない
+	ignoreFiles: ["quality.config.ts"],
 } satisfies KnipConfig;

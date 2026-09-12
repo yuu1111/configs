@@ -34,6 +34,7 @@ export default {
 ### base
 
 - `ignoreExportsUsedInFile` は自分のfile内だけで参照されるexportを報告から外す
+- `ignoreFiles` は `quality-check` が実行時に読み込む `quality.config.ts` を報告から外す
 
 ### application
 
