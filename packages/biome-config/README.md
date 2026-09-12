@@ -121,6 +121,17 @@ cacheRequest.catch(() => null)
 
 The plugin runs only on the files that match `includes`, so the same import stays valid in the adapters and in the layers that are allowed to reach them. A plugin pattern is matched against the full file path, so it has to start with `**/` to match a path such as `src/modules/authorization`.
 
+Leave the layer that is allowed to reach the integration modules out of the pattern. A module that keeps its own adapter implementations under an `adapters/` directory has to exclude that directory, or the rule reports the adapters themselves:
+
+```json
+{
+	"includes": [
+		"**/src/modules/authorization/**",
+		"!**/src/modules/authorization/adapters/**"
+	]
+}
+```
+
 `no-direct-response` errors on `new Response(...)`, `Response.json(...)` and `Response.redirect(...)` inside the scoped layer. Scope it to the layer that has to build every response through the shared helper:
 
 ```json
