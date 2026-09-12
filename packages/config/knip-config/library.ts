@@ -6,6 +6,5 @@ import { base } from "./base";
  */
 export const library = {
 	...base,
-	// 公開APIから外れたexportを未使用として報告する
 	includeEntryExports: true,
 } satisfies KnipConfig;

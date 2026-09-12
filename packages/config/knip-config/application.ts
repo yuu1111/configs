@@ -6,6 +6,5 @@ import { base } from "./base";
  */
 export const application = {
 	...base,
-	// applicationのentryは公開契約ではないため未使用exportとして報告しない
 	includeEntryExports: false,
 } satisfies KnipConfig;
