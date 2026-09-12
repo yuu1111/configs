@@ -126,4 +126,3 @@ engineのbinaryは利用Projectの `node_modules/.bin` から実行時に解決�
 `enable` は `comment-check` と `document-style-check` のopt-in ruleだけを受け取り、それぞれのcommandの `--enable <rule>` になる 他のengineへ書くとunknown optionとして拒否し、既定のrule集合は変えない このCLIはengineを同梱しないため、opt-in ruleを有効にするProjectは対応するengine packageも同じ変更で更新する
 
 `typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する 省略時はカレントの `tsconfig.json` を1回だけ読み、`args` はすべての起動へ足す
-

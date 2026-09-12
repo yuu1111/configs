@@ -70,4 +70,3 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 | `--ignore <path>` | 検査から外すpath 複数指定できる |
 | `--write` | 報告の代わりに整形を適用する |
 | `--json` | 検出をJSONで出力する |
-
