@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { classifyComment } from "../src/rules";
+import {
+	classifyComment,
+	findJapanesePeriod,
+	parseEnabledRules,
+} from "../src/rules";
 
 describe("comment classification", () => {
 	test("flags file-wide suppressions", () => {
@@ -34,5 +38,24 @@ describe("comment classification", () => {
 			classifyComment(" biome-ignore lint/suspicious/noExplicitAny: fixture"),
 		).toBeNull();
 		expect(classifyComment(" Returns the parsed header")).toBeNull();
+	});
+});
+
+describe("opt-in rules", () => {
+	test("accepts the Japanese period rule without duplicates", () => {
+		expect(parseEnabledRules([])).toEqual([]);
+		expect(parseEnabledRules(["japanese-period"])).toEqual(["japanese-period"]);
+		expect(parseEnabledRules(["japanese-period", "japanese-period"])).toEqual([
+			"japanese-period",
+		]);
+	});
+
+	test("rejects an unknown rule name", () => {
+		expect(() => parseEnabledRules(["period"])).toThrow("unknown rule: period");
+	});
+
+	test("finds the first Japanese period of a comment body", () => {
+		expect(findJapanesePeriod(" plain comment")).toBe(-1);
+		expect(findJapanesePeriod(" 一つ。二つ。")).toBe(3);
 	});
 });

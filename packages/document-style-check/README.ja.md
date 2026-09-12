@@ -24,6 +24,12 @@ AGENTS.md:18:1 hard-break-html error an HTML hard break adds spacing without mea
 Checked 14 files: 1 errors, 0 warnings
 ```
 
+日本語の文末の `。` も止めるProjectはopt-inのruleを指定する
+
+```bash
+document-style-check lint --enable japanese-period .
+```
+
 判断が要る候補を記録し、埋めてから確認する
 
 ```bash
@@ -48,10 +54,11 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 | `consecutive-blank-lines` | 意味を持たない連続空行 |
 | `date-anchored-statement` | 対象の識別を確認日で代用した記述 |
 | `hard-break-html` | 本文中の `<br>` |
+| `japanese-period` | 日本語の文を終える `。`（opt-in） |
 | `trailing-backslash` | 本文行の末尾のバックスラッシュ |
 | `trailing-whitespace` | 行末の空白 |
 
-`date-anchored-statement`以外は整形できるため、`lint --write`でerrorは解消し、warningだけが人またはモデルの判断に残る
+`consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため`lint --write`で解消する `date-anchored-statement`は人またはモデルが判断するwarningで、`japanese-period`は`--write`の後にもerrorとして残る
 
 ## Options
 
@@ -59,11 +66,14 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 |--------|-------------|
 | `--rules <path>` | `## 判断基準`を持つ基準file `scan`と`check`では必須 |
 | `--review <path>` | 読み書きする検証記録file |
+| `--enable <rule>` | opt-in ruleを実行する 複数指定できる 未知の名前は設定error |
 | `--ignore <path>` | 検査から外すpath 複数指定できる |
 | `--write` | 報告の代わりに整形を適用する |
 | `--json` | 検出をJSONで出力する |
 
 ## Notes
+
+opt-in ruleは `--enable` で指定するまで動かない `lint --write` の後にも `japanese-period` がerrorとして残るのは、`。` を外すと前後の文の書き換えが要るためで、このruleは報告だけを行う
 
 `scan`は既存の検証記録を上書きしない 古い記録を信じず、新しい名前で作り直す
 

@@ -8,36 +8,46 @@ import {
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
-import type { Finding } from "./rules";
+import { type Finding, type OptInRuleId, parseEnabledRules } from "./rules";
 import { SUPPORTED_EXTENSIONS, scanFiles } from "./scan";
 
 const DEFAULT_BASELINE = "comment-baseline.json";
 
 const RULE_MESSAGES: Record<string, string> = {
 	"broad-suppression": "file-wide suppression hides too much",
+	"japanese-period":
+		"a Japanese sentence in a comment does not end with a period",
 	"placeholder-comment": "placeholder comment should be resolved or tracked",
 	"separator-comment": "decorative separator comment adds no information",
 	"undocumented-directive": "TypeScript directive needs a description",
 };
 
 const USAGE =
-	"Usage: comment-check [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]";
+	"Usage: comment-check [--baseline <path>] [--enable <rule>] [--ignore <path>] [--update-baseline] [--json] [path...]";
 
-interface Options {
+/**
+ * 解析した起動条件
+ */
+export interface Options {
 	baselinePath: string;
+	enabled: OptInRuleId[];
 	ignores: string[];
 	json: boolean;
 	targets: string[];
 	update: boolean;
 }
 
-function parseArguments(argv: string[]): Options {
+/**
+ * 起動条件を解析する --enableのrule名はここで検証する
+ */
+export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
 		flags: ["json", "update-baseline"],
-		values: ["baseline", "ignore"],
+		values: ["baseline", "enable", "ignore"],
 	});
 	return {
 		baselinePath: parsed.values.get("baseline")?.at(-1) ?? DEFAULT_BASELINE,
+		enabled: parseEnabledRules(parsed.values.get("enable") ?? []),
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
 		targets: parsed.targets.length > 0 ? parsed.targets : ["."],
@@ -50,7 +60,10 @@ function describeFinding(finding: Finding): string {
 	return `${formatLocation(finding)} ${finding.rule} ${message}`.trimEnd();
 }
 
-function main(argv: string[]): number {
+/**
+ * 引数に応じて検査を実行し、終了codeを返す
+ */
+export function main(argv: string[]): number {
 	if (wantsHelp(argv)) {
 		console.log(USAGE);
 		return 0;
@@ -61,7 +74,7 @@ function main(argv: string[]): number {
 		extensions: SUPPORTED_EXTENSIONS,
 		ignores: options.ignores,
 	});
-	const findings = scanFiles(files);
+	const findings = scanFiles(files, process.cwd(), options.enabled);
 	if (options.update) {
 		const baseline = createBaseline(findings);
 		writeBaseline(options.baselinePath, baseline);
@@ -91,4 +104,6 @@ function main(argv: string[]): number {
 	return comparison.added.length > 0 ? 1 : 0;
 }
 
-runCli(main);
+if (import.meta.main) {
+	runCli(main);
+}

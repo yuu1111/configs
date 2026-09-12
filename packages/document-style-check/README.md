@@ -24,6 +24,13 @@ AGENTS.md:18:1 hard-break-html error an HTML hard break adds spacing without mea
 Checked 14 files: 1 errors, 0 warnings
 ```
 
+A project that also keeps Japanese sentences free of a trailing `。` names the
+opt-in rule:
+
+```bash
+document-style-check lint --enable japanese-period .
+```
+
 Record the candidates that need a judgment, fill them in, then verify:
 
 ```bash
@@ -49,10 +56,14 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 | `consecutive-blank-lines` | runs of blank lines that add spacing without meaning |
 | `date-anchored-statement` | a check date used in place of the subject's identity |
 | `hard-break-html` | `<br>` in prose |
+| `japanese-period` | a Japanese sentence that ends with `。` (opt-in) |
 | `trailing-backslash` | a backslash at the end of a prose line |
 | `trailing-whitespace` | whitespace at the end of a line |
 
-Every rule except `date-anchored-statement` is fixable, so `lint --write` clears all errors and leaves the warnings for a human or a model to judge.
+`consecutive-blank-lines`, `hard-break-html`, `trailing-backslash`, and
+`trailing-whitespace` are fixable, so `lint --write` clears them.
+`date-anchored-statement` is a warning for a human or a model to judge, and
+`japanese-period` remains an error after `--write`.
 
 ## Options
 
@@ -60,11 +71,16 @@ Every rule except `date-anchored-statement` is fixable, so `lint --write` clears
 |--------|-------------|
 | `--rules <path>` | Rules file that holds the `## 判断基準` criteria, required by `scan` and `check` |
 | `--review <path>` | Review file to write or read |
+| `--enable <rule>` | Run an opt-in rule, repeatable; an unknown name is a configuration error |
 | `--ignore <path>` | Path to leave out, repeatable |
 | `--write` | Apply the fixes instead of reporting them |
 | `--json` | Print findings as JSON |
 
 ## Notes
+
+An opt-in rule stays off until `--enable` names it. `lint --write` therefore
+leaves a `japanese-period` error in place: dropping a `。` needs a rewrite of the
+sentence around it, so the rule reports and stops.
 
 `scan` refuses to overwrite an existing review file, so regenerate it under a new name rather than trusting a stale record.
 

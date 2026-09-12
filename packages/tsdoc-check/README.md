@@ -33,6 +33,10 @@ bunx tsdoc-check src
 | `missing-doc` | warning | An exported declaration without a TSDoc comment |
 | `single-line-doc` | warning | A TSDoc comment written on a single line |
 
+A tag that TSDoc does not define is a warning under `tsdoc-tag`, so
+`@description` and any other non-standard tag are reported there, and
+`--error tsdoc-tag` raises every one of them to an error.
+
 Only top-level exported declarations are checked. A file that does not parse is
 left to the TypeScript compiler and to Biome, so its declarations are not
 checked.

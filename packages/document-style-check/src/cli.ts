@@ -5,13 +5,17 @@ import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
 import { snapshot, verify } from "./audit";
-import type { Finding } from "./rules";
+import { type Finding, type OptInRuleId, parseEnabledRules } from "./rules";
 import { DOCUMENT_EXTENSIONS, fixFiles, lintFiles } from "./scan";
 
 type Action = "check" | "lint" | "scan";
 
-interface Options {
+/**
+ * 解析した起動条件
+ */
+export interface Options {
 	action: Action;
+	enabled: OptInRuleId[];
 	ignores: string[];
 	json: boolean;
 	review: string;
@@ -25,7 +29,7 @@ const USAGE = [
 	"",
 	"  scan  <path...> --rules <file> --review <file>   確認候補と検証記録を作る",
 	"  check <path...> --rules <file> --review <file>   埋めた検証記録を確認する",
-	"  lint  [--write] [--ignore <path>] [--json] [path...]",
+	"  lint  [--write] [--enable <rule>] [--ignore <path>] [--json] [path...]",
 	"                                                  機械的な違反を報告または整形する",
 ].join("\n");
 
@@ -42,10 +46,10 @@ function toAction(argument: string): Action | undefined {
 /**
  * 引数を解析し、行動と対象をまとめる
  */
-function parseArguments(argv: string[]): Options {
+export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
 		flags: ["json", "write"],
-		values: ["ignore", "review", "rules"],
+		values: ["enable", "ignore", "review", "rules"],
 	});
 	const [actionArgument, ...targets] = parsed.targets;
 	if (actionArgument === undefined) {
@@ -57,6 +61,7 @@ function parseArguments(argv: string[]): Options {
 	}
 	return {
 		action,
+		enabled: parseEnabledRules(parsed.values.get("enable") ?? []),
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
 		review: parsed.values.get("review")?.at(-1) ?? "",
@@ -149,7 +154,7 @@ function runCheck(options: Options): number {
  * 検出と整形の結果を出力し、errorの有無を終了codeで返す
  */
 function report(options: Options, files: string[]): number {
-	const findings = lintFiles(files);
+	const findings = lintFiles(files, process.cwd(), options.enabled);
 	const errors = findings.filter((finding) => finding.severity === "error");
 	const warnings = findings.filter((finding) => finding.severity === "warning");
 	if (options.json) {
@@ -186,7 +191,7 @@ function runLint(options: Options): number {
 /**
  * 引数に応じた処理を実行し、終了codeを返す
  */
-function main(argv: string[]): number {
+export function main(argv: string[]): number {
 	if (wantsHelp(argv)) {
 		console.log(USAGE);
 		return 0;
@@ -201,4 +206,6 @@ function main(argv: string[]): number {
 	return runLint(options);
 }
 
-runCli(main);
+if (import.meta.main) {
+	runCli(main);
+}

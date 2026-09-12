@@ -160,6 +160,78 @@ describe("engine commands", () => {
 		).toEqual(["document-style-check", "lint", "--json", "."]);
 	});
 
+	test("passes the opt-in rules to the period engines", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{
+				config: {
+					"comment-check": { enable: ["japanese-period"] },
+					"document-style-check": { enable: ["japanese-period"] },
+				},
+				engines: { "comment-check": true, "document-style-check": true },
+			},
+			"test",
+		);
+		expect(
+			buildEngineCommand("comment-check", "comment-check", context),
+		).toEqual([
+			"comment-check",
+			"--json",
+			"--baseline",
+			"raw.json",
+			"--enable",
+			"japanese-period",
+			".",
+		]);
+		expect(
+			buildEngineCommand(
+				"document-style-check",
+				"document-style-check",
+				context,
+			),
+		).toEqual([
+			"document-style-check",
+			"lint",
+			"--json",
+			"--enable",
+			"japanese-period",
+			".",
+		]);
+	});
+
+	test("repeats the enable flag in config order", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{
+				config: {
+					"comment-check": {
+						args: ["--extra"],
+						enable: ["japanese-period", "second"],
+						ignore: ["dist"],
+					},
+				},
+				engines: { "comment-check": true },
+			},
+			"test",
+		);
+		expect(
+			buildEngineCommand("comment-check", "comment-check", context),
+		).toEqual([
+			"comment-check",
+			"--json",
+			"--baseline",
+			"raw.json",
+			"--enable",
+			"japanese-period",
+			"--enable",
+			"second",
+			".",
+			"--ignore",
+			"dist",
+			"--extra",
+		]);
+	});
+
 	test("turns the rule names of the TSDoc engine into flags", () => {
 		expect(
 			buildEngineCommand("tsdoc-check", "tsdoc-check", createContext()),

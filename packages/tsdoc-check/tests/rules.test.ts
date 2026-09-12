@@ -16,4 +16,19 @@ describe("rule promotion", () => {
 		const promoted = promoteFindings(findings, ["tsdoc-tag"]);
 		expect(promoted[0]?.severity).toBe("warning");
 	});
+
+	test("raises the undefined tag rule to an error", () => {
+		const source = [
+			"/** Runs the task",
+			" * @description the value read from the header",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+		const findings = scanSource(source, "src/sample.ts");
+		const promoted = promoteFindings(findings, ["tsdoc-tag"]);
+
+		expect(findings[0]?.rule).toBe("tsdoc-tag");
+		expect(findings[0]?.severity).toBe("warning");
+		expect(promoted[0]?.severity).toBe("error");
+	});
 });

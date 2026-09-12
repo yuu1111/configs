@@ -62,6 +62,30 @@ describe("tsdoc checks", () => {
 		expect(findings[0]?.severity).toBe("error");
 	});
 
+	test("reports the @description tag that TSDoc does not define", () => {
+		const source = [
+			"/** Runs the task",
+			" * @description the value read from the header",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+		const findings = scanSource(source, "src/sample.ts");
+
+		expect(rulesOf(source)).toEqual(["tsdoc-tag"]);
+		expect(findings[0]?.severity).toBe("warning");
+	});
+
+	test("does not report a multi-line TSDoc comment as a single line", () => {
+		const source = [
+			"/** Runs the task",
+			" * and returns nothing",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+
+		expect(rulesOf(source)).toEqual([]);
+	});
+
 	test("reports a tag that TSDoc does not define as a warning", () => {
 		const source = [
 			"/** Runs the task",

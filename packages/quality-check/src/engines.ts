@@ -180,6 +180,15 @@ function buildTypecheckCommand(
 }
 
 /**
+ * opt-in ruleを有効にするコマンド引数へ展開する
+ */
+function enableArguments(
+	options: { enable?: string[] } | null | undefined,
+): string[] {
+	return (options?.enable ?? []).flatMap((rule) => ["--enable", rule]);
+}
+
+/**
  * engineへ渡すコマンドを組み立てる
  */
 export function buildEngineCommand(
@@ -223,6 +232,7 @@ export function buildEngineCommand(
 			"--json",
 			"--baseline",
 			context.rawBaseline,
+			...enableArguments(engineConfig(context.config, "comment-check")),
 			...targets,
 			...ignoreArguments,
 			...extra,
@@ -233,6 +243,7 @@ export function buildEngineCommand(
 			executable,
 			"lint",
 			"--json",
+			...enableArguments(engineConfig(context.config, "document-style-check")),
 			...targets,
 			...ignoreArguments,
 			...extra,

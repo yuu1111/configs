@@ -38,7 +38,8 @@ export default defineConfig({
 		"tsdoc-check": true,
 	},
 	config: {
-		"comment-check": { ignore: ["another-project"] },
+		"comment-check": { enable: ["japanese-period"], ignore: ["another-project"] },
+		"document-style-check": { enable: ["japanese-period"] },
 		"tsdoc-check": { error: ["missing-doc"] },
 	},
 });
@@ -80,8 +81,8 @@ engine in `config`. Each engine runs:
 | `biome` | `biome check` | `targets`, `args`; `biome.json` holds the excluded paths |
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
-| `comment-check` | `comment-check --json` | `ignore`, `targets`, `args` |
-| `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args` |
+| `comment-check` | `comment-check --json` | `ignore`, `targets`, `args`, `enable` (rule names to turn on) |
+| `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args`, `enable` (rule names to turn on) |
 | `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `error` (rule names to fail on) |
 
 `args` is appended after the engine defaults, for conditions the config cannot
@@ -131,6 +132,12 @@ dependencies, so it declares them in `ignoreDependencies` with the reason.
 finding. The new-and-resolved diff is done by this CLI from a single baseline
 file, so an existing `comment-baseline.json` is moved over with
 `--update-baseline`.
+
+`enable` names the opt-in rules of `comment-check` and `document-style-check`
+and becomes `--enable <rule>` on each of their commands. The other engines
+reject the field, and the default rule set stays as it is. This CLI ships no
+engine of its own, so a project that turns an opt-in rule on updates the
+matching engine package in the same change.
 
 `typecheck` starts `tsc --noEmit -p <path>` once per path in `projects`. Without
 it the current `tsconfig.json` is read once, and `args` are added to every

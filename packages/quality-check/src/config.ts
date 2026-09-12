@@ -32,6 +32,22 @@ export interface EngineOptions {
 }
 
 /**
+ * comment-checkへ渡す起動条件
+ */
+export interface CommentCheckOptions extends EngineOptions {
+	/** 既定で無効のopt-in ruleのうち有効にするrule名 */
+	enable?: string[];
+}
+
+/**
+ * document-style-checkへ渡す起動条件
+ */
+export interface DocumentStyleCheckOptions extends EngineOptions {
+	/** 既定で無効のopt-in ruleのうち有効にするrule名 */
+	enable?: string[];
+}
+
+/**
  * TSDoc検査へ渡す起動条件
  */
 export interface TsdocCheckOptions extends EngineOptions {
@@ -54,8 +70,8 @@ export interface EngineConfigMap {
 	biome: EngineOptions;
 	typecheck: TypecheckOptions;
 	knip: EngineOptions;
-	"comment-check": EngineOptions;
-	"document-style-check": EngineOptions;
+	"comment-check": CommentCheckOptions;
+	"document-style-check": DocumentStyleCheckOptions;
 	"tsdoc-check": TsdocCheckOptions;
 }
 
@@ -107,8 +123,8 @@ const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
 	biome: ["args", "ignore", "targets"],
 	typecheck: ["args", "ignore", "projects", "targets"],
 	knip: ["args", "ignore", "targets"],
-	"comment-check": ["args", "ignore", "targets"],
-	"document-style-check": ["args", "ignore", "targets"],
+	"comment-check": ["args", "enable", "ignore", "targets"],
+	"document-style-check": ["args", "enable", "ignore", "targets"],
 	"tsdoc-check": ["args", "error", "ignore", "targets"],
 };
 
@@ -164,9 +180,52 @@ function parseEngines(
 }
 
 type ParsedEngineOptions = EngineOptions & {
+	enable?: string[];
 	error?: string[];
 	projects?: string[];
 };
+
+/**
+ * engine名ごとにしか受け取らない起動条件を読み取る
+ */
+function parseEngineExtras(
+	value: JsonObject,
+	source: string,
+	name: EngineName,
+): ParsedEngineOptions {
+	const extras: ParsedEngineOptions = {};
+	if (name === "comment-check" || name === "document-style-check") {
+		const enable = readStringArray(
+			value.enable,
+			`${source}: config.${name}.enable`,
+		);
+		if (enable !== undefined) {
+			extras.enable = enable;
+		}
+	}
+	if (name === "tsdoc-check") {
+		const error = readStringArray(
+			value.error,
+			`${source}: config.${name}.error`,
+		);
+		if (error !== undefined) {
+			extras.error = error;
+		}
+	}
+	if (name === "typecheck") {
+		const projects = readStringArray(
+			value.projects,
+			`${source}: config.${name}.projects`,
+		);
+		if (projects !== undefined) {
+			if (projects.length === 0) {
+				throw new Error(`${source}: config.${name}.projects must not be empty`);
+			}
+			extras.projects = projects;
+		}
+	}
+	return extras;
+}
 
 function parseEngineOptions(
 	value: JsonObject,
@@ -200,28 +259,7 @@ function parseEngineOptions(
 	if (args !== undefined) {
 		options.args = args;
 	}
-	if (name === "tsdoc-check") {
-		const error = readStringArray(
-			value.error,
-			`${source}: config.${name}.error`,
-		);
-		if (error !== undefined) {
-			options.error = error;
-		}
-	}
-	if (name === "typecheck") {
-		const projects = readStringArray(
-			value.projects,
-			`${source}: config.${name}.projects`,
-		);
-		if (projects !== undefined) {
-			if (projects.length === 0) {
-				throw new Error(`${source}: config.${name}.projects must not be empty`);
-			}
-			options.projects = projects;
-		}
-	}
-	return options;
+	return { ...options, ...parseEngineExtras(value, source, name) };
 }
 
 function parseEngineConfig(

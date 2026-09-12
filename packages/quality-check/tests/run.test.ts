@@ -25,6 +25,16 @@ const commentFinding: NormalizedFinding = {
 	text: "TODO: one",
 };
 
+const periodFinding: NormalizedFinding = {
+	column: 5,
+	engine: "comment-check",
+	file: "src/a.ts",
+	line: 1,
+	rule: "japanese-period",
+	severity: "error",
+	text: "説明。",
+};
+
 function commentOutput(findings: unknown[]): string {
 	return JSON.stringify({ added: findings, resolved: [] });
 }
@@ -224,6 +234,56 @@ describe("engine orchestration", () => {
 		expect(results[0]?.status).toBe("passed");
 		expect(results[0]?.reported).toHaveLength(0);
 		expect(results[0]?.detected).toHaveLength(1);
+	});
+
+	test("reports a new opt-in finding against the baseline", async () => {
+		const results = await runEngines(
+			createOptions({
+				baseline: createBaseline([commentFinding]),
+				config: parseConfig({ engines: { "comment-check": true } }, "test"),
+				runner: runnerFor({
+					exitCode: 1,
+					stderr: "",
+					stdout: commentOutput([commentFinding, periodFinding]),
+				}),
+			}),
+		);
+		expect(results[0]?.status).toBe("failed");
+		expect(results[0]?.reported).toEqual([periodFinding]);
+		expect(results[0]?.resolved).toBe(0);
+	});
+
+	test("keeps a baselined opt-in finding out of the report", async () => {
+		const results = await runEngines(
+			createOptions({
+				baseline: createBaseline([periodFinding]),
+				config: parseConfig({ engines: { "comment-check": true } }, "test"),
+				runner: runnerFor({
+					exitCode: 1,
+					stderr: "",
+					stdout: commentOutput([periodFinding]),
+				}),
+			}),
+		);
+		expect(results[0]?.status).toBe("passed");
+		expect(results[0]?.detected).toEqual([periodFinding]);
+		expect(results[0]?.reported).toEqual([]);
+	});
+
+	test("counts a resolved opt-in finding", async () => {
+		const results = await runEngines(
+			createOptions({
+				baseline: createBaseline([periodFinding]),
+				config: parseConfig({ engines: { "comment-check": true } }, "test"),
+				runner: runnerFor({
+					exitCode: 0,
+					stderr: "",
+					stdout: commentOutput([]),
+				}),
+			}),
+		);
+		expect(results[0]?.status).toBe("passed");
+		expect(results[0]?.resolved).toBe(1);
 	});
 
 	test("marks output that is not JSON as an error", async () => {

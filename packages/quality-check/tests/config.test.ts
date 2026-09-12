@@ -46,6 +46,58 @@ describe("quality config", () => {
 		).toThrow("unknown option");
 	});
 
+	test("reads the opt-in rules of the period engines", () => {
+		const config = parseConfig(
+			{
+				config: {
+					"comment-check": { enable: ["japanese-period"] },
+					"document-style-check": { enable: ["japanese-period"] },
+				},
+				engines: { "comment-check": true, "document-style-check": true },
+			},
+			"test",
+		);
+		expect(engineConfig(config, "comment-check")).toEqual({
+			enable: ["japanese-period"],
+		});
+		expect(engineConfig(config, "document-style-check")).toEqual({
+			enable: ["japanese-period"],
+		});
+	});
+
+	test("rejects the rule option outside the period engines", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: { biome: { enable: ["japanese-period"] } },
+					engines: { biome: true },
+				},
+				"test",
+			),
+		).toThrow("unknown option");
+		expect(() =>
+			parseConfig(
+				{
+					config: { knip: { enable: ["japanese-period"] } },
+					engines: { knip: true },
+				},
+				"test",
+			),
+		).toThrow("unknown option");
+	});
+
+	test("rejects an empty rule name", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: { "comment-check": { enable: [""] } },
+					engines: { "comment-check": true },
+				},
+				"test",
+			),
+		).toThrow("must be an array of non-empty strings");
+	});
+
 	test("rejects an empty project list", () => {
 		expect(() =>
 			parseConfig(

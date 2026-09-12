@@ -33,6 +33,8 @@ bunx tsdoc-check src
 | `missing-doc` | warning | TSDoc commentの無いexported宣言 |
 | `single-line-doc` | warning | 1行で書いたTSDoc comment |
 
+TSDocが定義していないtagは `tsdoc-tag` のwarningになる `@description` などの独自tagもそこで報告し、`--error tsdoc-tag` ですべてerrorへ上げる
+
 検査対象はトップレベルのexported宣言だけ parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は検査しない
 
 ## Suppressions

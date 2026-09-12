@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
-import { type Finding, fixSource, lintSource } from "./rules";
+import { type Finding, fixSource, lintSource, type OptInRuleId } from "./rules";
 
 /**
  * 検査するMarkdownの拡張子
@@ -15,20 +15,29 @@ export const DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
 /**
  * fileを読み込んで違反を検出する
  */
-export function lintFile(file: string, cwd = process.cwd()): Finding[] {
+export function lintFile(
+	file: string,
+	cwd = process.cwd(),
+	enabled: readonly OptInRuleId[] = [],
+): Finding[] {
 	return lintSource(
 		readFileSync(file, "utf8"),
 		normalizePath(relative(cwd, file)),
+		enabled,
 	);
 }
 
 /**
  * 複数fileの違反をまとめて位置順に並べる
  */
-export function lintFiles(files: string[], cwd = process.cwd()): Finding[] {
+export function lintFiles(
+	files: string[],
+	cwd = process.cwd(),
+	enabled: readonly OptInRuleId[] = [],
+): Finding[] {
 	const findings: Finding[] = [];
 	for (const file of files) {
-		findings.push(...lintFile(file, cwd));
+		findings.push(...lintFile(file, cwd, enabled));
 	}
 	return findings.sort(compareFindings);
 }

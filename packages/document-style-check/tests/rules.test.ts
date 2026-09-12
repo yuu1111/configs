@@ -8,6 +8,15 @@ function rulesOf(source: string): string[] {
 	return lintSource(source, "doc.md").map((finding) => finding.rule);
 }
 
+/**
+ * opt-in ruleを有効にした検出のrule名だけを位置順に返す
+ */
+function enabledRulesOf(source: string): string[] {
+	return lintSource(source, "doc.md", ["japanese-period"]).map(
+		(finding) => finding.rule,
+	);
+}
+
 test("行末の空白を検出して取り除く", () => {
 	const source = "本文です  \n次の行です\n";
 
@@ -106,4 +115,66 @@ test("整形を繰り返しても結果が変わらない", () => {
 
 	expect(fixSource(once)).toBe(once);
 	expect(lintSource(once, "doc.md")).toEqual([]);
+});
+
+test("既定では日本語の句点を検出しない", () => {
+	expect(rulesOf("本文です。\n")).toEqual([]);
+});
+
+test("本文、見出し、箇条書き、表の句点を検出する", () => {
+	const source = [
+		"# 見出しです。",
+		"",
+		"本文です。",
+		"",
+		"- 項目です。",
+		"",
+		"| 列です。 | 値 |",
+		"| --- | --- |",
+		"",
+	].join("\n");
+
+	expect(enabledRulesOf(source)).toEqual([
+		"japanese-period",
+		"japanese-period",
+		"japanese-period",
+		"japanese-period",
+	]);
+});
+
+test("frontmatterの句点を検出しない", () => {
+	expect(enabledRulesOf("---\ntitle: 題名です。\n---\n\n本文\n")).toEqual([]);
+});
+
+test("コードフェンスの句点を検出しない", () => {
+	expect(enabledRulesOf("```text\nコードです。\n```\n")).toEqual([]);
+});
+
+test("インラインコードの句点を検出しない", () => {
+	expect(enabledRulesOf("`コードです。` を説明する\n")).toEqual([]);
+});
+
+test("句点の位置を行と桁で報告する", () => {
+	expect(
+		lintSource("`コードです。` を含む本文です。\n", "doc.md", [
+			"japanese-period",
+		]),
+	).toEqual([
+		{
+			column: 17,
+			file: "doc.md",
+			line: 1,
+			message: "a Japanese sentence does not end with a period",
+			rule: "japanese-period",
+			severity: "error",
+		},
+	]);
+});
+
+test("整形しても句点を削除しない", () => {
+	const fixed = fixSource("本文です。  \n");
+
+	expect(fixed).toBe("本文です。\n");
+	expect(rulesOf(fixed)).toEqual([]);
+	expect(enabledRulesOf(fixed)).toEqual(["japanese-period"]);
 });

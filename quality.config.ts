@@ -10,6 +10,8 @@ export default defineConfig({
 		"tsdoc-check": true,
 	},
 	config: {
-		"tsdoc-check": { error: ["single-line-doc"] },
+		"comment-check": { enable: ["japanese-period"] },
+		"document-style-check": { enable: ["japanese-period"] },
+		"tsdoc-check": { error: ["single-line-doc", "tsdoc-tag"] },
 	},
 });

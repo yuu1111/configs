@@ -8,6 +8,7 @@ export const RULE_IDS = [
 	"consecutive-blank-lines",
 	"date-anchored-statement",
 	"hard-break-html",
+	"japanese-period",
 	"trailing-backslash",
 	"trailing-whitespace",
 ] as const;
@@ -16,6 +17,16 @@ export const RULE_IDS = [
  * RULE_IDSが定義するrule識別子のunion型
  */
 export type RuleId = (typeof RULE_IDS)[number];
+
+/**
+ * 既定では実行せず--enableで明示的に有効にするruleの識別子一覧
+ */
+export const OPT_IN_RULE_IDS = ["japanese-period"] as const;
+
+/**
+ * OPT_IN_RULE_IDSが定義するrule識別子のunion型
+ */
+export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
 
 /**
  * 検出した違反1件の内容と位置
@@ -31,6 +42,7 @@ const MESSAGES: Record<RuleId, string> = {
 		"consecutive blank lines add spacing without meaning",
 	"date-anchored-statement": "a check date is not the identity of the subject",
 	"hard-break-html": "an HTML hard break adds spacing without meaning",
+	"japanese-period": "a Japanese sentence does not end with a period",
 	"trailing-backslash": "a trailing backslash adds spacing without meaning",
 	"trailing-whitespace": "trailing whitespace is not part of the content",
 };
@@ -39,6 +51,31 @@ const INLINE_CODE = /`+[^`]*`+/g;
 const HARD_BREAK = /<br\s*\/?>/gi;
 const DATE_ANCHOR =
 	/\d{4}[-/]\d{1,2}[-/]\d{1,2}(?:\s*に)?(?:確認|時点|現在|版)|(?:確認|執筆|作成)(?:した)?時点/;
+const JAPANESE_PERIOD = "。";
+
+/**
+ * --enableの値を検証して重複を除く 未知のrule名は設定errorにする
+ */
+export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
+	const enabled: OptInRuleId[] = [];
+	for (const value of values) {
+		if (!(OPT_IN_RULE_IDS as readonly string[]).includes(value)) {
+			throw new Error(`unknown rule: ${value}`);
+		}
+		const rule = value as OptInRuleId;
+		if (!enabled.includes(rule)) {
+			enabled.push(rule);
+		}
+	}
+	return enabled;
+}
+
+/**
+ * 本文行にある最初の日本語句点の位置を返す 無ければ-1を返す
+ */
+export function findJapanesePeriod(line: string): number {
+	return line.indexOf(JAPANESE_PERIOD);
+}
 
 /**
  * 指定した位置の違反を組み立てる
@@ -90,7 +127,11 @@ function replaceOutsideInlineCode(
 /**
  * 通常本文の1行から、位置で示せる違反を検出する
  */
-function lintBodyLine(item: MarkdownLine, file: string): Finding[] {
+function lintBodyLine(
+	item: MarkdownLine,
+	file: string,
+	enabled: readonly OptInRuleId[],
+): Finding[] {
 	const findings: Finding[] = [];
 	const trailing = item.line.length - item.line.trimEnd().length;
 	if (trailing > 0) {
@@ -105,6 +146,14 @@ function lintBodyLine(item: MarkdownLine, file: string): Finding[] {
 		);
 	}
 	const masked = maskInlineCode(item.line);
+	if (enabled.includes("japanese-period")) {
+		const period = findJapanesePeriod(masked);
+		if (period >= 0) {
+			findings.push(
+				finding("japanese-period", "error", file, item.number, period + 1),
+			);
+		}
+	}
 	const hardBreak = masked.search(HARD_BREAK);
 	if (hardBreak >= 0) {
 		findings.push(
@@ -138,9 +187,13 @@ function lintBodyLine(item: MarkdownLine, file: string): Finding[] {
 }
 
 /**
- * 本文文字列を検査して違反を検出する
+ * 本文文字列を検査して違反を検出する 既定ではopt-in ruleを実行しない
  */
-export function lintSource(source: string, file: string): Finding[] {
+export function lintSource(
+	source: string,
+	file: string,
+	enabled: readonly OptInRuleId[] = [],
+): Finding[] {
 	const findings: Finding[] = [];
 	let blankStreak = 0;
 	for (const item of markdownLines(source)) {
@@ -158,7 +211,7 @@ export function lintSource(source: string, file: string): Finding[] {
 			continue;
 		}
 		blankStreak = 0;
-		findings.push(...lintBodyLine(item, file));
+		findings.push(...lintBodyLine(item, file, enabled));
 	}
 	return findings;
 }

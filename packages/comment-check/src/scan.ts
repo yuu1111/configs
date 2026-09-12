@@ -3,7 +3,13 @@ import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { extractComments } from "./comments";
-import { classifyComment, type Finding, normalizeComment } from "./rules";
+import {
+	classifyComment,
+	type Finding,
+	findJapanesePeriod,
+	normalizeComment,
+	type OptInRuleId,
+} from "./rules";
 
 /**
  * commentを検査する拡張子
@@ -35,22 +41,41 @@ function positionAt(
 }
 
 /**
- * source文字列を走査してcomment違反を検出する
+ * source文字列を走査してcomment違反を検出する 既定ではopt-in ruleを実行しない
  */
-export function scanSource(source: string, file: string): Finding[] {
+export function scanSource(
+	source: string,
+	file: string,
+	enabled: readonly OptInRuleId[] = [],
+): Finding[] {
 	const findings: Finding[] = [];
 	for (const comment of extractComments(source)) {
+		const text = normalizeComment(comment.text);
 		const rule = classifyComment(comment.text);
-		if (rule === null) {
+		if (rule !== null) {
+			const position = positionAt(source, comment.start);
+			findings.push({
+				column: position.column,
+				file,
+				line: position.line,
+				rule,
+				text,
+			});
+		}
+		if (!enabled.includes("japanese-period")) {
 			continue;
 		}
-		const position = positionAt(source, comment.start);
+		const offset = findJapanesePeriod(comment.text);
+		if (offset < 0) {
+			continue;
+		}
+		const position = positionAt(source, comment.start + 2 + offset);
 		findings.push({
 			column: position.column,
 			file,
 			line: position.line,
-			rule,
-			text: normalizeComment(comment.text),
+			rule: "japanese-period",
+			text,
 		});
 	}
 	return findings;
@@ -59,20 +84,29 @@ export function scanSource(source: string, file: string): Finding[] {
 /**
  * fileを読み込んでcomment違反を検出する
  */
-export function scanFile(file: string, cwd = process.cwd()): Finding[] {
+export function scanFile(
+	file: string,
+	cwd = process.cwd(),
+	enabled: readonly OptInRuleId[] = [],
+): Finding[] {
 	return scanSource(
 		readFileSync(file, "utf8"),
 		normalizePath(relative(cwd, file)),
+		enabled,
 	);
 }
 
 /**
  * 複数fileの違反をまとめて位置順に並べる
  */
-export function scanFiles(files: string[], cwd = process.cwd()): Finding[] {
+export function scanFiles(
+	files: string[],
+	cwd = process.cwd(),
+	enabled: readonly OptInRuleId[] = [],
+): Finding[] {
 	const findings: Finding[] = [];
 	for (const file of files) {
-		findings.push(...scanFile(file, cwd));
+		findings.push(...scanFile(file, cwd, enabled));
 	}
 	return findings.sort(compareFindings);
 }
