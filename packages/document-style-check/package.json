@@ -9,7 +9,7 @@
 	},
 	"type": "module",
 	"bin": {
-		"document-style-check": "dist/cli.js"
+		"document-style-check": "bin/cli.js"
 	},
 	"exports": {
 		".": "./dist/scan.js",
@@ -17,6 +17,7 @@
 	},
 	"files": [
 		"README.ja.md",
+		"bin",
 		"dist"
 	],
 	"scripts": {

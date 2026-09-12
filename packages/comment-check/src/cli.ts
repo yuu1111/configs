@@ -105,6 +105,13 @@ export function main(argv: string[]): number {
 	return comparison.added.length > 0 ? 1 : 0;
 }
 
-if (import.meta.main) {
+/**
+ * CLIの本体を起動する launcherと直接実行の両方から呼ぶ
+ */
+export function run(): void {
 	runCli(main);
+}
+
+if (import.meta.main) {
+	run();
 }

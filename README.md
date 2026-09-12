@@ -46,3 +46,5 @@ Use `biome-config-vX.Y.Z` for `@yuu1111/biome-config` and
 - The biome-config preset filename is `base.json` / `react.json` (not `biome.json`) to avoid Biome's nested-config detection.
 - The root `devDependencies` reference the workspace packages with `workspace:*` so the repo dogfoods its own configs via symlinks.
 - `@yuu1111/shared` is private and its code is bundled into each check package at build time, so the published packages have no runtime dependency on it.
+- Each check package ships a committed `bin/cli.js` launcher that calls the built `dist/cli.js`. Bun links a workspace `bin` only when its target already exists at install time, so a `bin` pointing at the build output is missing from `node_modules/.bin` on a clean clone until a second install.
+- `bun.lock` records each workspace `bin`, and Bun does not recompute that section on later installs. Change `bin` in `package.json` and `bun.lock` together so `--frozen-lockfile` still links the command.

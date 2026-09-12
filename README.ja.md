@@ -44,3 +44,5 @@ npm version patch --no-git-tag-version
 - biome-configのpreset file名は `base.json` / `react.json` にし、Biomeのnested config検出を避けるため `biome.json` にはしない
 - ルートの `devDependencies` はworkspace packageを `workspace:*` で参照し、symlink経由で自分の設定をdogfoodする
 - `@yuu1111/shared` はprivateにし、公開するcheck packageへbuild時に同梱する 公開物にruntime依存として残さない
+- 各check packageはcommit済みの `bin/cli.js` からbuild成果物の `dist/cli.js` を呼ぶ Bunはinstall時にtargetが存在するworkspaceの `bin` だけを `node_modules/.bin` へlinkするため、build成果物を直接 `bin` に指定するとclean cloneの初回installでCLIが見つからない
+- `bun.lock` はworkspaceの `bin` を保持し、Bunは後のinstallで再計算しない `bin` は `package.json` と `bun.lock` を同じ変更で更新し、`--frozen-lockfile` のinstallでもcommandをlinkできるようにする

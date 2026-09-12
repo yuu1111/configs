@@ -9,7 +9,7 @@
 	},
 	"type": "module",
 	"bin": {
-		"quality-check": "dist/cli.js"
+		"quality-check": "bin/cli.js"
 	},
 	"exports": {
 		".": "./src/config.ts",
@@ -17,6 +17,7 @@
 	},
 	"files": [
 		"README.ja.md",
+		"bin",
 		"src/config.ts",
 		"src/engines.ts",
 		"dist"

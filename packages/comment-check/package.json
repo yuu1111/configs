@@ -9,13 +9,14 @@
 	},
 	"type": "module",
 	"bin": {
-		"comment-check": "dist/cli.js"
+		"comment-check": "bin/cli.js"
 	},
 	"exports": {
 		".": "./dist/scan.js"
 	},
 	"files": [
 		"README.ja.md",
+		"bin",
 		"dist"
 	],
 	"scripts": {

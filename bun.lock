@@ -26,7 +26,7 @@
       "name": "@yuu1111/comment-check",
       "version": "2.0.0",
       "bin": {
-        "comment-check": "dist/cli.js",
+        "comment-check": "bin/cli.js",
       },
       "devDependencies": {
         "@yuu1111/shared": "workspace:*",
@@ -36,7 +36,7 @@
       "name": "@yuu1111/document-style-check",
       "version": "0.2.0",
       "bin": {
-        "document-style-check": "dist/cli.js",
+        "document-style-check": "bin/cli.js",
       },
       "devDependencies": {
         "@yuu1111/shared": "workspace:*",
@@ -59,7 +59,7 @@
       "name": "@yuu1111/quality-check",
       "version": "0.6.0",
       "bin": {
-        "quality-check": "dist/cli.js",
+        "quality-check": "bin/cli.js",
       },
       "devDependencies": {
         "@yuu1111/shared": "workspace:*",
@@ -77,7 +77,7 @@
       "name": "@yuu1111/tsdoc-check",
       "version": "2.0.0",
       "bin": {
-        "tsdoc-check": "dist/cli.js",
+        "tsdoc-check": "bin/cli.js",
       },
       "dependencies": {
         "@babel/parser": "^8.0.5",

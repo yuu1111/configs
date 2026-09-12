@@ -34,6 +34,8 @@ npm パッケージとして publish する
 - Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
 - check engine は @yuu1111/shared を build 時に bundle して配布する (shared は private なので publish しない)
+- check package の `bin` は commit した `bin/cli.js` を指し、そこで `dist/cli.js` の `run` を呼ぶ (Bun は install 時に target が存在しない workspace の `bin` を `node_modules/.bin` へ link しないため)
+- workspace の `bin` を変えるときは `bun.lock` の workspaces entry も同じ変更で更新する (Bun は既存 lockfile の workspaces を再計算しないため)
 - GitHub Release tag は `biome-config-vX.Y.Z`、`comment-check-vX.Y.Z`、`document-style-check-vX.Y.Z`、`knip-config-vX.Y.Z`、`quality-check-vX.Y.Z`、`tsdoc-check-vX.Y.Z`、または `tsconfig-vX.Y.Z`
 - npm publish はローカルで実行せず、`.github/workflows/release.yml` に任せる
 - バージョン更新は `bun pm version` を使う (npm version は workspace の reify でエラーになる)

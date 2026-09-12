@@ -70,4 +70,13 @@ function main(argv: string[]): number {
 	return errors.length > 0 ? 1 : 0;
 }
 
-runCli(main);
+/**
+ * CLIの本体を起動する launcherと直接実行の両方から呼ぶ
+ */
+export function run(): void {
+	runCli(main);
+}
+
+if (import.meta.main) {
+	run();
+}

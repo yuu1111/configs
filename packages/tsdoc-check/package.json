@@ -9,13 +9,14 @@
 	},
 	"type": "module",
 	"bin": {
-		"tsdoc-check": "dist/cli.js"
+		"tsdoc-check": "bin/cli.js"
 	},
 	"exports": {
 		".": "./dist/scan.js"
 	},
 	"files": [
 		"README.ja.md",
+		"bin",
 		"dist"
 	],
 	"scripts": {
