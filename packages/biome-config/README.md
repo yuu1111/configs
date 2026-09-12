@@ -1,3 +1,5 @@
+[日本語](README.ja.md)
+
 # @yuu1111/biome-config
 
 Shared [Biome](https://biomejs.dev/) configuration.

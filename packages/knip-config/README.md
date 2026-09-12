@@ -1,3 +1,5 @@
+[日本語](README.ja.md)
+
 # @yuu1111/knip-config
 
 Shared [Knip](https://knip.dev/) configuration.

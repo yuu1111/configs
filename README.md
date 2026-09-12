@@ -1,3 +1,5 @@
+[日本語](README.ja.md)
+
 # configs
 
 Shared configuration packages published to npm.

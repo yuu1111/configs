@@ -1,3 +1,5 @@
+[日本語](README.ja.md)
+
 # @yuu1111/comment-check
 
 Small comment checker with a baseline, used to keep suppressions and placeholder

@@ -1,3 +1,5 @@
+[日本語](README.ja.md)
+
 # @yuu1111/tsdoc-check
 
 Shared TSDoc checker for exported declarations.

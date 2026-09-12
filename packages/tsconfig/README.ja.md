@@ -1,8 +1,8 @@
-[日本語](README.ja.md)
+[English](README.md)
 
 # @yuu1111/tsconfig
 
-Shared TypeScript configurations.
+共有のTypeScript設定
 
 ## Install
 
@@ -12,7 +12,7 @@ bun add -D @yuu1111/tsconfig
 
 ## Usage
 
-Extend one of the presets in your `tsconfig.json`:
+`tsconfig.json` でpresetの1つをextendsする
 
 ### Base
 
@@ -24,7 +24,7 @@ Extend one of the presets in your `tsconfig.json`:
 
 ### Bun
 
-Install `@types/bun` in the consuming project, then extend the Bun preset:
+利用Projectで `@types/bun` をinstallしてからBun presetをextendsする
 
 ```json
 {
@@ -47,8 +47,7 @@ Install `@types/bun` in the consuming project, then extend the Bun preset:
 
 ### Declaration-only library
 
-Use this preset when a bundler emits JavaScript and TypeScript only needs to emit
-declaration files.
+bundlerがJavaScriptを出し、TypeScriptはdeclaration fileだけを出す場合にこのpresetを使う
 
 ```json
 {
@@ -76,8 +75,8 @@ declaration files.
 
 | Preset | Use case |
 |--------|----------|
-| `base.json` | Strict shared base |
-| `bun.json` | Bun projects |
-| `declaration-only.json` | Declaration-only library builds |
-| `library.json` | Library builds with declarations and source maps |
-| `react.json` | React (JSX + DOM types) |
+| `base.json` | 厳格な共有base |
+| `bun.json` | Bun project |
+| `declaration-only.json` | declarationだけを出すlibrary build |
+| `library.json` | declarationとsource mapを出すlibrary build |
+| `react.json` | React（JSX + DOM型） |
