@@ -4,8 +4,9 @@
 	"scripts": {
 		"test": "bun test packages",
 		"format": "biome check --write --unsafe .",
-		"quality-check": "biome check . && bun run comment-check && bun run tsdoc-check",
+		"check:quality": "quality-check && bun run document-style-check",
 		"comment-check": "comment-check .",
+		"document-style-check": "document-style-check lint .",
 		"tsdoc-check": "tsdoc-check --error single-line-doc .",
 		"typecheck": "tsc --noEmit"
 	},
@@ -17,6 +18,8 @@
 		"@types/bun": "^1.4.2",
 		"@yuu1111/biome-config": "workspace:*",
 		"@yuu1111/comment-check": "workspace:*",
+		"@yuu1111/document-style-check": "workspace:*",
+		"@yuu1111/quality-check": "workspace:*",
 		"@yuu1111/tsdoc-check": "workspace:*",
 		"@yuu1111/tsconfig": "workspace:*",
 		"typescript": "^7.0.2"

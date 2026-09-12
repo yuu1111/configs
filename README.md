@@ -10,7 +10,9 @@ Shared configuration packages published to npm.
 |---------|-------------|
 | [`@yuu1111/biome-config`](packages/biome-config) | Shared [Biome](https://biomejs.dev/) configuration |
 | [`@yuu1111/comment-check`](packages/comment-check) | Comment checker with a baseline |
+| [`@yuu1111/document-style-check`](packages/document-style-check) | Markdown checker with a review ledger |
 | [`@yuu1111/knip-config`](packages/knip-config) | Shared [Knip](https://knip.dev/) configuration |
+| [`@yuu1111/quality-check`](packages/quality-check) | Integrated CLI that runs the quality engines |
 | [`@yuu1111/tsconfig`](packages/tsconfig) | Shared TypeScript configurations |
 | [`@yuu1111/tsdoc-check`](packages/tsdoc-check) | TSDoc checker for exported declarations |
 

@@ -1,0 +1,27 @@
+{
+	"name": "@yuu1111/quality-check",
+	"version": "0.1.0",
+	"description": "Integrated quality check runner",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yuu1111/configs.git",
+		"directory": "packages/quality-check"
+	},
+	"type": "module",
+	"bin": {
+		"quality-check": "src/cli.ts"
+	},
+	"exports": {
+		".": "./src/config.ts",
+		"./engines": "./src/engines.ts"
+	},
+	"files": [
+		"README.ja.md",
+		"src"
+	],
+	"keywords": [
+		"quality",
+		"lint"
+	]
+}

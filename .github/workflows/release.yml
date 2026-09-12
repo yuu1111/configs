@@ -61,6 +61,14 @@ jobs:
               package_dir="packages/tsdoc-check"
               release_version="${RELEASE_TAG#tsdoc-check-v}"
               ;;
+            document-style-check-v*)
+              package_dir="packages/document-style-check"
+              release_version="${RELEASE_TAG#document-style-check-v}"
+              ;;
+            quality-check-v*)
+              package_dir="packages/quality-check"
+              release_version="${RELEASE_TAG#quality-check-v}"
+              ;;
             knip-config-v*)
               package_dir="packages/knip-config"
               release_version="${RELEASE_TAG#knip-config-v}"
