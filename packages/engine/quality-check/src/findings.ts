@@ -61,8 +61,8 @@ function parseJson(
 	let value: unknown;
 	try {
 		value = JSON.parse(stdout);
-	} catch {
-		throw new Error(`${engine} did not print JSON`);
+	} catch (error) {
+		throw new Error(`${engine} did not print JSON`, { cause: error });
 	}
 	if (!isJsonObject(value)) {
 		throw new Error(`${engine} printed an unexpected JSON value`);
@@ -72,6 +72,10 @@ function parseJson(
 
 /**
  * engineの--json出力を検出へ変換する 解析できない出力は例外にする
+ *
+ * @param engine - 出力を解釈するengine名
+ * @param stdout - engineが--jsonで出力した文字列
+ * @returns 阻害する検出と警告に分けた検出
  */
 export function parseFindings(
 	engine: EngineName,

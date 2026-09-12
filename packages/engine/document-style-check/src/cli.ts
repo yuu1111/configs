@@ -45,6 +45,9 @@ function toAction(argument: string): Action | undefined {
 
 /**
  * 引数を解析し、行動と対象をまとめる
+ *
+ * @param argv - 起動時に渡されたcommand line引数
+ * @returns 解析した行動・対象・optionの一覧
  */
 export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
@@ -190,6 +193,9 @@ function runLint(options: Options): number {
 
 /**
  * 引数に応じた処理を実行し、終了codeを返す
+ *
+ * @param argv - 起動時に渡されたcommand line引数
+ * @returns 処理結果を表す終了code
  */
 export function main(argv: string[]): number {
 	if (wantsHelp(argv)) {

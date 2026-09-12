@@ -40,6 +40,9 @@ export interface Options {
 
 /**
  * 起動条件を解析する --enableのrule名はここで検証する
+ *
+ * @param argv - 解析するコマンドライン引数
+ * @returns 解析した起動条件
  */
 export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
@@ -63,6 +66,9 @@ function describeFinding(finding: Finding): string {
 
 /**
  * 引数に応じて検査を実行し、終了codeを返す
+ *
+ * @param argv - コマンドライン引数の一覧
+ * @returns 違反が追加されたときは1 それ以外は0
  */
 export function main(argv: string[]): number {
 	if (wantsHelp(argv)) {

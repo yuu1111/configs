@@ -42,6 +42,7 @@ function readStringArray(record: JsonObject, key: string): string[] {
 	}
 	throw new Error(`${key} is not a string array`);
 }
+
 function createConsumer(configExport: "biome" | "react", ...presets: string[]) {
 	const consumerDirectory = mkdtempSync(
 		join(tmpdir(), "biome-config-consumer-"),

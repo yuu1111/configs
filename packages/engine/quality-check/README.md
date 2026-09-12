@@ -94,7 +94,7 @@ Each engine runs:
 | `code-style-check` | `code-style-check --json` | `ignore`, `targets`, `args` |
 | `comment-check` | `comment-check --json` | `ignore`, `targets`, `args`, `enable` (rule names to turn on) |
 | `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args`, `enable` (rule names to turn on) |
-| `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `error` (rule names to fail on) |
+| `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `enable` (rule names to turn on), `error` (rule names to fail on) |
 
 `args` is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
 
@@ -105,7 +105,7 @@ A condition that an engine does not take is not passed on, and the section says 
 biome: ignore skipped (biome.json holds its settings)
 ```
 
-`enable` becomes `--enable <rule>` on `comment-check` and `document-style-check`, and the other engines reject the field.
+`enable` becomes `--enable <rule>` on `comment-check`, `document-style-check`, and `tsdoc-check`, and the other engines reject the field.
 This CLI ships no engine of its own, so a project that turns an opt-in rule on updates the matching engine package in the same change.
 
 `comment-check` runs with an unwritten baseline path so that it reports every finding.

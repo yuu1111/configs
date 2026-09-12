@@ -14,6 +14,11 @@ export const DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
 
 /**
  * fileを読み込んで違反を検出する
+ *
+ * @param file - 読み込むMarkdownのpath
+ * @param cwd - 指摘に載せる相対pathの基準directory
+ * @param enabled - 追加で有効にするopt-in ruleの識別子
+ * @returns 検出した違反の一覧
  */
 export function lintFile(
 	file: string,
@@ -29,6 +34,11 @@ export function lintFile(
 
 /**
  * 複数fileの違反をまとめて位置順に並べる
+ *
+ * @param files - 検査するMarkdownのpath一覧
+ * @param cwd - 指摘に載せる相対pathの基準directory
+ * @param enabled - 追加で有効にするopt-in ruleの識別子
+ * @returns 位置順に並べた違反の一覧
  */
 export function lintFiles(
 	files: string[],
@@ -44,6 +54,9 @@ export function lintFiles(
 
 /**
  * fileを整形し、writeした場合だけtrueを返す
+ *
+ * @param file - 整形するMarkdownのpath
+ * @returns 内容をwriteした場合はtrue 変化が無ければfalse
  */
 export function fixFile(file: string): boolean {
 	const source = readFileSync(file, "utf8");
@@ -57,6 +70,9 @@ export function fixFile(file: string): boolean {
 
 /**
  * 複数fileを整形し、writeしたfile一覧を返す
+ *
+ * @param files - 整形するMarkdownのpath一覧
+ * @returns 実際にwriteしたfileのpath一覧
  */
 export function fixFiles(files: string[]): string[] {
 	return files.filter((file) => fixFile(file));

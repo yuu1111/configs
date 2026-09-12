@@ -55,6 +55,9 @@ const JAPANESE_PERIOD = "。";
 
 /**
  * --enableの値を検証して重複を除く 未知のrule名は設定errorにする
+ *
+ * @param values - --enableで指定されたrule名の一覧
+ * @returns 検証を通ったopt-in ruleの識別子
  */
 export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
 	const enabled: OptInRuleId[] = [];
@@ -72,6 +75,9 @@ export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
 
 /**
  * 本文行にある最初の日本語句点の位置を返す 無ければ-1を返す
+ *
+ * @param line - 句点を探す本文の1行
+ * @returns 最初の句点の0始まりの位置 見つからなければ-1
  */
 export function findJapanesePeriod(line: string): number {
 	return line.indexOf(JAPANESE_PERIOD);
@@ -188,6 +194,11 @@ function lintBodyLine(
 
 /**
  * 本文文字列を検査して違反を検出する 既定ではopt-in ruleを実行しない
+ *
+ * @param source - 検査するMarkdownの本文文字列
+ * @param file - 指摘に載せるfileのpath
+ * @param enabled - 追加で有効にするopt-in ruleの識別子
+ * @returns 検出した違反の一覧
  */
 export function lintSource(
 	source: string,
@@ -230,6 +241,9 @@ function fixLine(item: MarkdownLine): string {
 
 /**
  * 意味を変えずに整形できる違反を取り除いた本文を返す
+ *
+ * @param source - 整形するMarkdownの本文文字列
+ * @returns 整形後の本文文字列
  */
 export function fixSource(source: string): string {
 	const bom = source.startsWith("\uFEFF") ? "\uFEFF" : "";

@@ -33,6 +33,7 @@ export interface Declaration extends Position {
 	kind: string;
 	name: string;
 	parameters: string[];
+	returnType: string | null;
 	suppressions: Suppression[];
 	typeParameters: string[];
 }
@@ -41,11 +42,16 @@ interface DeclaredSymbol {
 	kind: string;
 	name: string;
 	parameters: string[];
+	returnType: string | null;
 	typeParameters: string[];
 }
 
 /**
  * 0始まりのoffsetを1始まりの行と桁へ変換する
+ *
+ * @param source - offsetを数える対象のsource文字列
+ * @param offset - 行と桁へ変換する0始まりの文字位置
+ * @returns 1始まりの行と桁
  */
 export function positionAt(source: string, offset: number): Position {
 	const limit = Math.min(Math.max(offset, 0), source.length);
@@ -149,7 +155,7 @@ function parameterNames(params: readonly Node[] | null | undefined): string[] {
 	const names: string[] = [];
 	for (const parameter of params ?? []) {
 		const name = bindingName(parameter);
-		if (name !== null) {
+		if (name !== null && name !== "this") {
 			names.push(name);
 		}
 	}
@@ -171,10 +177,31 @@ function typeParameterNames(node: Node): string[] {
 	return declaration.params.map((parameter) => parameter.name.name);
 }
 
+/**
+ * 宣言の戻り値型をsourceから切り出す 注釈が無ければnullを返す
+ */
+function returnTypeText(node: Node, source: string): string | null {
+	const annotation = (node as { returnType?: { typeAnnotation?: Node } | null })
+		.returnType;
+	const inner = annotation?.typeAnnotation;
+	if (
+		inner === null ||
+		inner === undefined ||
+		inner.start === null ||
+		inner.start === undefined ||
+		inner.end === null ||
+		inner.end === undefined
+	) {
+		return null;
+	}
+	return source.slice(inner.start, inner.end);
+}
+
 function callableSymbol(
 	kind: string,
 	name: string,
 	node: Node,
+	source: string,
 ): DeclaredSymbol {
 	const params =
 		"params" in node && Array.isArray(node.params) ? node.params : [];
@@ -182,32 +209,37 @@ function callableSymbol(
 		kind,
 		name,
 		parameters: parameterNames(params),
+		returnType: returnTypeText(node, source),
 		typeParameters: typeParameterNames(node),
 	};
 }
 
-function symbolsOf(node: Node): DeclaredSymbol[] {
+function symbolsOf(node: Node, source: string): DeclaredSymbol[] {
 	switch (node.type) {
 		case "ArrowFunctionExpression":
 		case "FunctionExpression":
-			return [callableSymbol("function", "default", node)];
+			return [callableSymbol("function", "default", node, source)];
 		case "ClassDeclaration":
 			return [
 				{
 					kind: "class",
 					name: node.id?.name ?? "default",
 					parameters: [],
+					returnType: null,
 					typeParameters: typeParameterNames(node),
 				},
 			];
 		case "FunctionDeclaration":
-			return [callableSymbol("function", node.id?.name ?? "default", node)];
+			return [
+				callableSymbol("function", node.id?.name ?? "default", node, source),
+			];
 		case "TSEnumDeclaration":
 			return [
 				{
 					kind: "enum",
 					name: node.id.name,
 					parameters: [],
+					returnType: null,
 					typeParameters: [],
 				},
 			];
@@ -217,6 +249,7 @@ function symbolsOf(node: Node): DeclaredSymbol[] {
 					kind: "interface",
 					name: node.id.name,
 					parameters: [],
+					returnType: null,
 					typeParameters: typeParameterNames(node),
 				},
 			];
@@ -226,6 +259,7 @@ function symbolsOf(node: Node): DeclaredSymbol[] {
 					kind: "type",
 					name: node.id.name,
 					parameters: [],
+					returnType: null,
 					typeParameters: typeParameterNames(node),
 				},
 			];
@@ -242,12 +276,15 @@ function symbolsOf(node: Node): DeclaredSymbol[] {
 					(init.type === "ArrowFunctionExpression" ||
 						init.type === "FunctionExpression")
 				) {
-					symbols.push(callableSymbol("function", declarator.id.name, init));
+					symbols.push(
+						callableSymbol("function", declarator.id.name, init, source),
+					);
 				} else {
 					symbols.push({
 						kind: "variable",
 						name: declarator.id.name,
 						parameters: [],
+						returnType: null,
 						typeParameters: [],
 					});
 				}
@@ -261,6 +298,10 @@ function symbolsOf(node: Node): DeclaredSymbol[] {
 
 /**
  * top-levelのexported宣言だけを集める
+ *
+ * @param source - 宣言を解析するsource文字列
+ * @param fileName - tsxかどうかの判定に使うfile名
+ * @returns 収集したexported宣言
  */
 export function collectDeclarations(
 	source: string,
@@ -288,7 +329,7 @@ export function collectDeclarations(
 		const comment = docCommentOf(statement, source);
 		const position = positionAt(source, statement.start ?? 0);
 		const suppressions = suppressionsOf(statement, source);
-		for (const symbol of symbolsOf(target)) {
+		for (const symbol of symbolsOf(target, source)) {
 			declarations.push({ ...position, ...symbol, comment, suppressions });
 		}
 	}

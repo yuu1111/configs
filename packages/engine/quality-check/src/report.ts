@@ -41,6 +41,10 @@ function describeStatus(result: EngineResult, paint: Painter): string {
 
 /**
  * engine1つ分の出力sectionを組み立てる
+ *
+ * @param result - sectionに載せるengine1つ分の実行結果
+ * @param paint - severityとstatusに色を付けるpainter
+ * @returns engineの状態と検出を並べた複数行のtext
  */
 export function formatEngineSection(
 	result: EngineResult,
@@ -68,6 +72,11 @@ export function formatEngineSection(
 
 /**
  * 失敗したengineを列挙した集約summaryを組み立てる
+ *
+ * @param results - 合否を集約するengineごとの実行結果
+ * @param elapsedMs - 集約までに要したミリ秒
+ * @param paint - 集約結果の状態に色を付けるpainter
+ * @returns 成功数または失敗したengine名を並べたtext
  */
 export function formatSummary(
 	results: EngineResult[],
@@ -102,6 +111,10 @@ export function formatSummary(
 
 /**
  * engineの結果をJSONへ変換する
+ *
+ * @param results - JSONへ載せるengineごとの実行結果
+ * @param elapsedMs - 所要時間として記録するミリ秒
+ * @returns 全体の所要時間とengineごとの結果を持つJSON値
  */
 export function toJsonReport(
 	results: EngineResult[],

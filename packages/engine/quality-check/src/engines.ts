@@ -85,6 +85,10 @@ export const ENGINE_LIMITS: Record<
 
 /**
  * engineが受け取らないため渡さなかった起動条件を返す
+ *
+ * @param name - 受け取れない起動条件を引くengine名
+ * @param options - engineへ渡そうとした起動条件
+ * @returns 渡さなかった起動条件とその理由の一覧
  */
 export function skippedEngineOptions(
 	name: EngineName,
@@ -106,6 +110,9 @@ export function skippedEngineOptions(
 
 /**
  * 検出をJSONで返すengineか
+ *
+ * @param name - 判定するengine名
+ * @returns 検出をJSONで返すengineならtrue
  */
 export function isFindingEngine(name: EngineName): boolean {
 	return (
@@ -118,6 +125,10 @@ export function isFindingEngine(name: EngineName): boolean {
 
 /**
  * node_modules/.binとPATHからengineの実行fileを探す
+ *
+ * @param name - 実行fileを探すengine名
+ * @param cwd - 探索を開始する作業ディレクトリのpath
+ * @returns 見つけた実行fileのpath PATHにも無ければnull
  */
 export function resolveExecutable(
 	name: EngineName,
@@ -193,6 +204,11 @@ function enableArguments(
 
 /**
  * engineへ渡すコマンドを組み立てる
+ *
+ * @param name - コマンドを組み立てるengine名
+ * @param executable - 起動するengineの実行fileのpath
+ * @param context - 設定と上書きを持つ実行条件
+ * @returns engineへ渡す引数を並べたコマンド
  */
 export function buildEngineCommand(
 	name: EngineName,
@@ -258,6 +274,7 @@ export function buildEngineCommand(
 	return [
 		executable,
 		"--json",
+		...enableArguments(engineConfig(context.config, "tsdoc-check")),
 		...errorArguments,
 		...targets,
 		...ignoreArguments,
@@ -267,6 +284,11 @@ export function buildEngineCommand(
 
 /**
  * engineの起動コマンドを順番に返す 型検査だけはprojectsごとに起動する
+ *
+ * @param name - コマンドを組み立てるengine名
+ * @param executable - 起動するengineの実行fileのpath
+ * @param context - 設定と上書きを持つ実行条件
+ * @returns 起動する順に並べたコマンドの配列
  */
 export function buildEngineCommands(
 	name: EngineName,
@@ -287,6 +309,10 @@ export function buildEngineCommands(
 
 /**
  * Bun.spawnでengineを起動する既定のrunner
+ *
+ * @param command - 実行fileと引数を並べたコマンド
+ * @param options - engineを起動する作業ディレクトリを持つ条件
+ * @returns 終了codeと標準出力と標準エラーを持つ結果
  */
 export async function runEngineProcess(
 	command: string[],

@@ -44,6 +44,9 @@ const COMMENT_CONTINUATION = /^(?:\/\/|\*|\/\*)/;
 
 /**
  * --enableの値を検証して重複を除く 未知のrule名は設定errorにする
+ *
+ * @param values - --enableで指定されたrule名の一覧
+ * @returns 検証済みで重複のないopt-in ruleの一覧
  */
 export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
 	const enabled: OptInRuleId[] = [];
@@ -61,6 +64,9 @@ export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
 
 /**
  * comment原文にある最初の日本語句点の位置を返す 無ければ-1を返す
+ *
+ * @param text - 日本語句点を探すcomment本文
+ * @returns 最初の日本語句点の位置 無ければ-1
  */
 export function findJapanesePeriod(text: string): number {
 	return text.indexOf(JAPANESE_PERIOD);
@@ -68,6 +74,10 @@ export function findJapanesePeriod(text: string): number {
 
 /**
  * 行頭のcommentが直前の行へ空行なしで続いているか判定する
+ *
+ * @param source - commentを含むsource文字列
+ * @param start - 判定するcommentの開始位置
+ * @returns 空行なしで続いているときはtrue
  */
 export function isCrampedComment(source: string, start: number): boolean {
 	const lineStart = source.lastIndexOf("\n", start - 1) + 1;
@@ -85,6 +95,9 @@ export function isCrampedComment(source: string, start: number): boolean {
 
 /**
  * block commentの記号を除いて空白を揃えた本文を返す
+ *
+ * @param body - 記号を除く前のcomment本文
+ * @returns 空白を揃えたcomment本文
  */
 export function normalizeComment(body: string): string {
 	return body
@@ -97,6 +110,9 @@ export function normalizeComment(body: string): string {
 
 /**
  * comment本文を分類し、該当するruleがなければnullを返す
+ *
+ * @param body - 分類するcomment本文
+ * @returns 該当するruleの識別子 該当しなければnull
  */
 export function classifyComment(body: string): RuleId | null {
 	const text = normalizeComment(body);

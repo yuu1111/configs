@@ -63,6 +63,10 @@ function consumeValue(
 
 /**
  * 引数を解析する 未知のoptionは例外にする
+ *
+ * @param argv - --付きoptionと位置引数を含む引数の一覧
+ * @param spec - 値を取るoptionと取らないoptionの定義
+ * @returns 解析したflag、値付きoption、位置引数
  */
 export function parseArgv(argv: string[], spec: ArgvSpec): Argv {
 	const flags = new Set<string>();
@@ -97,6 +101,9 @@ export function parseArgv(argv: string[], spec: ArgvSpec): Argv {
 
 /**
  * 引数がhelpを求めているか
+ *
+ * @param argv - helpの指定を調べる引数の一覧
+ * @returns --helpまたは-hを含む場合はtrue
  */
 export function wantsHelp(argv: readonly string[]): boolean {
 	return argv.includes("--help") || argv.includes("-h");
@@ -104,6 +111,8 @@ export function wantsHelp(argv: readonly string[]): boolean {
 
 /**
  * CLIの本体を実行し、終了codeでprocessを終える
+ *
+ * @param main - 引数を受け取って終了codeを返すCLIの本体
  */
 export function runCli(
 	main: (argv: string[]) => number | Promise<number>,

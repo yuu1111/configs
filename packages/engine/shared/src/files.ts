@@ -12,6 +12,9 @@ const IGNORED_DIRECTORIES = new Set([
 
 /**
  * 区切り文字を統一し先頭の./と末尾の/を除いたpathを返す
+ *
+ * @param path - 区切り文字を統一する対象のpath
+ * @returns 区切り文字を/へ統一し先頭の./と末尾の/を除いたpath
  */
 export function normalizePath(path: string): string {
 	return path.split("\\").join("/").replace(/^\.\//, "").replace(/\/+$/, "");
@@ -59,6 +62,10 @@ function walk(
 
 /**
  * 対象pathを走査して拡張子に合うfile一覧を集める
+ *
+ * @param targets - fileまたはディレクトリのpath一覧
+ * @param options - 収集する拡張子と除外するpathの条件
+ * @returns 拡張子に合い除外に該当しないfileの絶対path一覧
  */
 export function collectFiles(
 	targets: string[],

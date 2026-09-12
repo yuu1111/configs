@@ -18,6 +18,10 @@ const ANSI_CODES: Record<Tone, string> = {
 
 /**
  * 装飾を付けずにそのまま返すpainter
+ *
+ * @param text - 装飾せずにそのまま返す文字列
+ * @param _tone - 割り当てる装飾の種類 このpainterでは使わない
+ * @returns 装飾を付けないtextそのもの
  */
 export function plainPainter(text: string, _tone: Tone): string {
 	return text;
@@ -25,6 +29,8 @@ export function plainPainter(text: string, _tone: Tone): string {
 
 /**
  * ANSI escapeでtoneを色へ割り当てるpainterを作る
+ *
+ * @returns toneに対応するANSI escapeでtextを包むpainter
  */
 export function ansiPainter(): Painter {
 	return (text, tone) => `\u001b[${ANSI_CODES[tone]}m${text}\u001b[0m`;
@@ -32,6 +38,10 @@ export function ansiPainter(): Painter {
 
 /**
  * 出力先と環境変数から装飾の可否を決める
+ *
+ * @param stream - isTTYで出力先が端末かを示すstream
+ * @param env - NO_COLORとFORCE_COLORを参照する環境変数
+ * @returns 装飾を有効にする場合はtrue
  */
 export function colorEnabled(
 	stream: { isTTY?: boolean | undefined },

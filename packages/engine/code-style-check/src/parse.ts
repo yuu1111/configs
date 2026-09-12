@@ -45,6 +45,10 @@ const SKIPPED_KEYS = new Set([
 
 /**
  * 0始まりのoffsetを1始まりの行と桁へ変換する
+ *
+ * @param source - offsetの行と桁を数える対象のsource文字列
+ * @param offset - 1始まりへ変換する0始まりの文字位置
+ * @returns 1始まりの行と桁
  */
 export function positionAt(source: string, offset: number): Position {
 	const limit = Math.min(Math.max(offset, 0), source.length);
@@ -198,6 +202,10 @@ function parserPlugins(fileName: string): ParserPlugin[] {
 
 /**
  * 同じ並びの中で隣接する関数定義の組を集める
+ *
+ * @param source - 関数定義を解析するsource文字列
+ * @param fileName - 使用するparser pluginをfile名から決めるためのpath
+ * @returns 同じ並びで隣接する関数定義の組
  */
 export function collectAdjacentDefinitions(
 	source: string,

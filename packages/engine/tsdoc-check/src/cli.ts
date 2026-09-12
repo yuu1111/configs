@@ -2,13 +2,20 @@
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
-import { type Finding, KNOWN_RULE_NAMES, promoteFindings } from "./rules";
+import {
+	type Finding,
+	KNOWN_RULE_NAMES,
+	type OptInRuleId,
+	parseEnabledRules,
+	promoteFindings,
+} from "./rules";
 import { scanFiles, TYPESCRIPT_EXTENSIONS } from "./scan";
 
 const USAGE =
-	"Usage: tsdoc-check [--error <rule>] [--ignore <path>] [--json] [path...]";
+	"Usage: tsdoc-check [--enable <rule>] [--error <rule>] [--ignore <path>] [--json] [path...]";
 
 interface Options {
+	enabled: OptInRuleId[];
 	ignores: string[];
 	json: boolean;
 	promote: string[];
@@ -25,9 +32,10 @@ function applyPromoteOption(options: Options, value: string): void {
 function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
 		flags: ["json"],
-		values: ["error", "ignore"],
+		values: ["enable", "error", "ignore"],
 	});
 	const options: Options = {
+		enabled: parseEnabledRules(parsed.values.get("enable") ?? []),
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
 		promote: [],
@@ -54,7 +62,10 @@ function main(argv: string[]): number {
 		extensions: TYPESCRIPT_EXTENSIONS,
 		ignores: options.ignores,
 	});
-	const findings = promoteFindings(scanFiles(files), options.promote);
+	const findings = promoteFindings(
+		scanFiles(files, process.cwd(), options.enabled),
+		options.promote,
+	);
 	const errors = findings.filter((finding) => finding.severity === "error");
 	const warnings = findings.filter((finding) => finding.severity === "warning");
 	if (options.json) {

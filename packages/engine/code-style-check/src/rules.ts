@@ -27,6 +27,11 @@ export const REQUIRED_BLANK_LINES = 1;
 /**
  * 定義の終端と次の定義の開始の間で連続する空行の最大数を数える
  * 間にあるcommentの行は空行として数えず、空行の連続を途切れさせる
+ *
+ * @param source - 空行を数える対象のsource文字列
+ * @param previousEnd - 直前の関数定義の終端offset
+ * @param nextStart - 次の関数定義の開始offset
+ * @returns 連続する空行の最大数
  */
 export function countBlankLines(
 	source: string,
@@ -45,6 +50,10 @@ export function countBlankLines(
 
 /**
  * 空行の数から違反の内容と重大度を求める 適切ならnullを返す
+ *
+ * @param blankLines - 隣接する定義の間に見つかった空行の数
+ * @param name - 違反messageに載せる次の関数定義の名前
+ * @returns 違反のmessageとseverity、間隔が適切ならnull
  */
 export function classifyGap(
 	blankLines: number,

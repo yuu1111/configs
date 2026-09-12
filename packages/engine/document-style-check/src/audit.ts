@@ -141,6 +141,9 @@ function readKey(record: object, name: string): string {
 
 /**
  * Markdownのフェンス開始行から、記号と長さを返す
+ *
+ * @param line - フェンス開始行か判定する本文の1行
+ * @returns フェンスの記号と長さ 開始行でなければundefined
  */
 export function fenceStart(line: string): Fence | undefined {
 	const run = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
@@ -152,6 +155,10 @@ export function fenceStart(line: string): Fence | undefined {
 
 /**
  * 開いているMarkdownフェンスを閉じる行か判定する
+ *
+ * @param line - 判定する本文の1行
+ * @param fence - 閉じる対象のフェンスの記号と長さ
+ * @returns フェンスを閉じる行ならtrue
  */
 export function closesFence(line: string, fence: Fence): boolean {
 	return new RegExp(`^ {0,3}${fence.char}{${fence.length},}\\s*$`).test(line);
@@ -167,6 +174,9 @@ function isFrontmatterBoundary(line: string): boolean {
 
 /**
  * 先頭の区切り線に対応するfrontmatter終了位置を返す
+ *
+ * @param lines - 文書を改行で分割した行の一覧
+ * @returns frontmatterの終了行のindex 先頭が区切り線でなければ-1
  */
 export function frontmatterEndIndex(lines: string[]): number {
 	if (lines[0]?.trim() !== "---") {
@@ -179,6 +189,9 @@ export function frontmatterEndIndex(lines: string[]): number {
 
 /**
  * リスト項目の本文が始まる桁を返す
+ *
+ * @param line - リスト項目か判定する本文の1行
+ * @returns リスト本文が始まる桁数 リスト項目でなければundefined
  */
 export function listContentIndent(line: string): number | undefined {
 	return /^( {0,3})(?:[-+*]|\d+[.)])( +)/.exec(line)?.[0].length;
@@ -186,6 +199,9 @@ export function listContentIndent(line: string): number | undefined {
 
 /**
  * 見出し、リスト、表、コードなどのMarkdown構造行か判定する
+ *
+ * @param line - 判定する本文の1行
+ * @returns Markdown構造を表す行ならtrue
  */
 export function isStructuralLine(line: string): boolean {
 	const stripped = line.trim();
@@ -224,6 +240,9 @@ function classifyLine(
 
 /**
  * 文書を領域付きの行へ分解する
+ *
+ * @param text - 分解するMarkdownの本文文字列
+ * @returns 領域と行番号を持つ行の一覧
  */
 export function markdownLines(text: string): MarkdownLine[] {
 	const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
@@ -364,6 +383,9 @@ function boundaryBlocks(text: string): BoundaryBlock[] {
 
 /**
  * 通常本文の段落境界を候補として抽出する
+ *
+ * @param text - 段落境界を抽出するMarkdownの本文文字列
+ * @returns 未確認の段落境界の候補一覧
  */
 export function proseBoundaries(text: string): Boundary[] {
 	const blocks = boundaryBlocks(text);
@@ -403,6 +425,9 @@ function isListContinuation(previousLine: string, line: string): boolean {
 
 /**
  * 通常段落内と箇条書き継続行の単一改行を候補として抽出する
+ *
+ * @param text - 単一改行を抽出するMarkdownの本文文字列
+ * @returns 未確認の単一改行の候補一覧
  */
 export function proseLineBreaks(text: string): LineBreak[] {
 	const result: LineBreak[] = [];
@@ -438,6 +463,10 @@ export function proseLineBreaks(text: string): LineBreak[] {
 
 /**
  * 意味の切れ目を検討する長い原文行を候補として抽出する
+ *
+ * @param text - 長い行を抽出するMarkdownの本文文字列
+ * @param minimumLength - 候補にする行の最小文字数
+ * @returns 未確認の長い行の候補一覧
  */
 export function proseLongLines(text: string, minimumLength = 160): LongLine[] {
 	const result: LongLine[] = [];
@@ -465,6 +494,9 @@ export function proseLongLines(text: string, minimumLength = 160): LongLine[] {
 
 /**
  * 1文書の確認候補と本文hashを記録する
+ *
+ * @param documentPath - 確認候補を抽出する文書のpath
+ * @returns 確認候補と本文hashを持つ1文書分の検証記録
  */
 export function documentSnapshot(documentPath: string): DocumentReview {
 	const document = resolve(documentPath);
@@ -481,6 +513,10 @@ export function documentSnapshot(documentPath: string): DocumentReview {
 
 /**
  * 対象文書と判断基準から、全項目が未確認の検証記録を生成する
+ *
+ * @param documents - 対象にする文書のpath一覧
+ * @param rulesPath - 判断基準を書いたMarkdownのpath
+ * @returns 全項目が未確認の検証記録
  */
 export function snapshot(documents: string[], rulesPath: string): Review {
 	const rules = readFileSync(resolve(rulesPath));
@@ -599,6 +635,11 @@ function verifyDocumentList(
 
 /**
  * 未確認項目・文脈改変・本文や基準の変更を検出して問題一覧を返す
+ *
+ * @param documents - 現在の対象文書のpath一覧
+ * @param review - 読み込んだ検証記録のJSON
+ * @param rulesPath - 判断基準を書いたMarkdownのpath
+ * @returns 検出した問題の一覧 問題が無ければ空配列
  */
 export function verify(
 	documents: string[],

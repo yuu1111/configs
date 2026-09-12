@@ -234,6 +234,9 @@ function step(state: ScanState, source: string): void {
 
 /**
  * 文字列や正規表現リテラルを除外してsourceからcommentを抽出する
+ *
+ * @param source - commentを抽出するsource文字列
+ * @returns 抽出したcommentの一覧
  */
 export function extractComments(source: string): CommentPiece[] {
 	const shebang = source.startsWith("#!") ? source.indexOf("\n") : 0;

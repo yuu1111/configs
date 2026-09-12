@@ -5,6 +5,7 @@ export default defineConfig({
 		biome: true,
 		typecheck: true,
 		knip: true,
+		"code-style-check": true,
 		"comment-check": true,
 		"document-style-check": true,
 		"tsdoc-check": true,
@@ -17,7 +18,17 @@ export default defineConfig({
 			enable: ["japanese-period"],
 		},
 		"tsdoc-check": {
-			error: ["single-line-doc", "tsdoc-tag"],
+			enable: ["deprecated-without-guidance", "missing-returns", "param-order"],
+			error: [
+				"deprecated-without-guidance",
+				"missing-doc",
+				"missing-returns",
+				"param-order",
+				"param-untagged",
+				"single-line-doc",
+				"tsdoc-tag",
+				"type-param-untagged",
+			],
 		},
 	},
 });

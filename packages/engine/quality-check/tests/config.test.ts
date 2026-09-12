@@ -52,8 +52,13 @@ describe("quality config", () => {
 				config: {
 					"comment-check": { enable: ["japanese-period"] },
 					"document-style-check": { enable: ["japanese-period"] },
+					"tsdoc-check": { enable: ["missing-returns"] },
 				},
-				engines: { "comment-check": true, "document-style-check": true },
+				engines: {
+					"comment-check": true,
+					"document-style-check": true,
+					"tsdoc-check": true,
+				},
 			},
 			"test",
 		);
@@ -62,6 +67,9 @@ describe("quality config", () => {
 		});
 		expect(engineConfig(config, "document-style-check")).toEqual({
 			enable: ["japanese-period"],
+		});
+		expect(engineConfig(config, "tsdoc-check")).toEqual({
+			enable: ["missing-returns"],
 		});
 	});
 

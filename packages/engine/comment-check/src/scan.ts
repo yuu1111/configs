@@ -43,6 +43,11 @@ function positionAt(
 
 /**
  * source文字列を走査してcomment違反を検出する 既定ではopt-in ruleを実行しない
+ *
+ * @param source - 走査するsource文字列
+ * @param file - 指摘に載せるfileのpath
+ * @param enabled - 追加で有効にするopt-in ruleの一覧
+ * @returns 検出したcomment違反の一覧
  */
 export function scanSource(
 	source: string,
@@ -99,6 +104,11 @@ export function scanSource(
 
 /**
  * fileを読み込んでcomment違反を検出する
+ *
+ * @param file - 読み込むfileのpath
+ * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
+ * @param enabled - 追加で有効にするopt-in ruleの一覧
+ * @returns 検出したcomment違反の一覧
  */
 export function scanFile(
 	file: string,
@@ -114,6 +124,11 @@ export function scanFile(
 
 /**
  * 複数fileの違反をまとめて位置順に並べる
+ *
+ * @param files - 検査するfileのpath一覧
+ * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
+ * @param enabled - 追加で有効にするopt-in ruleの一覧
+ * @returns 位置順に並べたcomment違反の一覧
  */
 export function scanFiles(
 	files: string[],

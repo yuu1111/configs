@@ -1,40 +1,85 @@
 import type { Located, Severity } from "@yuu1111/shared/findings";
 import {
 	type Declaration,
+	type DocComment,
 	type Position,
 	positionAt,
 	type Suppression,
 } from "./parse";
-import { parseTsdoc } from "./tsdoc";
+import { parseTsdoc, type TsdocResult } from "./tsdoc";
 
 /**
  * tsdoc-checkが報告するruleの識別子
  */
 export type TsdocRule =
+	| "deprecated-without-guidance"
 	| "missing-doc"
+	| "missing-returns"
 	| "param-mismatch"
+	| "param-order"
+	| "param-untagged"
 	| "single-line-doc"
 	| "suppression"
 	| "suppression-unused"
 	| "tsdoc-syntax"
 	| "tsdoc-tag"
-	| "type-param-mismatch";
+	| "type-param-mismatch"
+	| "type-param-untagged";
 
 /**
  * 抑制commentと--errorで指定できるrule名の一覧
  */
 export const KNOWN_RULE_NAMES = [
+	"deprecated-without-guidance",
 	"missing-doc",
+	"missing-returns",
 	"param-mismatch",
+	"param-order",
+	"param-untagged",
 	"single-line-doc",
 	"suppression",
 	"suppression-unused",
 	"tsdoc-syntax",
 	"tsdoc-tag",
 	"type-param-mismatch",
+	"type-param-untagged",
 ] as const;
 
 const KNOWN_RULES = new Set<string>(KNOWN_RULE_NAMES);
+
+/**
+ * 既定では実行せず--enableで明示的に有効にするruleの識別子一覧
+ */
+export const OPT_IN_RULE_IDS = [
+	"deprecated-without-guidance",
+	"missing-returns",
+	"param-order",
+] as const;
+
+/**
+ * OPT_IN_RULE_IDSが定義するrule識別子のunion型
+ */
+export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
+
+/**
+ * --enableの値を検証して重複を除く 未知のrule名は設定errorにする
+ *
+ * @param values - --enableで渡されたrule名の一覧
+ * @returns 検証済みで重複を除いたopt-in ruleの識別子一覧
+ */
+export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
+	const enabled: OptInRuleId[] = [];
+	for (const value of values) {
+		if (!(OPT_IN_RULE_IDS as readonly string[]).includes(value)) {
+			throw new Error(`unknown rule: ${value}`);
+		}
+		const rule = value as OptInRuleId;
+		if (!enabled.includes(rule)) {
+			enabled.push(rule);
+		}
+	}
+	return enabled;
+}
 
 /**
  * TSDocに定義がないtagは構文errorではなく報告に留める
@@ -67,6 +112,179 @@ function finding(
 	};
 }
 
+const VOID_RETURN_TYPES = new Set(["never", "undefined", "void"]);
+const PROMISE_ANNOTATION = /^(?:Promise|PromiseLike)<([\s\S]*)>$/;
+
+/**
+ * 戻り値型の注釈が値を返すか判定する Promiseは中身で判定する
+ *
+ * @param annotation - 判定する戻り値型の注釈文字列
+ * @returns 値または値を返すPromiseならtrue
+ */
+export function returnsValue(annotation: string): boolean {
+	const text = annotation.trim();
+	const unwrapped = (PROMISE_ANNOTATION.exec(text)?.[1] ?? text).trim();
+	return unwrapped
+		.split("|")
+		.some((part) => !VOID_RETURN_TYPES.has(part.trim()));
+}
+
+/**
+ * 宣言にある引数と型引数のうちtagが無いものを報告する
+ */
+function untaggedFindings(
+	declaration: Declaration,
+	file: string,
+	comment: Position,
+	parsed: TsdocResult,
+): Finding[] {
+	const findings: Finding[] = [];
+	const parameters = new Set(parsed.parameters);
+	for (const name of declaration.parameters) {
+		if (!parameters.has(name)) {
+			findings.push(
+				finding(
+					"param-untagged",
+					"warning",
+					file,
+					comment,
+					`${declaration.name} has no @param tag for the parameter ${name}`,
+				),
+			);
+		}
+	}
+	const typeParameters = new Set(parsed.typeParameters);
+	for (const name of declaration.typeParameters) {
+		if (!typeParameters.has(name)) {
+			findings.push(
+				finding(
+					"type-param-untagged",
+					"warning",
+					file,
+					comment,
+					`${declaration.name} has no @typeParam tag for the type parameter ${name}`,
+				),
+			);
+		}
+	}
+	return findings;
+}
+
+/**
+ * @param tagの並びが宣言順と違うときだけ報告する
+ */
+function paramOrderFinding(
+	declaration: Declaration,
+	file: string,
+	comment: Position,
+	parsed: TsdocResult,
+): Finding | null {
+	const declared = new Set(declaration.parameters);
+	const tagged = new Set(parsed.parameters);
+	const documented = declaration.parameters.filter((name) => tagged.has(name));
+	const order = parsed.parameters.filter((name) => declared.has(name));
+	if (documented.length < 2 || documented.join("\n") === order.join("\n")) {
+		return null;
+	}
+	return finding(
+		"param-order",
+		"warning",
+		file,
+		comment,
+		`${declaration.name} lists its @param tags out of the declaration order`,
+	);
+}
+
+/**
+ * @deprecatedの代替先が@seeにも{@link}にも無いときだけ報告する
+ */
+function deprecatedFinding(
+	declaration: Declaration,
+	file: string,
+	comment: DocComment,
+	source: string,
+	parsed: TsdocResult,
+): Finding | null {
+	if (!parsed.hasDeprecated || parsed.hasSee) {
+		return null;
+	}
+	const raw = source.slice(comment.start, comment.start + comment.text.length);
+	if (raw.includes("{@link")) {
+		return null;
+	}
+	return finding(
+		"deprecated-without-guidance",
+		"warning",
+		file,
+		comment,
+		`${declaration.name} is deprecated without pointing to a replacement`,
+	);
+}
+
+/**
+ * 値を返す関数に@returnsが無いときだけ報告する
+ */
+function missingReturnsFinding(
+	declaration: Declaration,
+	file: string,
+	comment: Position,
+	parsed: TsdocResult,
+): Finding | null {
+	if (
+		parsed.hasReturns ||
+		declaration.returnType === null ||
+		!returnsValue(declaration.returnType)
+	) {
+		return null;
+	}
+	return finding(
+		"missing-returns",
+		"warning",
+		file,
+		comment,
+		`${declaration.name} returns a value but has no @returns tag`,
+	);
+}
+
+/**
+ * 引数と戻り値の契約を検査する opt-inのruleはenabledにあるときだけ実行する
+ */
+function contractFindings(
+	declaration: Declaration,
+	file: string,
+	comment: DocComment,
+	source: string,
+	parsed: TsdocResult,
+	enabled: readonly OptInRuleId[],
+): Finding[] {
+	const findings = untaggedFindings(declaration, file, comment, parsed);
+	if (enabled.includes("deprecated-without-guidance")) {
+		const deprecated = deprecatedFinding(
+			declaration,
+			file,
+			comment,
+			source,
+			parsed,
+		);
+		if (deprecated !== null) {
+			findings.push(deprecated);
+		}
+	}
+	if (enabled.includes("param-order")) {
+		const order = paramOrderFinding(declaration, file, comment, parsed);
+		if (order !== null) {
+			findings.push(order);
+		}
+	}
+	if (enabled.includes("missing-returns")) {
+		const missing = missingReturnsFinding(declaration, file, comment, parsed);
+		if (missing !== null) {
+			findings.push(missing);
+		}
+	}
+	return findings;
+}
+
 /**
  * exported宣言1つ分のTSDocを検査する
  */
@@ -74,6 +292,7 @@ function checkDeclaration(
 	declaration: Declaration,
 	file: string,
 	source: string,
+	enabled: readonly OptInRuleId[],
 ): Finding[] {
 	const comment = declaration.comment;
 	if (comment === null) {
@@ -141,6 +360,9 @@ function checkDeclaration(
 			);
 		}
 	}
+	findings.push(
+		...contractFindings(declaration, file, comment, source, parsed, enabled),
+	);
 	return findings;
 }
 
@@ -224,6 +446,10 @@ function suppressionFindings(
 
 /**
  * 指定したruleの指摘をerrorへ引き上げる
+ *
+ * @param findings - severityを引き上げる対象の指摘一覧
+ * @param rules - errorへ引き上げるrule名の一覧
+ * @returns severityを引き上げた指摘一覧
  */
 export function promoteFindings(
 	findings: Finding[],
@@ -236,13 +462,20 @@ export function promoteFindings(
 
 /**
  * 宣言の指摘へ抑制commentを適用する
+ *
+ * @param declaration - 検査するexported宣言
+ * @param file - 指摘に載せるfileのpath
+ * @param source - 宣言を切り出したsource文字列
+ * @param enabled - 実行するopt-in ruleの識別子一覧
+ * @returns 抑制を適用した後の指摘一覧
  */
 export function classifyDeclaration(
 	declaration: Declaration,
 	file: string,
 	source: string,
+	enabled: readonly OptInRuleId[] = [],
 ): Finding[] {
-	const findings = checkDeclaration(declaration, file, source);
+	const findings = checkDeclaration(declaration, file, source, enabled);
 	if (declaration.suppressions.length === 0) {
 		return findings;
 	}

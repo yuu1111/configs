@@ -18,6 +18,9 @@ export interface Options {
 
 /**
  * 起動条件を解析する
+ *
+ * @param argv - 解析するcommand line引数
+ * @returns ignoreとjsonとtargetsを持つ起動条件
  */
 export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
@@ -37,6 +40,9 @@ function describeFinding(finding: Finding): string {
 
 /**
  * 引数に応じて検査を実行し、終了codeを返す
+ *
+ * @param argv - 起動条件として解析するcommand line引数
+ * @returns 検出したerrorが無ければ0、あれば1の終了code
  */
 export function main(argv: string[]): number {
 	if (wantsHelp(argv)) {

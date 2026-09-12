@@ -52,6 +52,8 @@ export interface DocumentStyleCheckOptions extends EngineOptions {
  * TSDoc検査へ渡す起動条件
  */
 export interface TsdocCheckOptions extends EngineOptions {
+	/** 既定で無効のopt-in ruleのうち有効にするrule名 */
+	enable?: string[];
 	/** 違反として扱うrule名 */
 	error?: string[];
 }
@@ -91,6 +93,9 @@ export interface QualityConfig {
 
 /**
  * 設定fileを型付けするための恒等関数
+ *
+ * @param config - 型付けする統合検査の設定
+ * @returns 引数をそのまま返した統合検査の設定
  */
 export function defineConfig(config: QualityConfig): QualityConfig {
 	return config;
@@ -128,7 +133,7 @@ const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
 	"code-style-check": ["args", "ignore", "targets"],
 	"comment-check": ["args", "enable", "ignore", "targets"],
 	"document-style-check": ["args", "enable", "ignore", "targets"],
-	"tsdoc-check": ["args", "error", "ignore", "targets"],
+	"tsdoc-check": ["args", "enable", "error", "ignore", "targets"],
 };
 
 function readStringArray(value: unknown, field: string): string[] | undefined {
@@ -197,7 +202,11 @@ function parseEngineExtras(
 	name: EngineName,
 ): ParsedEngineOptions {
 	const extras: ParsedEngineOptions = {};
-	if (name === "comment-check" || name === "document-style-check") {
+	if (
+		name === "comment-check" ||
+		name === "document-style-check" ||
+		name === "tsdoc-check"
+	) {
 		const enable = readStringArray(
 			value.enable,
 			`${source}: config.${name}.enable`,
@@ -290,6 +299,10 @@ function parseEngineConfig(
 
 /**
  * 読み込んだ設定を検証して不足分を補う
+ *
+ * @param value - config fileがexportした検証前の値
+ * @param source - errorメッセージへ載せるconfig fileのpath
+ * @returns 検証して既定値を補った統合検査の設定
  */
 export function parseConfig(value: unknown, source: string): QualityConfig {
 	if (!isJsonObject(value)) {
@@ -311,6 +324,9 @@ export function parseConfig(value: unknown, source: string): QualityConfig {
 
 /**
  * 有効なengineを実行順で返す
+ *
+ * @param config - engineの有効無効を持つ統合検査の設定
+ * @returns 有効なengine名を実行順に並べた配列
  */
 export function enabledEngines(config: QualityConfig): EngineName[] {
 	return ENGINE_NAMES.filter((name) => Boolean(config.engines[name]));
@@ -318,6 +334,11 @@ export function enabledEngines(config: QualityConfig): EngineName[] {
 
 /**
  * engineの起動条件を返す 無効なengineにはnullを返す
+ *
+ * @typeParam K - 起動条件を取り出すengine名の型
+ * @param config - engineごとの起動条件を持つ統合検査の設定
+ * @param name - 起動条件を取り出すengine名
+ * @returns 指定したengineの起動条件 無効なengineならnull
  */
 export function engineConfig<K extends EngineName>(
 	config: QualityConfig,
@@ -331,6 +352,9 @@ export function engineConfig<K extends EngineName>(
 
 /**
  * 作業ディレクトリからconfig fileを探す
+ *
+ * @param cwd - 探索を開始する作業ディレクトリのpath
+ * @returns 見つけたconfig fileのpath 見つからなければnull
  */
 export function findConfigFile(cwd: string): string | null {
 	for (const name of DEFAULT_CONFIG_FILES) {
@@ -344,6 +368,9 @@ export function findConfigFile(cwd: string): string | null {
 
 /**
  * config fileを読み込んで検証する
+ *
+ * @param path - 読み込むconfig fileのpath
+ * @returns 読み込んで検証した統合検査の設定
  */
 export async function loadConfig(path: string): Promise<QualityConfig> {
 	const module: unknown = await import(pathToFileURL(path).href);

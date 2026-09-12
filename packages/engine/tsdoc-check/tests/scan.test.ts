@@ -31,9 +31,13 @@ describe("tsdoc checks", () => {
 			"export function run(value: number): void {}",
 		].join("\n");
 		const findings = scanSource(source, "src/sample.ts");
-		expect(findings).toHaveLength(1);
-		expect(findings[0]?.rule).toBe("param-mismatch");
-		expect(findings[0]?.severity).toBe("error");
+		expect(rulesOf(source).sort()).toEqual([
+			"param-mismatch",
+			"param-untagged",
+		]);
+		expect(
+			findings.find((finding) => finding.rule === "param-mismatch")?.severity,
+		).toBe("error");
 	});
 
 	test("reports a type parameter that the declaration does not declare", () => {
@@ -46,8 +50,15 @@ describe("tsdoc checks", () => {
 			"}",
 		].join("\n");
 		const findings = scanSource(source, "src/sample.ts");
-		expect(findings).toHaveLength(1);
-		expect(findings[0]?.rule).toBe("type-param-mismatch");
+		expect(rulesOf(source).sort()).toEqual([
+			"param-untagged",
+			"type-param-mismatch",
+			"type-param-untagged",
+		]);
+		expect(
+			findings.find((finding) => finding.rule === "type-param-mismatch")
+				?.severity,
+		).toBe("error");
 	});
 
 	test("reports a malformed tag as a syntax error", () => {
@@ -162,5 +173,198 @@ describe("tsdoc checks", () => {
 			"export const value = 1",
 		].join("\n");
 		expect(rulesOf(source)).toEqual([]);
+	});
+
+	test("reports a parameter without a @param tag", () => {
+		const source = [
+			"/** Runs the task",
+			" * @param other - another value",
+			" */",
+			"export function run(value: number): void {}",
+		].join("\n");
+		const findings = scanSource(source, "src/sample.ts");
+		expect(rulesOf(source).sort()).toEqual([
+			"param-mismatch",
+			"param-untagged",
+		]);
+		const untagged = findings.find(
+			(finding) => finding.rule === "param-untagged",
+		);
+		expect(untagged?.severity).toBe("warning");
+		expect(untagged?.message).toContain("value");
+	});
+
+	test("reports a type parameter without a @typeParam tag", () => {
+		const source = [
+			"/** Runs the task",
+			" * @param value - the value",
+			" * @typeParam U - the value type",
+			" */",
+			"export function run<T, U>(value: T): void {}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["type-param-untagged"]);
+	});
+
+	test("keeps the parameter order rule off by default", () => {
+		const source = [
+			"/** Runs the task",
+			" * @param second - the second value",
+			" * @param first - the first value",
+			" */",
+			"export function run(first: number, second: number): void {}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual([]);
+	});
+
+	test("reports @param tags out of the declaration order when enabled", () => {
+		const source = [
+			"/** Runs the task",
+			" * @param second - the second value",
+			" * @param first - the first value",
+			" */",
+			"export function run(first: number, second: number): void {}",
+		].join("\n");
+		const findings = scanSource(source, "src/sample.ts", ["param-order"]);
+		expect(findings.map((finding) => finding.rule)).toEqual(["param-order"]);
+		expect(findings[0]?.severity).toBe("warning");
+	});
+
+	test("keeps the returns rule off by default", () => {
+		const source = [
+			"/** Reads the value",
+			" */",
+			"export function read(): number {",
+			"\treturn 1",
+			"}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual([]);
+	});
+
+	test("reports a missing @returns when the function returns a value", () => {
+		const source = [
+			"/** Reads the value",
+			" */",
+			"export function read(): number {",
+			"\treturn 1",
+			"}",
+		].join("\n");
+		const findings = scanSource(source, "src/sample.ts", ["missing-returns"]);
+		expect(findings.map((finding) => finding.rule)).toEqual([
+			"missing-returns",
+		]);
+		expect(findings[0]?.severity).toBe("warning");
+	});
+
+	test("accepts @returns when the function returns a value", () => {
+		const source = [
+			"/** Reads the value",
+			" * @returns the value",
+			" */",
+			"export function read(): number {",
+			"\treturn 1",
+			"}",
+		].join("\n");
+		expect(scanSource(source, "src/sample.ts", ["missing-returns"])).toEqual(
+			[],
+		);
+	});
+
+	test("does not ask for @returns on a void function", () => {
+		const source = [
+			"/** Runs the task",
+			" */",
+			"export function run(): void {}",
+			"/** Waits for the task",
+			" */",
+			"export async function wait(): Promise<void> {}",
+		].join("\n");
+		expect(scanSource(source, "src/sample.ts", ["missing-returns"])).toEqual(
+			[],
+		);
+	});
+
+	test("does not ask for @returns without a return type annotation", () => {
+		const source = [
+			"/** Reads the value",
+			" */",
+			"export function read() {",
+			"\treturn 1",
+			"}",
+		].join("\n");
+		expect(scanSource(source, "src/sample.ts", ["missing-returns"])).toEqual(
+			[],
+		);
+	});
+
+	test("drops a new rule finding that a suppression covers", () => {
+		const source = [
+			"// tsdoc-check-ignore param-untagged: the loader passes the value",
+			"/** Runs the task",
+			" * @param other - another value",
+			" */",
+			"export function run(value: number): void {}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["param-mismatch"]);
+	});
+
+	test("reports an empty @deprecated as a syntax error", () => {
+		const source = [
+			"/** Runs the task",
+			" * @deprecated",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["tsdoc-syntax"]);
+	});
+
+	test("keeps the deprecation rule off by default", () => {
+		const source = [
+			"/** Runs the task",
+			" * @deprecated Use runAsync instead",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual([]);
+	});
+
+	test("reports a @deprecated without a replacement when enabled", () => {
+		const source = [
+			"/** Runs the task",
+			" * @deprecated Use runAsync instead",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+		const findings = scanSource(source, "src/sample.ts", [
+			"deprecated-without-guidance",
+		]);
+		expect(findings.map((finding) => finding.rule)).toEqual([
+			"deprecated-without-guidance",
+		]);
+		expect(findings[0]?.severity).toBe("warning");
+	});
+
+	test("accepts a @deprecated that links to the replacement", () => {
+		const source = [
+			"/** Runs the task",
+			" * @deprecated Use {@link runAsync} instead",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", ["deprecated-without-guidance"]),
+		).toEqual([]);
+	});
+
+	test("accepts a @deprecated next to a @see tag", () => {
+		const source = [
+			"/** Runs the task",
+			" * @deprecated Use the async variant",
+			" * @see runAsync for the replacement",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", ["deprecated-without-guidance"]),
+		).toEqual([]);
 	});
 });

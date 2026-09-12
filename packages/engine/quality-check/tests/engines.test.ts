@@ -256,6 +256,33 @@ describe("engine commands", () => {
 		).toEqual(["tsdoc-check", "--json", "--error", "missing-doc", "."]);
 	});
 
+	test("passes the opt-in rules and the error rules to the TSDoc engine", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{
+				config: {
+					"tsdoc-check": {
+						enable: ["missing-returns", "param-order"],
+						error: ["param-order"],
+					},
+				},
+				engines: { "tsdoc-check": true },
+			},
+			"test",
+		);
+		expect(buildEngineCommand("tsdoc-check", "tsdoc-check", context)).toEqual([
+			"tsdoc-check",
+			"--json",
+			"--enable",
+			"missing-returns",
+			"--enable",
+			"param-order",
+			"--error",
+			"param-order",
+			".",
+		]);
+	});
+
 	test("adds the command line overrides to the engines that accept them", () => {
 		const context = createContext();
 		context.overrides = { ignore: ["dist"], targets: ["src"] };

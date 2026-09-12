@@ -47,9 +47,10 @@ bun add -D @yuu1111/biome-config
 | `json.formatter.expand` | `always` |
 | `assist.source.organizeImports` | `on` |
 | `linter.rules.recommended` | `true` |
+| `nursery.noFloatingPromises` | `warn` |
 | `performance.noBarrelFile`、`performance.noReExportAll` | `error` |
 | `complexity.noExcessiveCognitiveComplexity` | `warn` |
-| `style.noNestedTernary` | `warn` |
+| `style.noNestedTernary`、`style.useErrorCause` | `warn` |
 | `suspicious.noEmptyBlockStatements` | `warn` |
 
 ```json

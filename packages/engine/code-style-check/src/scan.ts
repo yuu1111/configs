@@ -30,6 +30,10 @@ function definitionsOf(source: string, file: string): DefinitionPair[] {
 
 /**
  * source文字列の関数定義の間隔を検査する
+ *
+ * @param source - 関数定義の間隔を検査するsource文字列
+ * @param file - 指摘に載せるfileのpath
+ * @returns 検出した関数定義の間隔の違反
  */
 export function scanSource(source: string, file: string): Finding[] {
 	const findings: Finding[] = [];
@@ -57,6 +61,10 @@ export function scanSource(source: string, file: string): Finding[] {
 
 /**
  * fileを読み込んで関数定義の間隔を検査する
+ *
+ * @param file - 読み込んで検査するfileのpath
+ * @param cwd - 指摘に載せる相対pathの基準directory
+ * @returns 検出した関数定義の間隔の違反
  */
 export function scanFile(file: string, cwd = process.cwd()): Finding[] {
 	return scanSource(
@@ -67,6 +75,10 @@ export function scanFile(file: string, cwd = process.cwd()): Finding[] {
 
 /**
  * 複数fileの違反をまとめて位置順に並べる
+ *
+ * @param files - 検査するfileのpath一覧
+ * @param cwd - 指摘に載せる相対pathの基準directory
+ * @returns 位置順に並べた関数定義の間隔の違反
  */
 export function scanFiles(files: string[], cwd = process.cwd()): Finding[] {
 	const findings: Finding[] = [];

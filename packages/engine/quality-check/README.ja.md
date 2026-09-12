@@ -90,7 +90,7 @@ engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment
 | `code-style-check` | `code-style-check --json` | `ignore`、`targets`、`args` |
 | `comment-check` | `comment-check --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名） |
 | `document-style-check` | `document-style-check lint --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名） |
-| `tsdoc-check` | `tsdoc-check --json` | `ignore`、`targets`、`args`、`error`（違反として扱うrule名） |
+| `tsdoc-check` | `tsdoc-check --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名）、`error`（違反として扱うrule名） |
 
 `args` はengineの既定引数の後ろへ足す
 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
@@ -102,7 +102,7 @@ engineが受け取らない条件は渡さず、その旨をそのengineのsecti
 biome: ignore skipped (biome.json holds its settings)
 ```
 
-`enable` は `comment-check` と `document-style-check` の `--enable <rule>` になり、他のengineでは拒否される
+`enable` は `comment-check` と `document-style-check` と `tsdoc-check` の `--enable <rule>` になり、他のengineでは拒否される
 このCLIはengineを同梱しないため、opt-in ruleを有効にするProjectは対応するengine packageも同じ変更で更新する
 
 `comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する

@@ -243,6 +243,9 @@ async function runEngine(
 
 /**
  * 設定で有効なengineを順に起動する
+ *
+ * @param options - 設定とrunnerを持つ実行条件
+ * @returns 起動した順に並べたengineごとの実行結果
  */
 export async function runEngines(options: RunOptions): Promise<EngineResult[]> {
 	const runner = options.runner ?? runEngineProcess;

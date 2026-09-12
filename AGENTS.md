@@ -33,6 +33,7 @@ npm パッケージとして publish する
 - `bun run build` - 公開する check package へ @yuu1111/shared を同梱する
 - `bunx biome check .` - lint/format チェック
 - `bunx biome check --write .` - 自動修正
+- `bun run check:quality` - build して全 engine を最厳格な設定で実行する
 - `bun pm version patch/minor/major --no-git-tag-version` - バージョン更新 (各パッケージディレクトリで実行)
 
 ## ドキュメント
@@ -43,6 +44,7 @@ npm パッケージとして publish する
 ## 注意点
 
 - package の配置は `packages/config/` (共有設定) と `packages/engine/` (検査engine) に分ける
+- このリポジトリ自身を最厳格な利用例にするため、`quality.config.ts` で全 engine と全 opt-in rule を有効にし、warning は `error` へ上げる
 - Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
 - check engine は @yuu1111/shared を build 時に bundle して配布する (shared は private なので publish しない)

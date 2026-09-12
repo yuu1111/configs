@@ -21,12 +21,16 @@
 			"complexity": {
 				"noExcessiveCognitiveComplexity": "warn"
 			},
+			"nursery": {
+				"noFloatingPromises": "warn"
+			},
 			"performance": {
 				"noBarrelFile": "error",
 				"noReExportAll": "error"
 			},
 			"style": {
-				"noNestedTernary": "warn"
+				"noNestedTernary": "warn",
+				"useErrorCause": "warn"
 			},
 			"suspicious": {
 				"noEmptyBlockStatements": "warn"
