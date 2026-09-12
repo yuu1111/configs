@@ -35,6 +35,8 @@ export default {
 ### base
 
 - `ignoreExportsUsedInFile` keeps exports that are only referenced inside their own file out of the report
+- `entry` treats `quality.config.ts`, which `quality-check` loads at run time, as an entry point: it is not reported as an unused file and the exports it imports count as used
+- `ignoreIssues` keeps the exports of `quality.config.ts` itself out of the report, because the entry point of a consuming project is the API of `quality-check` and not the exports of this file
 
 ### application
 
@@ -49,6 +51,16 @@ export default {
 Dynamic entry points, CLI binaries, and generated files stay in the consuming
 project because a shared preset cannot infer them from the project layout.
 
+The `entry` that `base` adds is replaced when a project writes its own `entry`,
+so an added entry lists `quality.config.ts` as well:
+
+```ts
+export default {
+	...application,
+	entry: ["src/main.ts", "quality.config.ts"]
+}
+```
+
 A repository that also holds another project keeps that project out of the
 report with `ignore`, so its files are not read as source of the parent:
 
@@ -60,3 +72,7 @@ export default {
 	ignore: ["another-project/**"]
 }
 ```
+
+Knip prints a configuration hint when a repository with `workspaces` writes
+`entry` at the top level. A hint is not a report, so the exit code does not
+change.
