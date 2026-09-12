@@ -58,6 +58,18 @@ export default {
 }
 ```
 
+`workspaces` を設定に書くと、`base` が足すtop levelの `entry` はroot workspaceへ届かない root workspace側にも `entry` を書く
+
+```ts
+export default {
+	...application,
+	workspaces: {
+		".": { entry: ["quality.config.ts"] },
+		"packages/app": { entry: ["src/cli.ts"] }
+	}
+}
+```
+
 別Projectを同居させているrepositoryは `ignore` でそのProjectを報告から外し、親のsourceとして読ませない
 
 ```ts

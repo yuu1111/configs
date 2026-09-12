@@ -61,6 +61,19 @@ export default {
 }
 ```
 
+Writing `workspaces` in the config means the top-level `entry` that `base`
+adds does not reach the root workspace, so the root workspace repeats it:
+
+```ts
+export default {
+	...application,
+	workspaces: {
+		".": { entry: ["quality.config.ts"] },
+		"packages/app": { entry: ["src/cli.ts"] }
+	}
+}
+```
+
 A repository that also holds another project keeps that project out of the
 report with `ignore`, so its files are not read as source of the parent:
 
