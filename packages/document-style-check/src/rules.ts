@@ -1,22 +1,7 @@
 import { type MarkdownLine, markdownLines } from "./audit";
 
 /**
- * document-style-checkが報告するruleの識別子
- */
-export type RuleId =
-	| "consecutive-blank-lines"
-	| "date-anchored-statement"
-	| "hard-break-html"
-	| "trailing-backslash"
-	| "trailing-whitespace";
-
-/**
- * 指摘の重大度
- */
-export type Severity = "error" | "warning";
-
-/**
- * document-style-checkが報告するrule識別子の一覧
+ * document-style-checkが報告するruleの識別子一覧
  */
 export const RULE_IDS = [
 	"consecutive-blank-lines",
@@ -25,6 +10,16 @@ export const RULE_IDS = [
 	"trailing-backslash",
 	"trailing-whitespace",
 ] as const;
+
+/**
+ * RULE_IDSが定義するrule識別子のunion型
+ */
+export type RuleId = (typeof RULE_IDS)[number];
+
+/**
+ * 指摘の重大度
+ */
+export type Severity = "error" | "warning";
 
 /**
  * 検出した違反1件の内容と位置

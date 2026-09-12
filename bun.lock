@@ -10,9 +10,11 @@
         "@yuu1111/biome-config": "workspace:*",
         "@yuu1111/comment-check": "workspace:*",
         "@yuu1111/document-style-check": "workspace:*",
+        "@yuu1111/knip-config": "workspace:*",
         "@yuu1111/quality-check": "workspace:*",
         "@yuu1111/tsconfig": "workspace:*",
         "@yuu1111/tsdoc-check": "workspace:*",
+        "knip": "^6.35.1",
         "typescript": "^7.0.2",
       },
     },
@@ -36,7 +38,7 @@
     },
     "packages/knip-config": {
       "name": "@yuu1111/knip-config",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "devDependencies": {
         "knip": "^6.34.0",
       },
@@ -49,7 +51,7 @@
     },
     "packages/quality-check": {
       "name": "@yuu1111/quality-check",
-      "version": "0.1.0",
+      "version": "0.4.0",
       "bin": {
         "quality-check": "src/cli.ts",
       },
