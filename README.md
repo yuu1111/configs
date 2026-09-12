@@ -9,6 +9,7 @@ Shared configuration packages published to npm.
 | Package | Description |
 |---------|-------------|
 | [`@yuu1111/biome-config`](packages/config/biome-config) | Shared [Biome](https://biomejs.dev/) configuration |
+| [`@yuu1111/code-style-check`](packages/engine/code-style-check) | Function spacing checker |
 | [`@yuu1111/comment-check`](packages/engine/comment-check) | Comment checker with a baseline |
 | [`@yuu1111/document-style-check`](packages/engine/document-style-check) | Markdown checker with a review ledger |
 | [`@yuu1111/knip-config`](packages/config/knip-config) | Shared [Knip](https://knip.dev/) configuration |
@@ -34,17 +35,9 @@ Use a package-specific tag whose version matches the selected package.
 
 ```bash
 cd packages/config/biome-config
-npm version patch --no-git-tag-version
+bun pm version patch --no-git-tag-version
 # Commit and push the version change, then publish biome-config-vX.Y.Z on GitHub.
 ```
 
-Use `biome-config-vX.Y.Z` for `@yuu1111/biome-config` and
-`tsconfig-vX.Y.Z` for `@yuu1111/tsconfig`. Do not run `npm publish` locally.
-
-## Notes
-
-- The biome-config preset filename is `base.json` / `react.json` (not `biome.json`) to avoid Biome's nested-config detection.
-- The root `devDependencies` reference the workspace packages with `workspace:*` so the repo dogfoods its own configs via symlinks.
-- `@yuu1111/shared` is private and its code is bundled into each check package at build time, so the published packages have no runtime dependency on it.
-- Each check package ships a committed `bin/cli.js` launcher that calls the built `dist/cli.js`. Bun links a workspace `bin` only when its target already exists at install time, so a `bin` pointing at the build output is missing from `node_modules/.bin` on a clean clone until a second install.
-- `bun.lock` records each workspace `bin`, and Bun does not recompute that section on later installs. Change `bin` in `package.json` and `bun.lock` together so `--frozen-lockfile` still links the command.
+Use `biome-config-vX.Y.Z` for `@yuu1111/biome-config` and `tsconfig-vX.Y.Z` for `@yuu1111/tsconfig`.
+Do not run `npm publish` locally.

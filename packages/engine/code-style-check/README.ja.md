@@ -25,10 +25,10 @@ Checked 42 files: 1 errors, 0 warnings
 
 ## Rules
 
-| Rule | 検出対象 | 重大度 |
-|------|---------|--------|
-| `blank-line-between-functions` | 隣接する関数定義の間に空行が無い | error |
-| `blank-line-between-functions` | 隣接する関数定義の間に空行が2行以上ある | warning |
+| Rule | 重大度 | Default | 検出対象 |
+|------|----------|---------|---------|
+| `blank-line-between-functions` | error | true | 隣接する関数定義の間に空行が無い |
+| `blank-line-between-functions` | warning | true | 隣接する関数定義の間に空行が2行以上ある |
 
 ## 検査する定義
 
@@ -58,7 +58,7 @@ Checked 42 files: 1 errors, 0 warnings
 
 ## Options
 
-| Option | Description |
+| Option | 説明 |
 |--------|-------------|
 | `--ignore <path>` | 検査から外すpath 複数指定できる |
 | `--json` | 検出を `errors` と `warnings` のJSONで出力する |

@@ -19,7 +19,7 @@ document-style-check lint .
 document-style-check lint --write .
 ```
 
-```
+```text
 AGENTS.md:18:1 hard-break-html error an HTML hard break adds spacing without meaning
 Checked 14 files: 1 errors, 0 warnings
 ```
@@ -39,30 +39,30 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 
 記録は本文と基準のhashを固定するため、どちらかを編集すると無効になる `check`が保証するのは全項目に判断と根拠があることだけで、文体判断の正しさは別に確認する
 
+## Rules
+
+| Rule | 重大度 | Default | 検出対象 |
+|------|----------|---------|---------|
+| `consecutive-blank-lines` | error | true | 意味を持たない連続空行 |
+| `date-anchored-statement` | warning | true | 対象の識別を確認日で代用した記述 |
+| `hard-break-html` | error | true | 本文中の `<br>` |
+| `japanese-period` | error | false | 日本語の文を終える `。` |
+| `trailing-backslash` | error | true | 本文行の末尾のバックスラッシュ |
+| `trailing-whitespace` | error | true | 行末の空白 |
+
+`consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため`lint --write`で解消する `date-anchored-statement`は人またはモデルが判断するwarningで、`japanese-period`は`--write`の後にもerrorとして残る
+
 ## Commands
 
-| Command | Description |
+| Command | 説明 |
 |---------|-------------|
 | `scan` | 対象文書の未確認の検証記録を書き出す |
 | `check` | 埋めた検証記録を現在の本文と基準に対して確認する |
 | `lint` | 機械的な違反を報告し、`--write`で整形する |
 
-## Rules
-
-| Rule | 検出対象 |
-|------|---------|
-| `consecutive-blank-lines` | 意味を持たない連続空行 |
-| `date-anchored-statement` | 対象の識別を確認日で代用した記述 |
-| `hard-break-html` | 本文中の `<br>` |
-| `japanese-period` | 日本語の文を終える `。`（opt-in） |
-| `trailing-backslash` | 本文行の末尾のバックスラッシュ |
-| `trailing-whitespace` | 行末の空白 |
-
-`consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため`lint --write`で解消する `date-anchored-statement`は人またはモデルが判断するwarningで、`japanese-period`は`--write`の後にもerrorとして残る
-
 ## Options
 
-| Option | Description |
+| Option | 説明 |
 |--------|-------------|
 | `--rules <path>` | `## 判断基準`を持つ基準file `scan`と`check`では必須 |
 | `--review <path>` | 読み書きする検証記録file |

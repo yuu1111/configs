@@ -25,10 +25,10 @@ Checked 42 files: 1 errors, 0 warnings
 
 ## Rules
 
-| Rule | Finding | Severity |
-|------|---------|----------|
-| `blank-line-between-functions` | Adjacent function definitions have no blank line | error |
-| `blank-line-between-functions` | Adjacent function definitions have more than one blank line | warning |
+| Rule | Severity | Default | Detects |
+|------|----------|---------|---------|
+| `blank-line-between-functions` | error | true | Adjacent function definitions have no blank line |
+| `blank-line-between-functions` | warning | true | Adjacent function definitions have more than one blank line |
 
 ## Definitions that are checked
 
@@ -45,11 +45,9 @@ These are not treated as definitions:
 
 ## How the blank line is counted
 
-The rule requires exactly one consecutive whitespace-only line between the end
-of a definition and the start of the next one.
+The rule requires exactly one consecutive whitespace-only line between the end of a definition and the start of the next one.
 
-A comment line in between is not counted as a blank line and breaks the run, so
-the blank line may sit above or below the comment.
+A comment line in between is not counted as a blank line and breaks the run, so the blank line may sit above or below the comment.
 
 ## Relation to other linters
 

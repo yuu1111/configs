@@ -12,8 +12,7 @@ bun add -D @yuu1111/knip-config knip
 
 ## Usage
 
-Knip loads `knip.ts`, so import the preset that matches the project and add the
-project specific entries:
+Knip loads `knip.ts`, so import the preset that matches the project and add the project specific entries:
 
 ```ts
 import { application } from "@yuu1111/knip-config/application"
@@ -21,6 +20,43 @@ import { application } from "@yuu1111/knip-config/application"
 export default {
 	...application,
 	entry: ["src/main.ts"]
+}
+```
+
+A shared preset cannot infer dynamic entry points, CLI binaries, or generated files, so the project adds them.
+
+`base` adds `quality.config.ts` as an entry point, but a project that writes its own `entry` replaces it, so list `quality.config.ts` too:
+
+```ts
+export default {
+	...application,
+	entry: ["src/main.ts", "quality.config.ts"]
+}
+```
+
+A project with `workspaces` does not receive the top-level `entry` from `base` at the root workspace, so write it there too:
+
+```ts
+export default {
+	...application,
+	workspaces: {
+		".": { entry: ["quality.config.ts"] },
+		"packages/app": { entry: ["src/cli.ts"] }
+	}
+}
+```
+
+Knip prints a configuration hint when a repository with `workspaces` also writes `entry` at the top level.
+A hint is not a report, so the exit code does not change.
+
+A repository that also holds another project keeps it out of the report with `ignore`, so its files are not read as source of the parent:
+
+```ts
+import { application } from "@yuu1111/knip-config/application"
+
+export default {
+	...application,
+	ignore: ["another-project/**"]
 }
 ```
 
@@ -45,47 +81,3 @@ export default {
 ### library
 
 - `includeEntryExports` is on so an export that is no longer part of the public API is reported
-
-## Notes
-
-Dynamic entry points, CLI binaries, and generated files stay in the consuming
-project because a shared preset cannot infer them from the project layout.
-
-The `entry` that `base` adds is replaced when a project writes its own `entry`,
-so an added entry lists `quality.config.ts` as well:
-
-```ts
-export default {
-	...application,
-	entry: ["src/main.ts", "quality.config.ts"]
-}
-```
-
-Writing `workspaces` in the config means the top-level `entry` that `base`
-adds does not reach the root workspace, so the root workspace repeats it:
-
-```ts
-export default {
-	...application,
-	workspaces: {
-		".": { entry: ["quality.config.ts"] },
-		"packages/app": { entry: ["src/cli.ts"] }
-	}
-}
-```
-
-A repository that also holds another project keeps that project out of the
-report with `ignore`, so its files are not read as source of the parent:
-
-```ts
-import { application } from "@yuu1111/knip-config/application"
-
-export default {
-	...application,
-	ignore: ["another-project/**"]
-}
-```
-
-Knip prints a configuration hint when a repository with `workspaces` writes
-`entry` at the top level. A hint is not a report, so the exit code does not
-change.

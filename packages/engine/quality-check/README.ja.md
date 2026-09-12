@@ -10,6 +10,8 @@ Projectごとのscriptから個別に呼んでいたBiome、型検査、Knip、c
 bun add -D @yuu1111/quality-check
 ```
 
+engineのbinaryは利用Projectの `node_modules/.bin` から実行時に解決する engineを自分のscriptから呼ばないProjectではKnipが `@yuu1111/comment-check` などを未使用依存として報告するため `knip.ts` の `ignoreDependencies` で理由付きに宣言する
+
 ## Usage
 
 `quality.config.ts` で起動するengineとengineごとの起動条件を指定し、scriptから起動する
@@ -66,9 +68,11 @@ quality-check: 1 of 3 engines failed (1250ms)
   passed: biome, tsdoc-check
 ```
 
+終了codeは0が全engine成功、1が失敗したengineあり、2が設定またはengine起動の失敗
+
 ## Config
 
-| Field | Description |
+| Field | 説明 |
 |-------|-------------|
 | `engines` | 起動するengine 値は `true` または `false` |
 | `config` | engineごとの起動条件 |
@@ -78,7 +82,7 @@ engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment
 
 `engines` は起動の委任だけを表し、起動条件は `config` のengineの下へ置く engineごとの条件は複数行のobjectとして書き、ruleやoptionを足しても他のengineの行が動かないようにする engineが受け取る条件は次のとおり
 
-| engine | 起動するcommand | 受け取る条件 |
+| Engine | Command | 条件 |
 |--------|-----------------|--------------|
 | `biome` | `biome check` | `targets`、`args` 除外pathは `biome.json` が持つ |
 | `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
@@ -90,9 +94,22 @@ engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment
 
 `args` はengineの既定引数の後ろへ足す 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
 
+engineが受け取らない条件は渡さず、その旨をそのengineのsectionへ出す
+
+```text
+== biome ==
+biome: ignore skipped (biome.json holds its settings)
+```
+
+`enable` は `comment-check` と `document-style-check` の `--enable <rule>` になり、他のengineでは拒否される このCLIはengineを同梱しないため、opt-in ruleを有効にするProjectは対応するengine packageも同じ変更で更新する
+
+`comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する 新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す
+
+`typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する 省略時はカレントの `tsconfig.json` を1回だけ読む
+
 ## Options
 
-| Option | Description |
+| Option | 説明 |
 |--------|-------------|
 | `--config <path>` | 読み込むconfig file（既定は `quality.config.ts`） |
 | `--baseline <path>` | baseline fileを上書きする |
@@ -102,29 +119,4 @@ engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment
 
 `--ignore` と位置引数の対象pathは、その条件を受け取るengineへだけ渡す
 
-## Notes
-
-終了codeは0が全engine成功、1が失敗したengineあり、2が設定またはengine起動の失敗
-
 色は標準出力が端末のときだけ付ける `NO_COLOR` で無効にし、`FORCE_COLOR` で強制できる `--json` の出力には付けない
-
-色を扱えるengineへは自身の出力の色も許可する Biomeは `--colors=force`、tscは `--pretty` を受け取る
-
-engineの所要時間はengineの起動から結果の解釈までを計測し、状態行へ出す 起動しなかったengineには時間を出さない
-
-engineが受け取らない条件を書いた場合は渡さず、その旨をそのengineのsectionへ出す
-
-```text
-== biome ==
-biome: ignore skipped (biome.json holds its settings)
-```
-
-Biome、型検査、Knipの設定は `biome.json`、`tsconfig.json`、`knip.ts` が持つ このCLIは同じfileからengineの起動と結果の集約だけを行う
-
-engineのbinaryは利用Projectの `node_modules/.bin` から実行時に解決する engineを自分のscriptから呼ばないProjectではKnipが `@yuu1111/comment-check` などを未使用依存として報告するため `knip.ts` の `ignoreDependencies` で理由付きに宣言する
-
-`comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する 新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す
-
-`enable` は `comment-check` と `document-style-check` のopt-in ruleだけを受け取り、それぞれのcommandの `--enable <rule>` になる 他のengineへ書くとunknown optionとして拒否し、既定のrule集合は変えない このCLIはengineを同梱しないため、opt-in ruleを有効にするProjectは対応するengine packageも同じ変更で更新する
-
-`typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する 省略時はカレントの `tsconfig.json` を1回だけ読み、`args` はすべての起動へ足す

@@ -12,7 +12,7 @@ bun add -D @yuu1111/biome-config
 
 ## Usage
 
-### Base
+### base
 
 ```json
 {
@@ -27,7 +27,7 @@ base設定はrecommended ruleを有効にし、barrel fileとre-export-allをerr
 const size = small ? "s" : medium ? "m" : "l"
 ```
 
-### React
+### react
 
 CSS/Tailwind対応を含む
 
@@ -38,7 +38,7 @@ CSS/Tailwind対応を含む
 }
 ```
 
-### Custom rule presets
+## Presets
 
 Custom ruleはopt-in baseまたはReact設定の後ろに、必要な層のpresetを並べる
 
@@ -53,13 +53,15 @@ Custom ruleはopt-in baseまたはReact設定の後ろに、必要な層のprese
 }
 ```
 
-- `plugins/core` はforwarding export、未完成実装、型安全の迂回、安全でないerrno assertion、無意味なtest、pass-through wrapper、副作用目的のternaryを検査する
-- `plugins/network` は `fetch` に `AbortSignal` を要求し、手動で予約したabort timeoutの後始末を検査する
-- `plugins/discord` は動的なDiscord messageに明示的なmention処理があるかを検査する
+| Preset | rule |
+|--------|------|
+| `plugins/core` | forwarding export、未完成実装、型安全の迂回、安全でないerrno assertion、無意味なtest、pass-through wrapper、副作用目的のternary |
+| `plugins/network` | `fetch` への `AbortSignal` 要求と、手動で予約したabort timeoutの後始末 |
+| `plugins/discord` | 動的なDiscord messageの明示的なmention処理 |
 
-presetは他の層を含まないため、Projectに必要な層をすべて並べる [Project-scoped rule](#project-scoped-rules)はpresetではない 対象層を選ぶ `includes` を共有presetは持てないため、Project自身の設定で宣言する
+presetは他の層を含まないため、Projectに必要な層をすべて並べる [Project固有のrule](#project固有のrule)はpresetではない 対象層を選ぶ `includes` を共有presetは持てないため、Project自身の設定で宣言する
 
-#### Core rules
+### core
 
 - `no-reexports` は既存bindingを転送するだけのexport（`export type Alias = Imported`、`export default imported`、`export const wrapped = imported` など）をwarningにする `export ... from` の形はbaseのbarrel file ruleが担当する
 - `no-incomplete-implementation` はplaceholderのthrowをerror、logだけのcatch、`null`・`[]`・`{}` へ置き換えたrejected promiseとcatchしたerrorをwarningにする
@@ -96,27 +98,29 @@ flag ? enable() : disable()
 cacheRequest.catch(() => null)
 ```
 
-#### Network rule
+### network
 
 - `require-fetch-abort-signal` は `fetch` 呼び出しが `signal` optionを省いているとwarningにする
 - `require-abort-timeout-cleanup` は `setTimeout` callbackで `fetch` をabortしていながらそのtimerをclearしない関数をwarningにする
 
-#### Discord rule
+### discord
 
 `no-unsafe-dynamic-discord-message` は明示的な `allowedMentions` policy無しで動的なmessage内容を送るとwarningにする
 
-#### Project-scoped rules
+## Project固有のrule
+
+### no-adapter-import
 
 `no-adapter-import` は `integrations/` か `adapters/` を含むpathをmoduleがimportするとerrorにする Project自身の設定で宣言し、`includes` で絞る
 
 ```json
 {
-	"plugins": [
-		{
-			"path": "./node_modules/@yuu1111/biome-config/plugins/scoped/no-adapter-import.grit",
-			"includes": ["**/src/modules/authorization/**"]
-		}
-	]
+  "plugins": [
+    {
+      "path": "./node_modules/@yuu1111/biome-config/plugins/scoped/no-adapter-import.grit",
+      "includes": ["**/src/modules/authorization/**"]
+    }
+  ]
 }
 ```
 
@@ -128,23 +132,25 @@ pluginの `path` はfile pathとして解決されるため、上記のように
 
 ```json
 {
-	"includes": [
-		"**/src/modules/authorization/**",
-		"!**/src/modules/authorization/adapters/**"
-	]
+  "includes": [
+    "**/src/modules/authorization/**",
+    "!**/src/modules/authorization/adapters/**"
+  ]
 }
 ```
+
+### no-direct-response
 
 `no-direct-response` は対象層での `new Response(...)`、`Response.json(...)`、`Response.redirect(...)` をerrorにする すべてのresponseを共有helper経由で組み立てる層へ絞る
 
 ```json
 {
-	"plugins": [
-		{
-			"path": "./node_modules/@yuu1111/biome-config/plugins/scoped/no-direct-response.grit",
-			"includes": ["**/src/worker/routes/**"]
-		}
-	]
+  "plugins": [
+    {
+      "path": "./node_modules/@yuu1111/biome-config/plugins/scoped/no-direct-response.grit",
+      "includes": ["**/src/worker/routes/**"]
+    }
+  ]
 }
 ```
 

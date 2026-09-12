@@ -13,25 +13,19 @@ bun add -D @yuu1111/tsdoc-check
 ## Usage
 
 ```bash
-bunx tsdoc-check src
+tsdoc-check src
 ```
-
-| Option | Description |
-|--------|-------------|
-| `--error <rule>` | 指定したruleをerrorへ上げる 複数指定できる |
-| `--ignore <path>` | 検査から外すpath 複数指定できる |
-| `--json` | 検出をJSONで出力する |
 
 ## Rules
 
-| Rule | Severity | 検出対象 |
-|------|----------|---------|
-| `tsdoc-syntax` | error | TSDoc parserが返す構文メッセージ |
-| `param-mismatch` | error | signatureが宣言していないparameterを指す `@param` |
-| `tsdoc-tag` | warning | TSDoc設定が定義していないtag |
-| `type-param-mismatch` | error | 宣言に無いtype parameterを指す `@typeParam` |
-| `missing-doc` | warning | TSDoc commentの無いexported宣言 |
-| `single-line-doc` | warning | 1行で書いたTSDoc comment |
+| Rule | 重大度 | Default | 検出対象 |
+|------|----------|---------|---------|
+| `tsdoc-syntax` | error | true | TSDoc parserが返す構文メッセージ |
+| `param-mismatch` | error | true | signatureが宣言していないparameterを指す `@param` |
+| `tsdoc-tag` | warning | true | TSDoc設定が定義していないtag |
+| `type-param-mismatch` | error | true | 宣言に無いtype parameterを指す `@typeParam` |
+| `missing-doc` | warning | true | TSDoc commentの無いexported宣言 |
+| `single-line-doc` | warning | true | 1行で書いたTSDoc comment |
 
 TSDocが定義していないtagは `tsdoc-tag` のwarningになる `@description` などの独自tagもそこで報告し、`--error tsdoc-tag` ですべてerrorへ上げる
 
@@ -47,3 +41,11 @@ export const value = 1
 ```
 
 理由の無い抑制、未知のrule、ruleを書いていない抑制はerror 何も抑制しない抑制はwarning
+
+## Options
+
+| Option | 説明 |
+|--------|-------------|
+| `--error <rule>` | 指定したruleをerrorへ上げる 複数指定できる |
+| `--ignore <path>` | 検査から外すpath 複数指定できる |
+| `--json` | 検出をJSONで出力する |

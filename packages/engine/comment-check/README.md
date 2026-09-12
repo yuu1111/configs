@@ -2,8 +2,7 @@
 
 # @yuu1111/comment-check
 
-Small comment checker with a baseline, used to keep suppressions and placeholder
-comments from spreading.
+Small comment checker with a baseline, used to keep suppressions and placeholder comments from spreading.
 
 ## Install
 
@@ -20,20 +19,18 @@ comment-check --update-baseline .
 comment-check .
 ```
 
-```
+```text
 src/queue.ts:18:2 undocumented-directive TypeScript directive needs a description
 Checked 42 files: 1 new, 0 resolved, 3 baselined
 ```
 
-A project that also keeps Japanese sentences free of a trailing `。` names the
-opt-in rule:
+A project that also keeps Japanese sentences free of a trailing `。` names the opt-in rule:
 
 ```bash
 comment-check --enable japanese-period .
 ```
 
-A project that keeps a blank line before every multi-line comment names the
-other opt-in rule:
+A project that keeps a blank line before every multi-line comment names the other opt-in rule:
 
 ```bash
 comment-check --enable cramped-comment .
@@ -41,14 +38,14 @@ comment-check --enable cramped-comment .
 
 ## Rules
 
-| Rule | Detects |
-|------|---------|
-| `broad-suppression` | `biome-ignore-all`, `@ts-nocheck`, and rule-less `eslint-disable` |
-| `cramped-comment` | a multi-line block comment written directly under the previous line (opt-in) |
-| `undocumented-directive` | `@ts-ignore` or `@ts-expect-error` without a description |
-| `placeholder-comment` | `TODO`, `FIXME`, `XXX`, `HACK` |
-| `separator-comment` | decorative comments made only of punctuation |
-| `japanese-period` | a Japanese sentence in a comment that ends with `。` (opt-in) |
+| Rule | Severity | Default | Detects |
+|------|----------|---------|---------|
+| `broad-suppression` | error | true | `biome-ignore-all`, `@ts-nocheck`, and rule-less `eslint-disable` |
+| `cramped-comment` | error | false | a multi-line block comment written directly under the previous line |
+| `undocumented-directive` | error | true | `@ts-ignore` or `@ts-expect-error` without a description |
+| `placeholder-comment` | error | true | `TODO`, `FIXME`, `XXX`, `HACK` |
+| `separator-comment` | error | true | decorative comments made only of punctuation |
+| `japanese-period` | error | false | a Japanese sentence in a comment that ends with `。` |
 
 ## Options
 

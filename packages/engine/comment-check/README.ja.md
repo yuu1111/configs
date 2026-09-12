@@ -19,7 +19,7 @@ comment-check --update-baseline .
 comment-check .
 ```
 
-```
+```text
 src/queue.ts:18:2 undocumented-directive TypeScript directive needs a description
 Checked 42 files: 1 new, 0 resolved, 3 baselined
 ```
@@ -38,18 +38,18 @@ comment-check --enable cramped-comment .
 
 ## Rules
 
-| Rule | 検出対象 |
-|------|---------|
-| `broad-suppression` | `biome-ignore-all`、`@ts-nocheck`、ruleを書いていない `eslint-disable` |
-| `cramped-comment` | 直前の行へ空行なしで続く複数行comment（opt-in） |
-| `undocumented-directive` | 説明の無い `@ts-ignore` と `@ts-expect-error` |
-| `placeholder-comment` | `TODO`、`FIXME`、`XXX`、`HACK` |
-| `separator-comment` | 記号だけで作った装飾comment |
-| `japanese-period` | 日本語の文を終える `。` を含むcomment（opt-in） |
+| Rule | 重大度 | Default | 検出対象 |
+|------|----------|---------|---------|
+| `broad-suppression` | error | true | `biome-ignore-all`、`@ts-nocheck`、ruleを書いていない `eslint-disable` |
+| `cramped-comment` | error | false | 直前の行へ空行なしで続く複数行comment |
+| `undocumented-directive` | error | true | 説明の無い `@ts-ignore` と `@ts-expect-error` |
+| `placeholder-comment` | error | true | `TODO`、`FIXME`、`XXX`、`HACK` |
+| `separator-comment` | error | true | 記号だけで作った装飾comment |
+| `japanese-period` | error | false | 日本語の文を終える `。` を含むcomment |
 
 ## Options
 
-| Option | Description |
+| Option | 説明 |
 |--------|-------------|
 | `--baseline <path>` | 読み書きするbaseline file（既定は `comment-baseline.json`） |
 | `--enable <rule>` | opt-in ruleを実行する 複数指定できる 未知の名前は設定error |

@@ -10,20 +10,20 @@
 
 ## 見出し
 
-- 見出しは両言語とも英語にする
-- 節は `# @yuu1111/<package>` と1文の説明、`## Install`、`## Usage`、参照節、`## Options`、`## Notes` の順に置く
+- 節見出しは短い技術名（`Install`、`Usage`、`Rules`、`Options`、`Notes` など）を両言語で共通に使う 日本語版で説明的な見出しを足す場合は日本語にする 例: `## 他のlinterとの対応`
+- 節は `# @yuu1111/<package>` と1文の説明、`## Install`、`## Usage`、参照節、`## Options` の順に置く
 - 参照節は `## Presets`、`## Config`、`## Rules`、`## Commands`、`## Suppressions` の順に置く
+- 参照節に当てはまらない説明的な節は参照節の後ろ、`## Options` の前へ置く
 - CLIを持つpackageは `## Options` を必ず置く 項目が少なくても省略しない
-- `## Notes` は補足があるpackageだけに置く
+- 補足は `## Notes` へまとめず、該当する節へ書く 末尾のcatch-allの節を置かない
 - 参照節の中を分けるときは `###` を使い、`####` は使わない
 - 複数のpresetを持つpackageは `## Presets` に表を置き、presetごとの詳細を `###` で並べる 同じpresetを `## Usage` の `###` と `## Presets` の両方へ重複させない
-- 日本語版でも見出しは英語のままにする `## 検査する定義` のような日本語見出しを置かない
 
 ## 表
 
-- 列見出しは両言語とも英語にし、列の並びも両言語で同じにする
-- 規則の表は `| Rule | Detects |` を基本にし、ruleごとに重大度が変わるpackageだけ `| Rule | Severity | Detects |` にする
-- opt-inのruleは `Detects` のcellへ `(opt-in)` と添える
+- 列見出しは技術名を英語、説明列を日本語版で日本語にする 列の並びは両言語で同じにする 例: `| Option | 説明 |`、`| Preset | 用途 |`
+- 規則の表は `| Rule | Severity | Default | Detects |`（日本語版は `| Rule | 重大度 | Default | 検出対象 |`）にし、4列をどのpackageでも省略しない
+- `Severity` は `error` と `warning`、`Default` は `true` と `false` で示す opt-in ruleだけ `Default` を `false` にする
 - 表と箇条書きの末尾に句点を付けない
 
 ## コードブロック
