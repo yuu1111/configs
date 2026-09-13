@@ -10,7 +10,7 @@ Projectごとのscriptから個別に呼んでいたBiome、型検査、Knip、c
 bun add -D @yuu1111/quality-check
 ```
 
-このCLIは `comment-check`、`document-style-check`、`tsdoc-check` を、configの型がengineの公開するrule名を取り込むためpeer dependencyとして持つ
+このCLIは `code-style-check`、`comment-check`、`document-style-check`、`tsdoc-check` を、configの型がengineの公開するrule名を取り込むためpeer dependencyとして持つ
 package managerはこのCLIと一緒に導入し、engineのbinaryは利用Projectの `node_modules/.bin` から実行時に解決する
 
 `@yuu1111/code-style-check` を宣言するProjectではKnipが未使用依存として報告するため `knip.ts` の `ignoreDependencies` で理由付きに宣言する
@@ -95,7 +95,7 @@ engineごとのsectionが `enabled` とそのengineが受け取る条件を持�
 | `biome` | `biome check` | `targets`、`args` 除外pathは `biome.json` が持つ |
 | `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
 | `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
-| `code-style-check` | `code-style-check --json` | `ignore`、`targets`、`args` |
+| `code-style-check` | `code-style-check --json` | `ignore`、`targets`、`args`、`rules` |
 | `comment-check` | `comment-check --json` | `ignore`、`targets`、`args`、`rules` |
 | `document-style-check` | `document-style-check lint --json` | `ignore`、`targets`、`args`、`rules` |
 | `tsdoc-check` | `tsdoc-check --json` | `ignore`、`targets`、`args`、`rules` |
@@ -120,8 +120,8 @@ group名の下のobjectはruleを1つずつ選ぶ
 engineが知らないgroup名やrule名は設定errorになり、配布する `schema.json` がeditorへ同じ語彙を教える
 選んだruleは `--enable <rule>`、`--disable <rule>`、`tsdoc-check` では `--error <rule>` になる
 
-`comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する
-新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す
+検出engineはbaselineを持たないため、新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行う
+comment-check 2.xが書いた `comment-baseline.json` はもう読まれないため、`--update-baseline` で統合CLIのbaselineへ移す
 
 `typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する
 省略時はカレントの `tsconfig.json` を1回だけ読む

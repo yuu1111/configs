@@ -32,6 +32,10 @@ Checked 42 files: 1 errors, 0 warnings
 | `blank-line-between-definitions` | error | true | 隣接する定義の間に空行が無い |
 | `blank-line-between-definitions` | warning | true | 隣接する定義の間に空行が2行以上ある |
 
+ruleの識別子は `@yuu1111/code-style-check/rule-ids`（`RuleId`）として公開し、`quality.json` の `$schema` が読むrule語彙の出所になる
+
+既定で有効なruleも `--disable` で無効にできる
+
 ## 検査する定義
 
 - `function` 宣言（`export`、`async`、generatorを含む）
@@ -62,5 +66,6 @@ Checked 42 files: 1 errors, 0 warnings
 
 | Option | 説明 |
 |--------|-------------|
+| `--disable <rule>` | ruleを無効にする、複数指定できる、未知の名前は設定error |
 | `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--json` | 検出を `errors` と `warnings` のJSONで出力する |

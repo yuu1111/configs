@@ -1,6 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+	OPT_IN_RULE_IDS as CODE_STYLE_CHECK_OPT_IN_RULE_IDS,
+	RULE_GROUPS as CODE_STYLE_CHECK_RULE_GROUPS,
+	RULE_IDS as CODE_STYLE_CHECK_RULE_IDS,
+} from "@yuu1111/code-style-check/rule-ids";
+import {
 	OPT_IN_RULE_IDS as COMMENT_CHECK_OPT_IN_RULE_IDS,
 	RULE_GROUPS as COMMENT_CHECK_RULE_GROUPS,
 	RULE_IDS as COMMENT_CHECK_RULE_IDS,
@@ -86,7 +91,7 @@ export interface EngineConfigMap {
 	biome: EngineOptions;
 	typecheck: TypecheckOptions;
 	knip: EngineOptions;
-	"code-style-check": EngineOptions;
+	"code-style-check": RuleEngineOptions;
 	"comment-check": RuleEngineOptions;
 	"document-style-check": RuleEngineOptions;
 	"tsdoc-check": RuleEngineOptions;
@@ -123,11 +128,13 @@ interface EngineVocabulary {
 /**
  * engineが公開するrule語彙 engineのrule-idsが唯一の出所になる
  */
-export const RULE_VOCABULARY: Record<EngineName, EngineVocabulary> = {
-	biome: { all: [], groups: {}, optIn: [], promotes: false },
-	typecheck: { all: [], groups: {}, optIn: [], promotes: false },
-	knip: { all: [], groups: {}, optIn: [], promotes: false },
-	"code-style-check": { all: [], groups: {}, optIn: [], promotes: false },
+export const RULE_VOCABULARY = {
+	"code-style-check": {
+		all: CODE_STYLE_CHECK_RULE_IDS,
+		groups: CODE_STYLE_CHECK_RULE_GROUPS,
+		optIn: CODE_STYLE_CHECK_OPT_IN_RULE_IDS,
+		promotes: false,
+	},
 	"comment-check": {
 		all: COMMENT_CHECK_RULE_IDS,
 		groups: COMMENT_CHECK_RULE_GROUPS,
@@ -146,7 +153,22 @@ export const RULE_VOCABULARY: Record<EngineName, EngineVocabulary> = {
 		optIn: TSDOC_CHECK_OPT_IN_RULE_IDS,
 		promotes: true,
 	},
-};
+} satisfies Record<string, EngineVocabulary>;
+
+/**
+ * rule語彙を受け取るengine名のunion型
+ */
+export type RuleEngineName = keyof typeof RULE_VOCABULARY;
+
+/**
+ * engineがrule語彙を受け取るか
+ *
+ * @param name - 判定するengine名
+ * @returns rule語彙を受け取るengineならtrue
+ */
+export function isRuleEngine(name: EngineName): name is RuleEngineName {
+	return name in RULE_VOCABULARY;
+}
 
 /**
  * config fileを探索する既定のfile名
@@ -160,36 +182,66 @@ export const DEFAULT_BASELINE_FILE = "quality-baseline.json";
 
 type JsonObject = Record<string, unknown>;
 
-const RULE_ENGINE_NAMES: readonly string[] = [
-	"comment-check",
-	"document-style-check",
-	"tsdoc-check",
-];
+/**
+ * engineが受け取る検出と起動条件
+ */
+export interface EngineCapabilities {
+	/** `--json` の検出を返し baseline の対象になるか */
+	findings: boolean;
+	/** 受け取らない起動条件とその理由 受け取るときは undefined */
+	skipped: Partial<Record<"ignore" | "targets", string>>;
+}
 
-const TARGET_ENGINE_NAMES: readonly string[] = [
-	"biome",
-	"code-style-check",
-	"comment-check",
-	"document-style-check",
-	"tsdoc-check",
-];
-
-const IGNORE_ENGINE_NAMES: readonly string[] = [
-	"code-style-check",
-	"comment-check",
-	"document-style-check",
-	"tsdoc-check",
-];
-
-const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
-	biome: ["args", "enabled", "targets"],
-	typecheck: ["args", "enabled", "projects"],
-	knip: ["args", "enabled"],
-	"code-style-check": ["args", "enabled", "ignore", "targets"],
-	"comment-check": ["args", "enabled", "ignore", "rules", "targets"],
-	"document-style-check": ["args", "enabled", "ignore", "rules", "targets"],
-	"tsdoc-check": ["args", "enabled", "ignore", "rules", "targets"],
+/**
+ * engine名ごとの能力 受け取る起動条件と検出の唯一の出所
+ */
+export const ENGINE_CAPABILITIES: Record<EngineName, EngineCapabilities> = {
+	biome: {
+		findings: false,
+		skipped: { ignore: "biome.json holds its settings" },
+	},
+	typecheck: {
+		findings: false,
+		skipped: {
+			ignore: "tsconfig.json holds its settings",
+			targets: "tsconfig.json and projects hold its settings",
+		},
+	},
+	knip: {
+		findings: false,
+		skipped: {
+			ignore: "knip.ts holds its settings",
+			targets: "knip analyzes the whole project",
+		},
+	},
+	"code-style-check": { findings: true, skipped: {} },
+	"comment-check": { findings: true, skipped: {} },
+	"document-style-check": { findings: true, skipped: {} },
+	"tsdoc-check": { findings: true, skipped: {} },
 };
+
+/**
+ * sectionで許すoption名を能力から組み立てる
+ *
+ * @param name - option名を組み立てるengine名
+ * @returns sectionで許すoption名の一覧
+ */
+function engineOptionKeys(name: EngineName): readonly string[] {
+	const keys = ["args", "enabled"];
+	if (ENGINE_CAPABILITIES[name].skipped.targets === undefined) {
+		keys.push("targets");
+	}
+	if (ENGINE_CAPABILITIES[name].skipped.ignore === undefined) {
+		keys.push("ignore");
+	}
+	if (name === "typecheck") {
+		keys.push("projects");
+	}
+	if (isRuleEngine(name)) {
+		keys.push("rules");
+	}
+	return keys;
+}
 
 function isJsonObject(value: unknown): value is JsonObject {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -360,7 +412,7 @@ function toRuleSelection(
 function readRuleSelection(
 	value: unknown,
 	field: string,
-	name: EngineName,
+	name: RuleEngineName,
 ): RuleSelection {
 	let entries: JsonObject = {};
 	if (value !== undefined) {
@@ -369,7 +421,7 @@ function readRuleSelection(
 		}
 		entries = value;
 	}
-	const vocabulary = RULE_VOCABULARY[name];
+	const vocabulary: EngineVocabulary = RULE_VOCABULARY[name];
 	const states = new Map<string, RuleState>();
 	for (const rule of vocabulary.all) {
 		states.set(rule, vocabulary.optIn.includes(rule) ? "off" : "on");
@@ -392,7 +444,7 @@ function parseEngineOptions(
 	name: EngineName,
 ): Record<string, unknown> {
 	const unknown = Object.keys(value).find(
-		(key) => !ENGINE_OPTION_KEYS[name].includes(key),
+		(key) => !engineOptionKeys(name).includes(key),
 	);
 	if (unknown !== undefined) {
 		throw new Error(`${source}: ${name} has an unknown option: ${unknown}`);
@@ -402,11 +454,11 @@ function parseEngineOptions(
 		ignore: [],
 		targets: [],
 	};
-	if (TARGET_ENGINE_NAMES.includes(name)) {
+	if (ENGINE_CAPABILITIES[name].skipped.targets === undefined) {
 		options.targets =
 			readStringArray(value.targets, `${source}: ${name}.targets`) ?? [];
 	}
-	if (IGNORE_ENGINE_NAMES.includes(name)) {
+	if (ENGINE_CAPABILITIES[name].skipped.ignore === undefined) {
 		options.ignore =
 			readStringArray(value.ignore, `${source}: ${name}.ignore`) ?? [];
 	}
@@ -414,7 +466,7 @@ function parseEngineOptions(
 		options.projects =
 			readStringArray(value.projects, `${source}: ${name}.projects`) ?? [];
 	}
-	if (RULE_ENGINE_NAMES.includes(name)) {
+	if (isRuleEngine(name)) {
 		options.rules = readRuleSelection(
 			value.rules,
 			`${source}: ${name}.rules`,

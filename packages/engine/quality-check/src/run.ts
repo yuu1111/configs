@@ -61,8 +61,6 @@ export interface RunOptions {
 	cwd: string;
 	/** コマンドラインから渡された起動条件の上書き */
 	overrides: RunOverrides;
-	/** comment-checkのbaseline差分を無効化する未作成のpath */
-	rawBaseline: string;
 	/** engineの実行fileを解決する関数 テストでは差し替える */
 	resolve?: (name: EngineName, cwd: string) => string | null;
 	runner?: EngineRunner;
@@ -259,7 +257,6 @@ export async function runEngines(options: RunOptions): Promise<EngineResult[]> {
 		color: options.color,
 		config: options.config,
 		overrides: options.overrides,
-		rawBaseline: options.rawBaseline,
 	};
 	const results: EngineResult[] = [];
 	for (const name of enabledEngines(options.config)) {

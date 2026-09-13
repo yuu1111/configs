@@ -2,20 +2,21 @@ import { describe, expect, test } from "bun:test";
 import { parseFindings } from "../src/findings";
 
 describe("engine findings", () => {
-	test("reads the added findings of comment-check", () => {
+	test("reads the findings of comment-check", () => {
 		const parsed = parseFindings(
 			"comment-check",
 			JSON.stringify({
-				added: [
+				errors: [
 					{
 						column: 3,
 						file: "src/a.ts",
 						line: 2,
+						message: "placeholder comment should be resolved or tracked",
 						rule: "placeholder-comment",
-						text: "TODO: one",
+						severity: "error",
 					},
 				],
-				resolved: [],
+				warnings: [],
 			}),
 		);
 		expect(parsed.errors).toEqual([
@@ -26,7 +27,7 @@ describe("engine findings", () => {
 				line: 2,
 				rule: "placeholder-comment",
 				severity: "error",
-				text: "TODO: one",
+				text: "placeholder comment should be resolved or tracked",
 			},
 		]);
 		expect(parsed.warnings).toEqual([]);

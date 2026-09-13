@@ -35,36 +35,38 @@ const periodFinding: NormalizedFinding = {
 	text: "説明。",
 };
 
-function commentOutput(findings: unknown[]): string {
-	return JSON.stringify({ added: findings, resolved: [] });
+/**
+ * engineの`--json`出力を組み立てる
+ *
+ * @param errors - errorとして返す検出
+ * @param warnings - warningとして返す検出
+ * @returns 検出のtextをmessageへ詰め替えたJSON text
+ */
+function reportOutput(
+	errors: NormalizedFinding[],
+	warnings: NormalizedFinding[] = [],
+): string {
+	const toFinding = (finding: NormalizedFinding) => ({
+		column: finding.column,
+		file: finding.file,
+		line: finding.line,
+		message: finding.text,
+		rule: finding.rule,
+	});
+	return JSON.stringify({
+		errors: errors.map(toFinding),
+		warnings: warnings.map(toFinding),
+	});
 }
 
+/**
+ * warning1件だけを返すengineの出力を組み立てる
+ *
+ * @param finding - warningとして返す検出
+ * @returns warningだけを持つJSON text
+ */
 function warningOutput(finding: NormalizedFinding): string {
-	return JSON.stringify({
-		errors: [],
-		warnings: [
-			{
-				column: finding.column,
-				file: finding.file,
-				line: finding.line,
-				message: finding.text,
-				rule: finding.rule,
-			},
-		],
-	});
-}
-
-function documentOutput(findings: NormalizedFinding[]): string {
-	return JSON.stringify({
-		errors: findings.map((finding) => ({
-			column: finding.column,
-			file: finding.file,
-			line: finding.line,
-			message: finding.text,
-			rule: finding.rule,
-		})),
-		warnings: [],
-	});
+	return reportOutput([], [finding]);
 }
 
 function runnerFor(result: EngineProcessResult): EngineRunner {
@@ -78,7 +80,6 @@ function createOptions(overrides: Partial<RunOptions>): RunOptions {
 		config: parseConfig({ biome: { enabled: true } }, "test"),
 		cwd: ".",
 		overrides: { ignore: [], targets: ["."] },
-		rawBaseline: "raw.json",
 		resolve: () => "/fake/bin",
 		...overrides,
 	};
@@ -213,7 +214,7 @@ describe("engine orchestration", () => {
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
-					stdout: commentOutput([commentFinding]),
+					stdout: reportOutput([commentFinding]),
 				}),
 			}),
 		);
@@ -231,7 +232,7 @@ describe("engine orchestration", () => {
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
-					stdout: documentOutput([documentFinding]),
+					stdout: reportOutput([documentFinding]),
 				}),
 			}),
 		);
@@ -247,7 +248,7 @@ describe("engine orchestration", () => {
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
-					stdout: commentOutput([commentFinding]),
+					stdout: reportOutput([commentFinding]),
 				}),
 			}),
 		);
@@ -264,7 +265,7 @@ describe("engine orchestration", () => {
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
-					stdout: commentOutput([commentFinding, periodFinding]),
+					stdout: reportOutput([commentFinding, periodFinding]),
 				}),
 			}),
 		);
@@ -281,7 +282,7 @@ describe("engine orchestration", () => {
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
-					stdout: commentOutput([periodFinding]),
+					stdout: reportOutput([periodFinding]),
 				}),
 			}),
 		);
@@ -298,7 +299,7 @@ describe("engine orchestration", () => {
 				runner: runnerFor({
 					exitCode: 0,
 					stderr: "",
-					stdout: commentOutput([]),
+					stdout: reportOutput([]),
 				}),
 			}),
 		);

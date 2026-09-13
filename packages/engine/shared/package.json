@@ -10,6 +10,7 @@
 		"./color": "./src/color.ts",
 		"./files": "./src/files.ts",
 		"./findings": "./src/findings.ts",
-		"./json": "./src/json.ts"
+		"./json": "./src/json.ts",
+		"./report": "./src/report.ts"
 	}
 }

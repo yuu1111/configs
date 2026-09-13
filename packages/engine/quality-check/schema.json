@@ -108,6 +108,51 @@
 						"type": "string"
 					},
 					"type": "array"
+				},
+				"rules": {
+					"additionalProperties": false,
+					"properties": {
+						"preset": {
+							"enum": [
+								"recommended",
+								"all",
+								"none"
+							],
+							"type": "string"
+						},
+						"spacing": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"blank-line-between-class-members": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"blank-line-between-definitions": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						}
+					},
+					"type": "object"
 				}
 			},
 			"type": "object"

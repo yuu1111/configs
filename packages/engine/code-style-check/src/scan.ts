@@ -3,6 +3,7 @@ import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { collectAdjacentDefinitions, type DefinitionPair } from "./parse";
+import type { RuleId } from "./rule-ids";
 import {
 	classifyGap,
 	countBlankLines,
@@ -39,9 +40,14 @@ function definitionsOf(source: string, file: string): DefinitionPair[] {
  *
  * @param source - 定義の間隔を検査するsource文字列
  * @param file - 指摘に載せるfileのpath
+ * @param disabled - 追加で無効にするruleの一覧
  * @returns 検出した定義の間隔の違反
  */
-export function scanSource(source: string, file: string): Finding[] {
+export function scanSource(
+	source: string,
+	file: string,
+	disabled: readonly RuleId[] = [],
+): Finding[] {
 	const findings: Finding[] = [];
 	for (const pair of definitionsOf(source, file)) {
 		if (!requiresBlankLine(pair.previous.kind, pair.next.kind)) {
@@ -69,7 +75,7 @@ export function scanSource(source: string, file: string): Finding[] {
 			severity: classification.severity,
 		});
 	}
-	return findings;
+	return findings.filter((finding) => !disabled.includes(finding.rule));
 }
 
 /**
@@ -77,12 +83,18 @@ export function scanSource(source: string, file: string): Finding[] {
  *
  * @param file - 読み込んで検査するfileのpath
  * @param cwd - 指摘に載せる相対pathの基準directory
+ * @param disabled - 追加で無効にするruleの一覧
  * @returns 検出した定義の間隔の違反
  */
-export function scanFile(file: string, cwd = process.cwd()): Finding[] {
+export function scanFile(
+	file: string,
+	cwd = process.cwd(),
+	disabled: readonly RuleId[] = [],
+): Finding[] {
 	return scanSource(
 		readFileSync(file, "utf8"),
 		normalizePath(relative(cwd, file)),
+		disabled,
 	);
 }
 
@@ -91,12 +103,17 @@ export function scanFile(file: string, cwd = process.cwd()): Finding[] {
  *
  * @param files - 検査するfileのpath一覧
  * @param cwd - 指摘に載せる相対pathの基準directory
+ * @param disabled - 追加で無効にするruleの一覧
  * @returns 位置順に並べた定義の間隔の違反
  */
-export function scanFiles(files: string[], cwd = process.cwd()): Finding[] {
+export function scanFiles(
+	files: string[],
+	cwd = process.cwd(),
+	disabled: readonly RuleId[] = [],
+): Finding[] {
 	const findings: Finding[] = [];
 	for (const file of files) {
-		findings.push(...scanFile(file, cwd));
+		findings.push(...scanFile(file, cwd, disabled));
 	}
 	return findings.sort(compareFindings);
 }

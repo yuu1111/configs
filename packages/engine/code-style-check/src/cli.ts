@@ -1,16 +1,24 @@
 #!/usr/bin/env bun
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
-import { formatLocation } from "@yuu1111/shared/findings";
-import type { Finding } from "./rules";
+import {
+	describeReportFinding,
+	formatReportSummary,
+	printReport,
+	toReport,
+} from "@yuu1111/shared/report";
+import type { RuleId } from "./rule-ids";
+import { type Finding, parseDisabledRules } from "./rules";
 import { SUPPORTED_EXTENSIONS, scanFiles } from "./scan";
 
-const USAGE = "Usage: code-style-check [--ignore <path>] [--json] [path...]";
+const USAGE =
+	"Usage: code-style-check [--disable <rule>] [--ignore <path>] [--json] [path...]";
 
 /**
  * 解析した起動条件
  */
 export interface Options {
+	disabled: RuleId[];
 	ignores: string[];
 	json: boolean;
 	targets: string[];
@@ -20,22 +28,19 @@ export interface Options {
  * 起動条件を解析する
  *
  * @param argv - 解析するcommand line引数
- * @returns ignoreとjsonとtargetsを持つ起動条件
+ * @returns disableとignoreとjsonとtargetsを持つ起動条件
  */
 export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
 		flags: ["json"],
-		values: ["ignore"],
+		values: ["disable", "ignore"],
 	});
 	return {
+		disabled: parseDisabledRules(parsed.values.get("disable") ?? []),
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
 		targets: parsed.targets.length > 0 ? parsed.targets : ["."],
 	};
-}
-
-function describeFinding(finding: Finding): string {
-	return `${formatLocation(finding)} ${finding.rule} ${finding.severity} ${finding.message}`;
 }
 
 /**
@@ -55,20 +60,17 @@ export function main(argv: string[]): number {
 		extensions: SUPPORTED_EXTENSIONS,
 		ignores: options.ignores,
 	});
-	const findings = scanFiles(files);
-	const errors = findings.filter((finding) => finding.severity === "error");
-	const warnings = findings.filter((finding) => finding.severity === "warning");
+	const findings: Finding[] = scanFiles(files, process.cwd(), options.disabled);
+	const report = toReport(findings);
 	if (options.json) {
-		console.log(JSON.stringify({ errors, warnings }, null, "\t"));
+		printReport(report);
 	} else {
-		for (const finding of [...errors, ...warnings]) {
-			console.log(describeFinding(finding));
+		for (const finding of [...report.errors, ...report.warnings]) {
+			console.log(describeReportFinding(finding));
 		}
-		console.log(
-			`Checked ${files.length} files: ${errors.length} errors, ${warnings.length} warnings`,
-		);
+		console.log(formatReportSummary(files.length, report));
 	}
-	return errors.length > 0 ? 1 : 0;
+	return report.errors.length > 0 ? 1 : 0;
 }
 
 /**

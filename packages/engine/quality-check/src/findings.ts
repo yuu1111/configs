@@ -1,5 +1,5 @@
 import type { Located, Severity } from "@yuu1111/shared/findings";
-import { isJsonObject } from "@yuu1111/shared/json";
+import { type ReportFinding, readReport } from "@yuu1111/shared/report";
 import type { EngineName } from "./config";
 
 /**
@@ -20,54 +20,19 @@ export interface ParsedFindings {
 	warnings: NormalizedFinding[];
 }
 
-function readFinding(
+function normalize(
 	engine: EngineName,
-	value: unknown,
-	severity: Severity,
-	textField: "message" | "text",
+	finding: ReportFinding,
 ): NormalizedFinding {
-	if (!isJsonObject(value)) {
-		throw new Error(`${engine} printed an unexpected finding`);
-	}
-	const { column, file, line, rule } = value;
-	const text = value[textField];
-	if (
-		typeof rule !== "string" ||
-		typeof file !== "string" ||
-		typeof line !== "number" ||
-		typeof column !== "number" ||
-		typeof text !== "string"
-	) {
-		throw new Error(`${engine} printed an unexpected finding`);
-	}
-	return { column, engine, file, line, rule, severity, text };
-}
-
-function readEntries(
-	engine: EngineName,
-	value: unknown,
-	field: string,
-): unknown[] {
-	if (!Array.isArray(value)) {
-		throw new Error(`${engine} printed JSON without a ${field} array`);
-	}
-	return value;
-}
-
-function parseJson(
-	engine: EngineName,
-	stdout: string,
-): Record<string, unknown> {
-	let value: unknown;
-	try {
-		value = JSON.parse(stdout);
-	} catch (error) {
-		throw new Error(`${engine} did not print JSON`, { cause: error });
-	}
-	if (!isJsonObject(value)) {
-		throw new Error(`${engine} printed an unexpected JSON value`);
-	}
-	return value;
+	return {
+		column: finding.column,
+		engine,
+		file: finding.file,
+		line: finding.line,
+		rule: finding.rule,
+		severity: finding.severity,
+		text: finding.message,
+	};
 }
 
 /**
@@ -81,21 +46,9 @@ export function parseFindings(
 	engine: EngineName,
 	stdout: string,
 ): ParsedFindings {
-	const value = parseJson(engine, stdout);
-	if (engine === "comment-check") {
-		return {
-			errors: readEntries(engine, value.added, "added").map((entry) =>
-				readFinding(engine, entry, "error", "text"),
-			),
-			warnings: [],
-		};
-	}
+	const report = readReport(engine, stdout);
 	return {
-		errors: readEntries(engine, value.errors, "errors").map((entry) =>
-			readFinding(engine, entry, "error", "message"),
-		),
-		warnings: readEntries(engine, value.warnings, "warnings").map((entry) =>
-			readFinding(engine, entry, "warning", "message"),
-		),
+		errors: report.errors.map((finding) => normalize(engine, finding)),
+		warnings: report.warnings.map((finding) => normalize(engine, finding)),
 	};
 }

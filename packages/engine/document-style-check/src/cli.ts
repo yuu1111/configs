@@ -3,10 +3,15 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
-import { formatLocation } from "@yuu1111/shared/findings";
+import {
+	describeReportFinding,
+	formatReportSummary,
+	printReport,
+	toReport,
+} from "@yuu1111/shared/report";
 import { snapshot, verify } from "./audit";
 import type { OptInRuleId, RuleId } from "./rule-ids";
-import { type Finding, parseDisabledRules, parseEnabledRules } from "./rules";
+import { parseDisabledRules, parseEnabledRules } from "./rules";
 import { DOCUMENT_EXTENSIONS, fixFiles, lintFiles } from "./scan";
 
 type Action = "check" | "lint" | "scan";
@@ -81,9 +86,6 @@ export function parseArguments(argv: string[]): Options {
 /**
  * 検出を1行の文字列へ整える
  */
-function describeFinding(finding: Finding): string {
-	return `${formatLocation(finding)} ${finding.rule} ${finding.severity} ${finding.message}`;
-}
 
 /**
  * 対象のMarkdownを絶対pathの一覧にする
@@ -167,19 +169,16 @@ function report(options: Options, files: string[]): number {
 		options.enabled,
 		options.disabled,
 	);
-	const errors = findings.filter((finding) => finding.severity === "error");
-	const warnings = findings.filter((finding) => finding.severity === "warning");
+	const result = toReport(findings);
 	if (options.json) {
-		console.log(JSON.stringify({ errors, warnings }, null, "\t"));
-		return errors.length > 0 ? 1 : 0;
+		printReport(result);
+		return result.errors.length > 0 ? 1 : 0;
 	}
-	for (const finding of [...errors, ...warnings]) {
-		console.log(describeFinding(finding));
+	for (const finding of [...result.errors, ...result.warnings]) {
+		console.log(describeReportFinding(finding));
 	}
-	console.log(
-		`Checked ${files.length} files: ${errors.length} errors, ${warnings.length} warnings`,
-	);
-	return errors.length > 0 ? 1 : 0;
+	console.log(formatReportSummary(files.length, result));
+	return result.errors.length > 0 ? 1 : 0;
 }
 
 /**

@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import {
 	createBaseline,
 	readBaseline,
@@ -91,7 +90,6 @@ async function main(argv: string[]): Promise<number> {
 		config,
 		cwd,
 		overrides: { ignore: options.ignores, targets: options.targets },
-		rawBaseline: join(tmpdir(), `quality-check-raw-${process.pid}.json`),
 	});
 	const elapsedMs = performance.now() - startedAt;
 	if (options.update) {

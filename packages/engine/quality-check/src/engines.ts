@@ -1,11 +1,13 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type {
-	EngineName,
-	EngineOptions,
-	QualityConfig,
-	RuleEngineOptions,
-	RuleSelection,
+import {
+	ENGINE_CAPABILITIES,
+	type EngineName,
+	type EngineOptions,
+	isRuleEngine,
+	type QualityConfig,
+	type RuleEngineOptions,
+	type RuleSelection,
 } from "./config";
 
 /**
@@ -58,31 +60,7 @@ export interface EngineCommandContext {
 	color: boolean;
 	/** 対応するengineへだけ足す上書き */
 	overrides: RunOverrides;
-	/** comment-checkのbaseline差分を無効化するために渡す未作成のpath */
-	rawBaseline: string;
 }
-
-/**
- * engineが受け取らない起動条件と、その設定の持ち主
- */
-export const ENGINE_LIMITS: Record<
-	EngineName,
-	Partial<Record<"ignore" | "targets", string>>
-> = {
-	biome: { ignore: "biome.json holds its settings" },
-	typecheck: {
-		ignore: "tsconfig.json holds its settings",
-		targets: "tsconfig.json and projects hold its settings",
-	},
-	knip: {
-		ignore: "knip.ts holds its settings",
-		targets: "knip analyzes the whole project",
-	},
-	"code-style-check": {},
-	"comment-check": {},
-	"document-style-check": {},
-	"tsdoc-check": {},
-};
 
 /**
  * engineが受け取らないため渡さなかった上書きを返す
@@ -95,7 +73,7 @@ export function skippedEngineOptions(
 	name: EngineName,
 	overrides: RunOverrides,
 ): string[] {
-	const limits = ENGINE_LIMITS[name];
+	const limits = ENGINE_CAPABILITIES[name].skipped;
 	const skipped: string[] = [];
 	for (const key of ["ignore", "targets"] as const) {
 		const reason = limits[key];
@@ -113,12 +91,7 @@ export function skippedEngineOptions(
  * @returns 検出をJSONで返すengineならtrue
  */
 export function isFindingEngine(name: EngineName): boolean {
-	return (
-		name === "code-style-check" ||
-		name === "comment-check" ||
-		name === "document-style-check" ||
-		name === "tsdoc-check"
-	);
+	return ENGINE_CAPABILITIES[name].findings;
 }
 
 /**
@@ -191,12 +164,6 @@ function buildTypecheckCommand(
 	];
 }
 
-const RULE_ENGINE_NAMES: readonly string[] = [
-	"comment-check",
-	"document-style-check",
-	"tsdoc-check",
-];
-
 /**
  * ruleを持つengineへ渡すrule名を状態ごとに返す
  *
@@ -208,7 +175,7 @@ function ruleArguments(
 	name: EngineName,
 	options: EngineOptions,
 ): RuleSelection {
-	if (!RULE_ENGINE_NAMES.includes(name)) {
+	if (!isRuleEngine(name)) {
 		return { disable: [], enable: [], error: [] };
 	}
 	return (options as RuleEngineOptions).rules;
@@ -251,6 +218,21 @@ function resolveTargets(overrides: string[], configured: string[]): string[] {
 }
 
 /**
+ * engineのsectionが無いときに使う既定の起動条件を返す
+ *
+ * @param name - 既定を組み立てるengine名
+ * @returns rule語彙を持つengineにも渡せる起動条件
+ */
+function defaultEngineOptions(): RuleEngineOptions {
+	return {
+		args: [],
+		ignore: [],
+		rules: { disable: [], enable: [], error: [] },
+		targets: [],
+	};
+}
+
+/**
  * engineへ渡すコマンドを組み立てる
  *
  * @param name - コマンドを組み立てるengine名
@@ -258,18 +240,15 @@ function resolveTargets(overrides: string[], configured: string[]): string[] {
  * @param context - 設定と上書きを持つ実行条件
  * @returns engineへ渡す引数を並べたコマンド
  */
+
 export function buildEngineCommand(
 	name: EngineName,
 	executable: string,
 	context: EngineCommandContext,
 ): string[] {
-	const configured = context.config.config[name] as EngineOptions | undefined;
-	const options: EngineOptions = configured ?? {
-		args: [],
-		ignore: [],
-		targets: [],
-	};
-	const limits = ENGINE_LIMITS[name];
+	const options: EngineOptions =
+		context.config.config[name] ?? defaultEngineOptions();
+	const limits = ENGINE_CAPABILITIES[name].skipped;
 	const ruleFlags = ruleArgumentsToFlags(name, options);
 	const extra = options.args;
 	const ignores =
@@ -298,8 +277,6 @@ export function buildEngineCommand(
 		return [
 			executable,
 			"--json",
-			"--baseline",
-			context.rawBaseline,
 			...ruleFlags,
 			...targets,
 			...ignoreArguments,
@@ -318,7 +295,14 @@ export function buildEngineCommand(
 		];
 	}
 	if (name === "code-style-check") {
-		return [executable, "--json", ...targets, ...ignoreArguments, ...extra];
+		return [
+			executable,
+			"--json",
+			...ruleFlags,
+			...targets,
+			...ignoreArguments,
+			...extra,
+		];
 	}
 	return [
 		executable,

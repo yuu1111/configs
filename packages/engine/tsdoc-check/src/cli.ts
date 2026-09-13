@@ -1,10 +1,14 @@
 #!/usr/bin/env bun
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
-import { formatLocation } from "@yuu1111/shared/findings";
+import {
+	describeReportFinding,
+	formatReportSummary,
+	printReport,
+	toReport,
+} from "@yuu1111/shared/report";
 import { KNOWN_RULE_NAMES, type OptInRuleId, type TsdocRule } from "./rule-ids";
 import {
-	type Finding,
 	parseDisabledRules,
 	parseEnabledRules,
 	promoteFindings,
@@ -54,10 +58,6 @@ function parseArguments(argv: string[]): Options {
 	return options;
 }
 
-function describeFinding(finding: Finding): string {
-	return `${formatLocation(finding)} ${finding.rule} ${finding.severity} ${finding.message}`;
-}
-
 function main(argv: string[]): number {
 	if (wantsHelp(argv)) {
 		console.log(USAGE);
@@ -73,19 +73,16 @@ function main(argv: string[]): number {
 		scanFiles(files, process.cwd(), options.enabled, options.disabled),
 		options.promote,
 	);
-	const errors = findings.filter((finding) => finding.severity === "error");
-	const warnings = findings.filter((finding) => finding.severity === "warning");
+	const result = toReport(findings);
 	if (options.json) {
-		console.log(JSON.stringify({ errors, warnings }, null, "\t"));
+		printReport(result);
 	} else {
-		for (const finding of [...errors, ...warnings]) {
-			console.log(describeFinding(finding));
+		for (const finding of [...result.errors, ...result.warnings]) {
+			console.log(describeReportFinding(finding));
 		}
-		console.log(
-			`Checked ${files.length} files: ${errors.length} errors, ${warnings.length} warnings`,
-		);
+		console.log(formatReportSummary(files.length, result));
 	}
-	return errors.length > 0 ? 1 : 0;
+	return result.errors.length > 0 ? 1 : 0;
 }
 
 /**

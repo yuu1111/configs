@@ -37,7 +37,6 @@ function createContext(): EngineCommandContext {
 			"test",
 		),
 		overrides: { ignore: [], targets: [] },
-		rawBaseline: "raw.json",
 	};
 }
 
@@ -133,28 +132,32 @@ describe("engine commands", () => {
 		context.color = true;
 		expect(
 			buildEngineCommand("comment-check", "comment-check", context),
-		).toEqual([
-			"comment-check",
-			"--json",
-			"--baseline",
-			"raw.json",
-			".",
-			"--ignore",
-			"src/generated",
-		]);
+		).toEqual(["comment-check", "--json", ".", "--ignore", "src/generated"]);
 	});
 
-	test("disables the comment-check baseline so the runner owns the diff", () => {
+	test("passes the disabled rules to the source style checker", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{
+				"code-style-check": {
+					enabled: true,
+					rules: {
+						spacing: {
+							"blank-line-between-definitions": "off",
+						},
+					},
+				},
+			},
+			"test",
+		);
 		expect(
-			buildEngineCommand("comment-check", "comment-check", createContext()),
+			buildEngineCommand("code-style-check", "code-style-check", context),
 		).toEqual([
-			"comment-check",
+			"code-style-check",
 			"--json",
-			"--baseline",
-			"raw.json",
+			"--disable",
+			"blank-line-between-definitions",
 			".",
-			"--ignore",
-			"src/generated",
 		]);
 	});
 
@@ -203,15 +206,7 @@ describe("engine commands", () => {
 		);
 		expect(
 			buildEngineCommand("comment-check", "comment-check", context),
-		).toEqual([
-			"comment-check",
-			"--json",
-			"--baseline",
-			"raw.json",
-			"--enable",
-			"japanese-period",
-			".",
-		]);
+		).toEqual(["comment-check", "--json", "--enable", "japanese-period", "."]);
 		expect(
 			buildEngineCommand(
 				"document-style-check",
@@ -248,8 +243,6 @@ describe("engine commands", () => {
 		).toEqual([
 			"comment-check",
 			"--json",
-			"--baseline",
-			"raw.json",
 			"--enable",
 			"cramped-comment",
 			"--enable",
@@ -350,8 +343,6 @@ describe("engine commands", () => {
 		).toEqual([
 			"comment-check",
 			"--json",
-			"--baseline",
-			"raw.json",
 			"src",
 			"--ignore",
 			"src/generated",

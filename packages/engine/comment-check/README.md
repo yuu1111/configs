@@ -2,7 +2,7 @@
 
 # @yuu1111/comment-check
 
-Small comment checker with a baseline, used to keep suppressions and placeholder comments from spreading.
+Small comment checker that keeps suppressions and placeholder comments from spreading.
 
 ## Install
 
@@ -12,25 +12,25 @@ bun add -D @yuu1111/comment-check
 
 ## Usage
 
-Record the current findings once, then fail only when a new one appears:
-
 ```bash
-comment-check --update-baseline .
 comment-check .
+comment-check --ignore generated src
 ```
 
 ```text
-src/queue.ts:18:2 undocumented-directive TypeScript directive needs a description
-Checked 42 files: 1 new, 0 resolved, 3 baselined
+src/queue.ts:18:2 undocumented-directive error TypeScript directive needs a description
+Checked 42 files: 1 errors, 0 warnings
 ```
 
-A project that also keeps Japanese sentences free of a trailing `。` names the opt-in rule:
+The baseline diff is owned by `@yuu1111/quality-check`, so this CLI reports every finding that it sees.
+
+A project that keeps Japanese sentences free of a trailing `。` enables an opt-in rule:
 
 ```bash
 comment-check --enable japanese-period .
 ```
 
-A project that keeps a blank line before every multi-line comment names the other opt-in rule:
+A project that wants a blank line before every multi-line comment enables the other opt-in rule:
 
 ```bash
 comment-check --enable cramped-comment .
@@ -47,7 +47,7 @@ comment-check --enable cramped-comment .
 | `separator-comment` | error | true | decorative comments made only of punctuation |
 | `japanese-period` | error | false | a Japanese sentence in a comment that ends with `。` |
 
-The rule identifiers are published as `@yuu1111/comment-check/rule-ids` (`RuleId`, `OptInRuleId`) and is the rule vocabulary that the `$schema` of `quality.json` reads.
+The rule identifiers are published as `@yuu1111/comment-check/rule-ids` (`RuleId`, `OptInRuleId`) and are the rule vocabulary that the `$schema` of `quality.json` reads.
 
 A rule that is on by default can be turned off with `--disable`.
 
@@ -55,9 +55,7 @@ A rule that is on by default can be turned off with `--disable`.
 
 | Option | Description |
 |--------|-------------|
-| `--baseline <path>` | Baseline file to read or write (default `comment-baseline.json`) |
 | `--enable <rule>` | Run an opt-in rule, repeatable; an unknown name is a configuration error |
 | `--disable <rule>` | Turn a rule off, repeatable; an unknown name is a configuration error, and a rule cannot be both enabled and disabled |
 | `--ignore <path>` | Path to leave out, repeatable |
-| `--update-baseline` | Replace the baseline with the current findings |
-| `--json` | Print new and resolved findings as JSON |
+| `--json` | Print the findings as `errors` and `warnings` |

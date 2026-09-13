@@ -2,8 +2,7 @@
 
 # @yuu1111/code-style-check
 
-A small source style checker without a baseline.
-It keeps one blank line between adjacent definitions.
+A small source style checker that keeps one blank line between adjacent definitions.
 
 ## Install
 
@@ -31,6 +30,10 @@ Checked 42 files: 1 errors, 0 warnings
 | `blank-line-between-class-members` | warning | true | A class property and the adjacent member have more than one blank line |
 | `blank-line-between-definitions` | error | true | Adjacent definitions have no blank line |
 | `blank-line-between-definitions` | warning | true | Adjacent definitions have more than one blank line |
+
+The rule identifiers are published as `@yuu1111/code-style-check/rule-ids` (`RuleId`) and are the rule vocabulary that the `$schema` of `quality.json` reads.
+
+A rule that is on by default can be turned off with `--disable`.
 
 ## Definitions that are checked
 
@@ -62,5 +65,6 @@ A comment line in between is not counted as a blank line and breaks the run, so 
 
 | Option | Description |
 |--------|-------------|
+| `--disable <rule>` | Turn a rule off, repeatable; an unknown name is a configuration error |
 | `--ignore <path>` | Exclude a path, repeatable |
 | `--json` | Print the findings as `errors` and `warnings` JSON |

@@ -11,7 +11,7 @@ The baseline diff lives here too.
 bun add -D @yuu1111/quality-check
 ```
 
-`comment-check`, `document-style-check`, and `tsdoc-check` are peer dependencies of this CLI, because the config types embed the rule names those engines publish.
+`code-style-check`, `comment-check`, `document-style-check`, and `tsdoc-check` are peer dependencies of this CLI, because the config types embed the rule names those engines publish.
 A package manager installs them with this CLI, and each engine binary is resolved at run time from the project's `node_modules/.bin`.
 
 A project that declares `@yuu1111/code-style-check` sees Knip report it as an unused dependency, so it names it in `ignoreDependencies` with the reason.
@@ -98,7 +98,7 @@ Each engine runs:
 | `biome` | `biome check` | `targets`, `args`; `biome.json` holds the excluded paths |
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
-| `code-style-check` | `code-style-check --json` | `ignore`, `targets`, `args` |
+| `code-style-check` | `code-style-check --json` | `ignore`, `targets`, `args`, `rules` |
 | `comment-check` | `comment-check --json` | `ignore`, `targets`, `args`, `rules` |
 | `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args`, `rules` |
 | `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `rules` |
@@ -122,8 +122,8 @@ Only `tsdoc-check` takes `error`, which raises the rule and turns an opt-in rule
 A group or rule name that the engine does not know is a configuration error, and the published `schema.json` teaches an editor the same names.
 Each selected rule becomes `--enable <rule>`, `--disable <rule>`, or, on `tsdoc-check`, `--error <rule>`.
 
-`comment-check` runs with an unwritten baseline path so that it reports every finding.
-The new-and-resolved diff is done by this CLI from a single baseline file, so an existing `comment-baseline.json` is moved over with `--update-baseline`.
+No check engine keeps a baseline of its own, so the new-and-resolved diff is done by this CLI from a single baseline file.
+A `comment-baseline.json` written by comment-check 2.x is not read anymore, so move it over with `--update-baseline`.
 
 `typecheck` starts `tsc --noEmit -p <path>` once per path in `projects`, and falls back to the current `tsconfig.json`.
 

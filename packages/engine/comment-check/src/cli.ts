@@ -1,18 +1,15 @@
 #!/usr/bin/env bun
-import {
-	compareWithBaseline,
-	createBaseline,
-	readBaseline,
-	writeBaseline,
-} from "@yuu1111/shared/baseline";
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
-import { formatLocation } from "@yuu1111/shared/findings";
+import {
+	describeReportFinding,
+	formatReportSummary,
+	printReport,
+	toReport,
+} from "@yuu1111/shared/report";
 import type { OptInRuleId, RuleId } from "./rule-ids";
 import { type Finding, parseDisabledRules, parseEnabledRules } from "./rules";
 import { SUPPORTED_EXTENSIONS, scanFiles } from "./scan";
-
-const DEFAULT_BASELINE = "comment-baseline.json";
 
 const RULE_MESSAGES: Record<string, string> = {
 	"broad-suppression": "file-wide suppression hides too much",
@@ -25,19 +22,17 @@ const RULE_MESSAGES: Record<string, string> = {
 };
 
 const USAGE =
-	"Usage: comment-check [--baseline <path>] [--enable <rule>] [--disable <rule>] [--ignore <path>] [--update-baseline] [--json] [path...]";
+	"Usage: comment-check [--enable <rule>] [--disable <rule>] [--ignore <path>] [--json] [path...]";
 
 /**
  * 解析した起動条件
  */
 export interface Options {
-	baselinePath: string;
 	disabled: RuleId[];
 	enabled: OptInRuleId[];
 	ignores: string[];
 	json: boolean;
 	targets: string[];
-	update: boolean;
 }
 
 /**
@@ -48,31 +43,43 @@ export interface Options {
  */
 export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
-		flags: ["json", "update-baseline"],
-		values: ["baseline", "disable", "enable", "ignore"],
+		flags: ["json"],
+		values: ["disable", "enable", "ignore"],
 	});
 	const enabled = parseEnabledRules(parsed.values.get("enable") ?? []);
 	return {
-		baselinePath: parsed.values.get("baseline")?.at(-1) ?? DEFAULT_BASELINE,
 		disabled: parseDisabledRules(parsed.values.get("disable") ?? [], enabled),
 		enabled,
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
 		targets: parsed.targets.length > 0 ? parsed.targets : ["."],
-		update: parsed.flags.has("update-baseline"),
 	};
 }
 
-function describeFinding(finding: Finding): string {
-	const message = RULE_MESSAGES[finding.rule] ?? "";
-	return `${formatLocation(finding)} ${finding.rule} ${message}`.trimEnd();
+/**
+ * 検出をengineの報告へ変換する ruleごとの説明をmessageへ載せる
+ *
+ * @param findings - 報告へ載せる検出
+ * @returns severityとmessageを補った報告
+ */
+function toEngineReport(findings: readonly Finding[]) {
+	return toReport(
+		findings.map((finding) => ({
+			column: finding.column,
+			file: finding.file,
+			line: finding.line,
+			message: RULE_MESSAGES[finding.rule] ?? "",
+			rule: finding.rule,
+			severity: "error",
+		})),
+	);
 }
 
 /**
  * 引数に応じて検査を実行し、終了codeを返す
  *
  * @param argv - コマンドライン引数の一覧
- * @returns 違反が追加されたときは1 それ以外は0
+ * @returns 検出したerrorが無ければ0、あれば1の終了code
  */
 export function main(argv: string[]): number {
 	if (wantsHelp(argv)) {
@@ -85,39 +92,18 @@ export function main(argv: string[]): number {
 		extensions: SUPPORTED_EXTENSIONS,
 		ignores: options.ignores,
 	});
-	const findings = scanFiles(
-		files,
-		process.cwd(),
-		options.enabled,
-		options.disabled,
+	const report = toEngineReport(
+		scanFiles(files, process.cwd(), options.enabled, options.disabled),
 	);
-	if (options.update) {
-		const baseline = createBaseline(findings);
-		writeBaseline(options.baselinePath, baseline);
-		console.log(
-			`Recorded ${baseline.entries.length} entries in ${options.baselinePath}`,
-		);
-		return 0;
-	}
-	const baseline = readBaseline(options.baselinePath, "comment");
-	const comparison = compareWithBaseline(findings, baseline);
 	if (options.json) {
-		console.log(
-			JSON.stringify(
-				{ added: comparison.added, resolved: comparison.resolved },
-				null,
-				"\t",
-			),
-		);
+		printReport(report);
 	} else {
-		for (const finding of comparison.added) {
-			console.log(describeFinding(finding));
+		for (const finding of report.errors) {
+			console.log(describeReportFinding(finding));
 		}
-		console.log(
-			`Checked ${files.length} files: ${comparison.added.length} new, ${comparison.resolved.length} resolved, ${baseline.entries.length} baselined`,
-		);
+		console.log(formatReportSummary(files.length, report));
 	}
-	return comparison.added.length > 0 ? 1 : 0;
+	return report.errors.length > 0 ? 1 : 0;
 }
 
 /**

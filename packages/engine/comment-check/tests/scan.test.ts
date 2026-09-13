@@ -2,7 +2,6 @@ import { describe, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { compareWithBaseline, createBaseline } from "@yuu1111/shared/baseline";
 import { collectFiles } from "@yuu1111/shared/files";
 import { main, parseArguments } from "../src/cli";
 import { SUPPORTED_EXTENSIONS, scanSource } from "../src/scan";
@@ -128,18 +127,6 @@ describe("source scanning", () => {
 		expect(findings[0]?.column).toBe(6);
 	});
 
-	test("keeps a baselined finding when the line moves", () => {
-		const baseline = createBaseline(
-			scanSource("const a = 1\n// 説明。\n", "src/a.ts", ["japanese-period"]),
-		);
-		const moved = scanSource("\n\nconst a = 1\n// 説明。\n", "src/a.ts", [
-			"japanese-period",
-		]);
-		const comparison = compareWithBaseline(moved, baseline);
-		expect(comparison.added).toEqual([]);
-		expect(comparison.resolved).toEqual([]);
-	});
-
 	test("keeps the cramped comment rule off by default", () => {
 		const source = "const a = 1\n/**\n * b\n */\nexport const b = 1\n";
 		expect(scanSource(source, "src/a.ts")).toEqual([]);
@@ -183,17 +170,11 @@ describe("command line", () => {
 		const root = mkdtempSync(join(tmpdir(), "comment-check-cli-"));
 		try {
 			writeFileSync(join(root, "a.ts"), "// 説明。\n");
-			const { code, output } = runMain([
-				"--enable",
-				"japanese-period",
-				"--baseline",
-				join(root, "baseline.json"),
-				root,
-			]);
+			const { code, output } = runMain(["--enable", "japanese-period", root]);
 
 			expect(code).toBe(1);
 			expect(output).toContain("japanese-period");
-			expect(output).toContain("1 new");
+			expect(output).toContain("1 errors");
 		} finally {
 			rmSync(root, { force: true, recursive: true });
 		}
@@ -203,15 +184,31 @@ describe("command line", () => {
 		const root = mkdtempSync(join(tmpdir(), "comment-check-cli-"));
 		try {
 			writeFileSync(join(root, "a.ts"), "// 説明。\n");
-			const { code, output } = runMain([
-				"--baseline",
-				join(root, "baseline.json"),
-				root,
-			]);
+			const { code, output } = runMain([root]);
 
 			expect(code).toBe(0);
 			expect(output).not.toContain("japanese-period");
-			expect(output).toContain("0 new");
+			expect(output).toContain("0 errors");
+		} finally {
+			rmSync(root, { force: true, recursive: true });
+		}
+	});
+
+	test("prints the findings as errors and warnings", () => {
+		const root = mkdtempSync(join(tmpdir(), "comment-check-cli-"));
+		try {
+			writeFileSync(join(root, "a.ts"), "// TODO: remove\\n");
+			const { code, output } = runMain(["--json", root]);
+			const report = JSON.parse(output);
+
+			expect(code).toBe(1);
+			expect(report.warnings).toEqual([]);
+			expect(report.errors).toHaveLength(1);
+			expect(report.errors[0].rule).toBe("placeholder-comment");
+			expect(report.errors[0].severity).toBe("error");
+			expect(report.errors[0].message).toBe(
+				"placeholder comment should be resolved or tracked",
+			);
 		} finally {
 			rmSync(root, { force: true, recursive: true });
 		}
@@ -246,13 +243,11 @@ describe("command line --disable", () => {
 			const { code, output } = runMain([
 				"--disable",
 				"placeholder-comment",
-				"--baseline",
-				join(root, "baseline.json"),
 				root,
 			]);
 
 			expect(code).toBe(0);
-			expect(output).toContain("0 new");
+			expect(output).toContain("0 errors");
 		} finally {
 			rmSync(root, { force: true, recursive: true });
 		}

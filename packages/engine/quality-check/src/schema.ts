@@ -1,4 +1,11 @@
-import { ENGINE_NAMES, type EngineName, RULE_VOCABULARY } from "./config";
+import {
+	ENGINE_CAPABILITIES,
+	ENGINE_NAMES,
+	type EngineName,
+	isRuleEngine,
+	RULE_VOCABULARY,
+	type RuleEngineName,
+} from "./config";
 
 type JsonSchema = Record<string, unknown>;
 
@@ -6,27 +13,6 @@ const STRING_ARRAY: JsonSchema = {
 	items: { minLength: 1, type: "string" },
 	type: "array",
 };
-
-const RULE_ENGINE_NAMES: readonly string[] = [
-	"comment-check",
-	"document-style-check",
-	"tsdoc-check",
-];
-
-const TARGET_ENGINE_NAMES: readonly string[] = [
-	"biome",
-	"code-style-check",
-	"comment-check",
-	"document-style-check",
-	"tsdoc-check",
-];
-
-const IGNORE_ENGINE_NAMES: readonly string[] = [
-	"code-style-check",
-	"comment-check",
-	"document-style-check",
-	"tsdoc-check",
-];
 
 /**
  * rule1つ分の状態を許すschemaを返す
@@ -47,12 +33,13 @@ function ruleStateSchema(promotes: boolean): JsonSchema {
  * @param name - rulesを組み立てるengine名
  * @returns rulesのschema
  */
-function rulesSchema(name: EngineName): JsonSchema {
+function rulesSchema(name: RuleEngineName): JsonSchema {
 	const vocabulary = RULE_VOCABULARY[name];
 	const properties: Record<string, unknown> = {
 		preset: { enum: ["recommended", "all", "none"], type: "string" },
 	};
-	for (const [group, members] of Object.entries(vocabulary.groups)) {
+	for (const [group, rules] of Object.entries(vocabulary.groups)) {
+		const members: readonly string[] = rules;
 		properties[group] = {
 			anyOf: [
 				ruleStateSchema(vocabulary.promotes),
@@ -80,20 +67,21 @@ function rulesSchema(name: EngineName): JsonSchema {
  * @returns engineのsectionのschema
  */
 function engineSchema(name: EngineName): JsonSchema {
+	const capabilities = ENGINE_CAPABILITIES[name];
 	const properties: Record<string, unknown> = {
 		args: STRING_ARRAY,
 		enabled: { type: "boolean" },
 	};
-	if (TARGET_ENGINE_NAMES.includes(name)) {
+	if (capabilities.skipped.targets === undefined) {
 		properties.targets = STRING_ARRAY;
 	}
-	if (IGNORE_ENGINE_NAMES.includes(name)) {
+	if (capabilities.skipped.ignore === undefined) {
 		properties.ignore = STRING_ARRAY;
 	}
 	if (name === "typecheck") {
 		properties.projects = STRING_ARRAY;
 	}
-	if (RULE_ENGINE_NAMES.includes(name)) {
+	if (isRuleEngine(name)) {
 		properties.rules = rulesSchema(name);
 	}
 	return {
