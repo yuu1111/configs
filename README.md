@@ -2,7 +2,7 @@
 
 # configs
 
-Shared configuration packages published to npm.
+Shared configuration and check packages published to npm.
 
 ## Packages
 
@@ -41,5 +41,5 @@ bun pm version patch --no-git-tag-version
 # Commit and push the version change, then publish biome-config-vX.Y.Z on GitHub.
 ```
 
-Use `biome-config-vX.Y.Z` for `@yuu1111/biome-config` and `tsconfig-vX.Y.Z` for `@yuu1111/tsconfig`.
+Name the tag after the package being released, for example `biome-config-vX.Y.Z`.
 Do not run `npm publish` locally.

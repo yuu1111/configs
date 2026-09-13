@@ -2,7 +2,7 @@
 	"name": "@yuu1111/comment-check",
 	"version": "3.0.0",
 	"private": true,
-	"description": "Comment and suppression checker built into @yuu1111/quality-check",
+	"description": "Comment checker built into @yuu1111/quality-check",
 	"type": "module",
 	"exports": {
 		"./rule-ids": "./src/rule-ids.ts",

@@ -2,7 +2,7 @@
 
 # configs
 
-npmへ公開する共有設定package
+npmへ公開する共有設定と検査package
 
 ## Packages
 
@@ -41,5 +41,5 @@ bun pm version patch --no-git-tag-version
 # Commit and push the version change, then publish biome-config-vX.Y.Z on GitHub.
 ```
 
-`@yuu1111/biome-config` は `biome-config-vX.Y.Z`、`@yuu1111/tsconfig` は `tsconfig-vX.Y.Z` を使う
+tagは公開するpackageの名前に合わせ、例えば `biome-config-vX.Y.Z` にする
 ローカルで `npm publish` は実行しない
