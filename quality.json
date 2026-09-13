@@ -1,0 +1,40 @@
+{
+	"$schema": "./node_modules/@yuu1111/quality-check/schema.json",
+	"biome": {
+		"enabled": true
+	},
+	"typecheck": {
+		"enabled": true
+	},
+	"knip": {
+		"enabled": true
+	},
+	"code-style-check": {
+		"enabled": true
+	},
+	"comment-check": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"shape": {
+				"cramped-comment": "on"
+			},
+			"content": {
+				"japanese-period": "on"
+			}
+		}
+	},
+	"document-style-check": {
+		"enabled": true,
+		"rules": {
+			"preset": "all"
+		}
+	},
+	"tsdoc-check": {
+		"enabled": true,
+		"rules": {
+			"preset": "all"
+		}
+	},
+	"failOnWarnings": true
+}

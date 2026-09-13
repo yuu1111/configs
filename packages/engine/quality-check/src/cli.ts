@@ -76,10 +76,10 @@ async function main(argv: string[]): Promise<number> {
 	const cwd = process.cwd();
 	const configPath = resolveConfigPath(options, cwd);
 	if (configPath === null) {
-		console.error(`quality.config.ts not found in ${cwd}`);
+		console.error(`quality.json not found in ${cwd}`);
 		return 2;
 	}
-	const config = await loadConfig(configPath);
+	const config = loadConfig(configPath);
 	const baselinePath = resolveBaselinePath(options, config, cwd);
 	const startedAt = performance.now();
 	const results = await runEngines({

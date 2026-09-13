@@ -18,7 +18,7 @@ A project that declares `@yuu1111/code-style-check` sees Knip report it as an un
 
 ## Usage
 
-Declare the engines to run and the conditions of each engine in `quality.config.ts`, then call the CLI from a script:
+Declare the engines to run in `quality.json`, then call the CLI from a script:
 
 ```json
 {
@@ -29,27 +29,35 @@ Declare the engines to run and the conditions of each engine in `quality.config.
 ```
 
 ```ts
-import { defineConfig } from "@yuu1111/quality-check";
-
-export default defineConfig({
-	engines: {
-		biome: true,
-		typecheck: true,
-		knip: true,
-		"code-style-check": true,
-		"comment-check": true,
-		"document-style-check": true,
-		"tsdoc-check": true,
-	},
-	config: {
-		"comment-check": {
-			ignore: ["another-project"],
-			rules: { "japanese-period": "on" },
-		},
-		"document-style-check": { enable: true },
-		"tsdoc-check": { error: true },
-	},
-});
+{
+  "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
+  "biome": {
+    "enabled": true
+  },
+  "comment-check": {
+    "enabled": true,
+    "ignore": ["another-project"],
+    "rules": {
+      "preset": "recommended",
+      "content": {
+        "japanese-period": "on"
+      }
+    }
+  },
+  "document-style-check": {
+    "enabled": true,
+    "rules": {
+      "preset": "all"
+    }
+  },
+  "tsdoc-check": {
+    "enabled": true,
+    "rules": {
+      "preset": "all"
+    }
+  },
+  "failOnWarnings": true
+}
 ```
 
 Each engine prints its own section with its own time, and the summary names the engines that failed and the total time the run took:
@@ -74,14 +82,15 @@ Exit code 0 means every engine passed, 1 that at least one failed, and 2 that th
 
 | Field | Description |
 |-------|-------------|
-| `engines` | Engines to run, as `true` or `false` |
-| `config` | Conditions of each engine |
+| `<engine>` | One section per engine; `enabled` starts it |
+| `<engine>.rules` | Rule selection of the three rule engines |
+| `failOnWarnings` | Treat every warning as a blocking finding |
 | `baseline` | Baseline file path; `false` disables the diff |
 
 Engines run in the order `biome`, `typecheck`, `knip`, `code-style-check`, `comment-check`, `document-style-check`, `tsdoc-check`.
 
-`engines` only delegates the start-up, and the conditions belong under the engine in `config`.
-Write an engine's conditions as a multi-line object, so a new rule or option changes one engine's block alone.
+Each engine owns a top-level section that holds `enabled` and the conditions that engine takes.
+A condition an engine does not take is rejected, so a typo fails at start-up instead of being ignored.
 Each engine runs:
 
 | Engine | Command | Conditions |
@@ -90,26 +99,28 @@ Each engine runs:
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
 | `code-style-check` | `code-style-check --json` | `ignore`, `targets`, `args` |
-| `comment-check` | `comment-check --json` | `ignore`, `targets`, `args`, `enable`, `rules` |
-| `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args`, `enable`, `rules` |
-| `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `enable`, `error`, `rules` |
+| `comment-check` | `comment-check --json` | `ignore`, `targets`, `args`, `rules` |
+| `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args`, `rules` |
+| `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `rules` |
 
 `args` is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
 
-A condition that an engine does not take is not passed on, and the section says so:
+A command line override an engine does not take is not passed on, and the section says so:
 
 ```text
 == biome ==
 biome: ignore skipped (biome.json holds its settings)
 ```
 
-`enable` and `error` pick rules in bulk, and `rules` picks one rule at a time.
-`enable: true` turns on every rule the engine keeps off by default.
-`error: true` turns every rule of `tsdoc-check` into an error, enabling the opt-in ones first; it is the only condition that raises a rule.
-A `rules` entry names one rule and gives it `off`, `on`, or `error`, where `on` keeps the engine default and `error` means the same as the `error` preset for that rule.
-The `rules` key is the rule name itself, so the installed engine's union types it and a name that engine does not know is a type error rather than a start-up failure.
-Only `tsdoc-check` takes `error` in `rules`, and only rules that are off by default take `off`, because no engine can turn off a rule that is on by default.
-Each selected rule becomes `--enable <rule>` and, on `tsdoc-check`, `--error <rule>`; the other engines reject the fields.
+`rules` picks which rules run and how they are reported.
+`rules.preset` selects in bulk: `recommended` is the engine default, `all` turns every rule on, and `none` turns every rule off.
+A group key names one of the rule groups the engine publishes and takes `off`, `on`, or `error` for every rule in that group.
+An object under a group key names single rules.
+The most specific setting wins, so a preset, a group, and a rule may be written in that order.
+`off` also works for a rule that is on by default, and `on` keeps the engine default severity.
+Only `tsdoc-check` takes `error`, which raises the rule and turns an opt-in rule on first.
+A group or rule name that the engine does not know is a configuration error, and the published `schema.json` teaches an editor the same names.
+Each selected rule becomes `--enable <rule>`, `--disable <rule>`, or, on `tsdoc-check`, `--error <rule>`.
 
 `comment-check` runs with an unwritten baseline path so that it reports every finding.
 The new-and-resolved diff is done by this CLI from a single baseline file, so an existing `comment-baseline.json` is moved over with `--update-baseline`.
@@ -120,7 +131,7 @@ The new-and-resolved diff is done by this CLI from a single baseline file, so an
 
 | Option | Description |
 |--------|-------------|
-| `--config <path>` | Config file to load (default `quality.config.ts`) |
+| `--config <path>` | Config file to load (default `quality.json`) |
 | `--baseline <path>` | Override the baseline file |
 | `--ignore <path>` | Add an excluded path, repeatable |
 | `--update-baseline` | Replace the baseline with the current findings |

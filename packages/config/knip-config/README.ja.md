@@ -37,12 +37,9 @@ export default {
 
 | Setting | 値 |
 |---------|-----|
-| `entry` | `["quality.config.ts"]` |
+| `entry` | `["quality.json"]` |
 | `ignoreExportsUsedInFile` | `true` |
-| `ignoreIssues` | `{"quality.config.ts": ["exports"]}` |
-
-`quality-check` は `quality.config.ts` を実行時に読み込むため、このfileはentry pointとして扱われ未使用fileとして報告しない
-`ignoreIssues` はこのfileのexportを報告から外す
+`quality-check` は `quality.json` を実行時に読み込むため、このfileはentry pointとして扱われ未使用fileとして報告しない
 利用側の公開APIは `quality-check` のAPIであり、このfileのexportではない
 
 ### application
@@ -57,12 +54,12 @@ applicationのentry pointは公開契約ではないため `includeEntryExports:
 
 動的なentry point、CLI binary、生成物は共有presetがProject構成から推測できないため、利用Project側で足す
 
-`entry` は利用Projectが書くと置き換わるため `quality.config.ts` も並べる
+`entry` は利用Projectが書くと置き換わるため `quality.json` も並べる
 
 ```ts
 export default {
 	...application,
-	entry: ["src/main.ts", "quality.config.ts"]
+	entry: ["src/main.ts", "quality.json"]
 }
 ```
 
@@ -72,7 +69,7 @@ export default {
 export default {
 	...application,
 	workspaces: {
-		".": { entry: ["quality.config.ts"] },
+		".": { entry: ["quality.json"] },
 		"packages/app": { entry: ["src/cli.ts"] }
 	}
 }

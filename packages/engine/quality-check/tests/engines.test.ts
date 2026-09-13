@@ -24,23 +24,19 @@ function createContext(): EngineCommandContext {
 		color: false,
 		config: parseConfig(
 			{
-				config: {
-					biome: { ignore: ["src/generated"] },
-					"comment-check": { ignore: ["src/generated"] },
-					"tsdoc-check": { rules: { "missing-doc": "error" } },
+				biome: { enabled: true },
+				"comment-check": { enabled: true, ignore: ["src/generated"] },
+				"document-style-check": { enabled: true },
+				knip: { enabled: true },
+				"tsdoc-check": {
+					enabled: true,
+					rules: { documentation: { "missing-doc": "error" } },
 				},
-				engines: {
-					biome: true,
-					"comment-check": true,
-					"document-style-check": true,
-					knip: true,
-					"tsdoc-check": true,
-					typecheck: true,
-				},
+				typecheck: { enabled: true },
 			},
 			"test",
 		),
-		overrides: { ignore: [], targets: ["."] },
+		overrides: { ignore: [], targets: [] },
 		rawBaseline: "raw.json",
 	};
 }
@@ -68,7 +64,9 @@ afterEach(() => {
 
 describe("engine commands", () => {
 	test("gives Biome the targets without the ignore list", () => {
-		expect(buildEngineCommand("biome", "biome", createContext())).toEqual([
+		const context = createContext();
+		context.overrides = { ignore: ["dist"], targets: ["."] };
+		expect(buildEngineCommand("biome", "biome", context)).toEqual([
 			"biome",
 			"check",
 			".",
@@ -87,8 +85,7 @@ describe("engine commands", () => {
 		context.color = true;
 		context.config = parseConfig(
 			{
-				config: { typecheck: { projects: [".", "examples/client"] } },
-				engines: { typecheck: true },
+				typecheck: { enabled: true, projects: [".", "examples/client"] },
 			},
 			"test",
 		);
@@ -193,11 +190,14 @@ describe("engine commands", () => {
 		const context = createContext();
 		context.config = parseConfig(
 			{
-				config: {
-					"comment-check": { rules: { "japanese-period": "on" } },
-					"document-style-check": { rules: { "japanese-period": "on" } },
+				"comment-check": {
+					enabled: true,
+					rules: { content: { "japanese-period": "on" } },
 				},
-				engines: { "comment-check": true, "document-style-check": true },
+				"document-style-check": {
+					enabled: true,
+					rules: { typography: { "japanese-period": "on" } },
+				},
 			},
 			"test",
 		);
@@ -227,19 +227,19 @@ describe("engine commands", () => {
 			".",
 		]);
 	});
-
-	test("repeats the enable flag in the order of the rules map", () => {
+	test("repeats the enable flag in the order of the rule vocabulary", () => {
 		const context = createContext();
 		context.config = parseConfig(
 			{
-				config: {
-					"comment-check": {
-						args: ["--extra"],
-						ignore: ["dist"],
-						rules: { "japanese-period": "on", "cramped-comment": "on" },
+				"comment-check": {
+					args: ["--extra"],
+					enabled: true,
+					ignore: ["dist"],
+					rules: {
+						content: { "japanese-period": "on" },
+						shape: { "cramped-comment": "on" },
 					},
 				},
-				engines: { "comment-check": true },
 			},
 			"test",
 		);
@@ -251,9 +251,9 @@ describe("engine commands", () => {
 			"--baseline",
 			"raw.json",
 			"--enable",
-			"japanese-period",
-			"--enable",
 			"cramped-comment",
+			"--enable",
+			"japanese-period",
 			".",
 			"--ignore",
 			"dist",
@@ -271,12 +271,13 @@ describe("engine commands", () => {
 		const context = createContext();
 		context.config = parseConfig(
 			{
-				config: {
-					"tsdoc-check": {
-						rules: { "missing-returns": "error", "param-order": "on" },
+				"tsdoc-check": {
+					enabled: true,
+					rules: {
+						contract: { "param-order": "on" },
+						documentation: { "missing-returns": "error" },
 					},
 				},
-				engines: { "tsdoc-check": true },
 			},
 			"test",
 		);
@@ -292,13 +293,19 @@ describe("engine commands", () => {
 			".",
 		]);
 	});
-
-	test("turns every rule of the TSDoc engine into an error with the error preset", () => {
+	test("turns every rule of the TSDoc engine into an error with the group states", () => {
 		const context = createContext();
 		context.config = parseConfig(
 			{
-				config: { "tsdoc-check": { error: true } },
-				engines: { "tsdoc-check": true },
+				"tsdoc-check": {
+					enabled: true,
+					rules: {
+						contract: "error",
+						documentation: "error",
+						suppression: "error",
+						syntax: "error",
+					},
+				},
 			},
 			"test",
 		);
@@ -312,13 +319,13 @@ describe("engine commands", () => {
 		const context = createContext();
 		context.config = parseConfig(
 			{
-				config: {
-					"comment-check": {
-						enable: true,
-						rules: { "japanese-period": "off" },
+				"comment-check": {
+					enabled: true,
+					rules: {
+						content: { "japanese-period": "off" },
+						preset: "all",
 					},
 				},
-				engines: { "comment-check": true },
 			},
 			"test",
 		);
@@ -357,22 +364,28 @@ describe("engine commands", () => {
 describe("engine limits", () => {
 	test("reports the conditions that an engine cannot take", () => {
 		expect(
-			skippedEngineOptions("biome", { ignore: ["src/generated"] }),
+			skippedEngineOptions("biome", { ignore: ["src/generated"], targets: [] }),
 		).toEqual(["ignore skipped (biome.json holds its settings)"]);
-		expect(skippedEngineOptions("knip", { targets: ["src"] })).toEqual([
-			"targets skipped (knip analyzes the whole project)",
-		]);
-		expect(skippedEngineOptions("typecheck", { targets: ["src"] })).toEqual([
+		expect(
+			skippedEngineOptions("knip", { ignore: [], targets: ["src"] }),
+		).toEqual(["targets skipped (knip analyzes the whole project)"]);
+		expect(
+			skippedEngineOptions("typecheck", { ignore: [], targets: ["src"] }),
+		).toEqual([
 			"targets skipped (tsconfig.json and projects hold its settings)",
 		]);
 	});
 
 	test("reports nothing for the conditions an engine can take", () => {
-		expect(skippedEngineOptions("comment-check", { ignore: ["dist"] })).toEqual(
+		expect(
+			skippedEngineOptions("comment-check", { ignore: ["dist"], targets: [] }),
+		).toEqual([]);
+		expect(
+			skippedEngineOptions("biome", { ignore: [], targets: ["src"] }),
+		).toEqual([]);
+		expect(skippedEngineOptions("biome", { ignore: [], targets: [] })).toEqual(
 			[],
 		);
-		expect(skippedEngineOptions("biome", { targets: ["src"] })).toEqual([]);
-		expect(skippedEngineOptions("biome", undefined)).toEqual([]);
 	});
 });
 

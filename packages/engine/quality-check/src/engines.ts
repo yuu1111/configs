@@ -1,12 +1,11 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import {
-	type EngineName,
-	type EngineOptions,
-	engineConfig,
-	type QualityConfig,
-	RULE_VOCABULARY,
-	type RuleState,
+import type {
+	EngineName,
+	EngineOptions,
+	QualityConfig,
+	RuleEngineOptions,
+	RuleSelection,
 } from "./config";
 
 /**
@@ -86,24 +85,21 @@ export const ENGINE_LIMITS: Record<
 };
 
 /**
- * engineが受け取らないため渡さなかった起動条件を返す
+ * engineが受け取らないため渡さなかった上書きを返す
  *
- * @param name - 受け取れない起動条件を引くengine名
- * @param options - engineへ渡そうとした起動条件
- * @returns 渡さなかった起動条件とその理由の一覧
+ * @param name - 受け取れない上書きを引くengine名
+ * @param overrides - コマンドラインから渡された上書き
+ * @returns 渡さなかった上書きとその理由の一覧
  */
 export function skippedEngineOptions(
 	name: EngineName,
-	options: EngineOptions | undefined,
+	overrides: RunOverrides,
 ): string[] {
-	if (options === undefined) {
-		return [];
-	}
 	const limits = ENGINE_LIMITS[name];
 	const skipped: string[] = [];
 	for (const key of ["ignore", "targets"] as const) {
 		const reason = limits[key];
-		if (reason !== undefined && options[key] !== undefined) {
+		if (reason !== undefined && overrides[key].length > 0) {
 			skipped.push(`${key} skipped (${reason})`);
 		}
 	}
@@ -185,87 +181,73 @@ function buildTypecheckCommand(
 	context: EngineCommandContext,
 	project: string | undefined,
 ): string[] {
-	const options = engineConfig(context.config, "typecheck") ?? {};
+	const options = context.config.config.typecheck;
 	return [
 		executable,
 		"--noEmit",
 		...(project === undefined ? [] : ["--project", project]),
 		...colorArguments("typecheck", context.color),
-		...(options.args ?? []),
+		...(options?.args ?? []),
+	];
+}
+
+const RULE_ENGINE_NAMES: readonly string[] = [
+	"comment-check",
+	"document-style-check",
+	"tsdoc-check",
+];
+
+/**
+ * ruleを持つengineへ渡すrule名を状態ごとに返す
+ *
+ * @param name - 起動するengine名
+ * @param options - engineへ渡す起動条件
+ * @returns --enableと--disableと--errorへ渡すrule名の組
+ */
+function ruleArguments(
+	name: EngineName,
+	options: EngineOptions,
+): RuleSelection {
+	if (!RULE_ENGINE_NAMES.includes(name)) {
+		return { disable: [], enable: [], error: [] };
+	}
+	return (options as RuleEngineOptions).rules;
+}
+
+/**
+ * 選んだruleをengineへ渡す引数へ展開する
+ *
+ * @param name - 起動するengine名
+ * @param options - engineへ渡す起動条件
+ * @returns --enableと--disableと--errorへ渡す引数
+ */
+function ruleArgumentsToFlags(
+	name: EngineName,
+	options: EngineOptions,
+): string[] {
+	const rules = ruleArguments(name, options);
+	return [
+		...rules.enable.flatMap((rule) => ["--enable", rule]),
+		...rules.disable.flatMap((rule) => ["--disable", rule]),
+		...rules.error.flatMap((rule) => ["--error", rule]),
 	];
 }
 
 /**
- * 設定fileが持つruleの指定
- */
-interface RuleSelection {
-	enable?: boolean;
-	error?: boolean;
-	rules?: Record<string, RuleState>;
-}
-
-/**
- * engineが公開するrule語彙
- */
-type RuleVocabulary = (typeof RULE_VOCABULARY)[EngineName];
-
-/**
- * 選んだruleを有効の一覧と違反の一覧へ反映する
+ * 検査する対象pathを決める 上書きを優先し 無ければengineの指定 それも無ければカレントにする
  *
- * @param vocabulary - 反映先engineのrule語彙
- * @param selected - 反映先のrule名の集合
- * @param rule - 反映するrule名
- * @param state - 反映する状態
+ * @param overrides - コマンドラインから渡された上書き
+ * @param configured - engineのsectionが持つ対象path
+ * @returns engineへ渡す対象path
  */
-function applyRuleState(
-	vocabulary: RuleVocabulary,
-	selected: { enable: Set<string>; error: Set<string> },
-	rule: string,
-	state: RuleState,
-): void {
-	if (state === "off") {
-		selected.enable.delete(rule);
-		selected.error.delete(rule);
-		return;
+function resolveTargets(overrides: string[], configured: string[]): string[] {
+	if (overrides.length > 0) {
+		return overrides;
 	}
-	if (state === "on") {
-		selected.error.delete(rule);
-	} else {
-		selected.error.add(rule);
+	if (configured.length > 0) {
+		return configured;
 	}
-	if (vocabulary.optIn.includes(rule)) {
-		selected.enable.add(rule);
-	}
-}
-
-/**
- * ruleの一括指定と個別指定をengineへ渡すruleの一覧へ展開する
- *
- * @param name - 展開するengine名
- * @param options - engineへ渡す起動条件
- * @returns --enableへ渡すrule名と--errorへ渡すrule名の組
- */
-function selectRules(
-	name: EngineName,
-	options: EngineOptions | null | undefined,
-): { enable: string[]; error: string[] } {
-	const selection = (options ?? {}) as RuleSelection;
-	const vocabulary = RULE_VOCABULARY[name];
-	const selected = { enable: new Set<string>(), error: new Set<string>() };
-	if (selection.enable === true) {
-		for (const rule of vocabulary.optIn) {
-			selected.enable.add(rule);
-		}
-	}
-	if (selection.error === true) {
-		for (const rule of vocabulary.all) {
-			applyRuleState(vocabulary, selected, rule, "error");
-		}
-	}
-	for (const [rule, state] of Object.entries(selection.rules ?? {})) {
-		applyRuleState(vocabulary, selected, rule, state);
-	}
-	return { enable: [...selected.enable], error: [...selected.error] };
+	return ["."];
 }
 
 /**
@@ -281,23 +263,20 @@ export function buildEngineCommand(
 	executable: string,
 	context: EngineCommandContext,
 ): string[] {
-	const options: EngineOptions = engineConfig(context.config, name) ?? {};
+	const configured = context.config.config[name] as EngineOptions | undefined;
+	const options: EngineOptions = configured ?? {
+		args: [],
+		ignore: [],
+		targets: [],
+	};
 	const limits = ENGINE_LIMITS[name];
-	const selection = selectRules(name, options);
-	const enableArguments = selection.enable.flatMap((rule) => [
-		"--enable",
-		rule,
-	]);
-	const errorArguments = selection.error.flatMap((rule) => ["--error", rule]);
-	const extra = options.args ?? [];
+	const ruleFlags = ruleArgumentsToFlags(name, options);
+	const extra = options.args;
 	const ignores =
 		limits.ignore === undefined
-			? [...(options.ignore ?? []), ...context.overrides.ignore]
+			? [...options.ignore, ...context.overrides.ignore]
 			: [];
-	const requested =
-		context.overrides.targets.length > 0
-			? context.overrides.targets
-			: (options.targets ?? ["."]);
+	const requested = resolveTargets(context.overrides.targets, options.targets);
 	const targets = limits.targets === undefined ? requested : [];
 	const ignoreArguments = ignores.flatMap((ignore) => ["--ignore", ignore]);
 	if (name === "biome") {
@@ -321,7 +300,7 @@ export function buildEngineCommand(
 			"--json",
 			"--baseline",
 			context.rawBaseline,
-			...enableArguments,
+			...ruleFlags,
 			...targets,
 			...ignoreArguments,
 			...extra,
@@ -332,7 +311,7 @@ export function buildEngineCommand(
 			executable,
 			"lint",
 			"--json",
-			...enableArguments,
+			...ruleFlags,
 			...targets,
 			...ignoreArguments,
 			...extra,
@@ -344,8 +323,7 @@ export function buildEngineCommand(
 	return [
 		executable,
 		"--json",
-		...enableArguments,
-		...errorArguments,
+		...ruleFlags,
 		...targets,
 		...ignoreArguments,
 		...extra,
@@ -367,7 +345,7 @@ export function buildEngineCommands(
 ): string[][] {
 	const projects =
 		name === "typecheck"
-			? (engineConfig(context.config, "typecheck")?.projects ?? [])
+			? (context.config.config.typecheck?.projects ?? [])
 			: [];
 	if (projects.length === 0) {
 		return [buildEngineCommand(name, executable, context)];

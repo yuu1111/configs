@@ -37,11 +37,10 @@ Every preset extends `base`.
 
 | Setting | Value |
 |---------|-------|
-| `entry` | `["quality.config.ts"]` |
+| `entry` | `["quality.json"]` |
 | `ignoreExportsUsedInFile` | `true` |
-| `ignoreIssues` | `{"quality.config.ts": ["exports"]}` |
 
-`quality-check` loads `quality.config.ts` at run time, so the file counts as an entry point and is not reported as unused.
+`quality-check` loads `quality.json` at run time, so the file counts as an entry point and is not reported as unused.
 `ignoreIssues` keeps its exports out of the report, because the public API of a consuming project is the API of `quality-check` and not the exports of this file.
 
 ### application
@@ -56,12 +55,12 @@ Sets `includeEntryExports: true`, so an export that is no longer part of the pub
 
 A shared preset cannot see dynamic entry points, CLI binaries, or generated files, so the project adds them.
 
-`entry` is replaced when the project writes its own, so list `quality.config.ts` too:
+`entry` is replaced when the project writes its own, so list `quality.json` too:
 
 ```ts
 export default {
 	...application,
-	entry: ["src/main.ts", "quality.config.ts"]
+	entry: ["src/main.ts", "quality.json"]
 }
 ```
 
@@ -71,7 +70,7 @@ export default {
 export default {
 	...application,
 	workspaces: {
-		".": { entry: ["quality.config.ts"] },
+		".": { entry: ["quality.json"] },
 		"packages/app": { entry: ["src/cli.ts"] }
 	}
 }

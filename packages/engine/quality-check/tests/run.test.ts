@@ -39,6 +39,21 @@ function commentOutput(findings: unknown[]): string {
 	return JSON.stringify({ added: findings, resolved: [] });
 }
 
+function warningOutput(finding: NormalizedFinding): string {
+	return JSON.stringify({
+		errors: [],
+		warnings: [
+			{
+				column: finding.column,
+				file: finding.file,
+				line: finding.line,
+				message: finding.text,
+				rule: finding.rule,
+			},
+		],
+	});
+}
+
 function documentOutput(findings: NormalizedFinding[]): string {
 	return JSON.stringify({
 		errors: findings.map((finding) => ({
@@ -60,7 +75,7 @@ function createOptions(overrides: Partial<RunOptions>): RunOptions {
 	return {
 		baseline: null,
 		color: false,
-		config: parseConfig({ engines: { biome: true } }, "test"),
+		config: parseConfig({ biome: { enabled: true } }, "test"),
 		cwd: ".",
 		overrides: { ignore: [], targets: ["."] },
 		rawBaseline: "raw.json",
@@ -129,8 +144,7 @@ describe("engine orchestration", () => {
 			createOptions({
 				config: parseConfig(
 					{
-						config: { typecheck: { projects: [".", "examples/client"] } },
-						engines: { typecheck: true },
+						typecheck: { enabled: true, projects: [".", "examples/client"] },
 					},
 					"test",
 				),
@@ -163,8 +177,7 @@ describe("engine orchestration", () => {
 			createOptions({
 				config: parseConfig(
 					{
-						config: { typecheck: { projects: ["."] } },
-						engines: { typecheck: true },
+						typecheck: { enabled: true, projects: ["."] },
 					},
 					"test",
 				),
@@ -180,14 +193,11 @@ describe("engine orchestration", () => {
 		expect(results[0]?.message).toBe("biome is not installed");
 		expect(results[0]?.durationMs).toBeNull();
 	});
-
 	test("reports a condition that the engine could not take", async () => {
 		const results = await runEngines(
 			createOptions({
-				config: parseConfig(
-					{ config: { biome: { ignore: ["dist"] } }, engines: { biome: true } },
-					"test",
-				),
+				config: parseConfig({ biome: { enabled: true } }, "test"),
+				overrides: { ignore: ["dist"], targets: [] },
 				runner: runnerFor({ exitCode: 0, stderr: "", stdout: "" }),
 			}),
 		);
@@ -199,7 +209,7 @@ describe("engine orchestration", () => {
 	test("reports a new finding from a finding engine", async () => {
 		const results = await runEngines(
 			createOptions({
-				config: parseConfig({ engines: { "comment-check": true } }, "test"),
+				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
@@ -215,7 +225,7 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				config: parseConfig(
-					{ engines: { "document-style-check": true } },
+					{ "document-style-check": { enabled: true } },
 					"test",
 				),
 				runner: runnerFor({
@@ -233,7 +243,7 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				baseline: createBaseline([commentFinding]),
-				config: parseConfig({ engines: { "comment-check": true } }, "test"),
+				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
@@ -250,7 +260,7 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				baseline: createBaseline([commentFinding]),
-				config: parseConfig({ engines: { "comment-check": true } }, "test"),
+				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
@@ -267,7 +277,7 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				baseline: createBaseline([periodFinding]),
-				config: parseConfig({ engines: { "comment-check": true } }, "test"),
+				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
 				runner: runnerFor({
 					exitCode: 1,
 					stderr: "",
@@ -284,7 +294,7 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				baseline: createBaseline([periodFinding]),
-				config: parseConfig({ engines: { "comment-check": true } }, "test"),
+				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
 				runner: runnerFor({
 					exitCode: 0,
 					stderr: "",
@@ -295,11 +305,52 @@ describe("engine orchestration", () => {
 		expect(results[0]?.status).toBe("passed");
 		expect(results[0]?.resolved).toBe(1);
 	});
+	test("keeps a warning out of the report by default", async () => {
+		const results = await runEngines(
+			createOptions({
+				config: parseConfig(
+					{ "document-style-check": { enabled: true } },
+					"test",
+				),
+				runner: runnerFor({
+					exitCode: 0,
+					stderr: "",
+					stdout: warningOutput(documentFinding),
+				}),
+			}),
+		);
+		expect(results[0]?.status).toBe("passed");
+		expect(results[0]?.warnings).toHaveLength(1);
+	});
+
+	test("turns a warning into a blocking finding with failOnWarnings", async () => {
+		const results = await runEngines(
+			createOptions({
+				config: parseConfig(
+					{
+						"document-style-check": { enabled: true },
+						failOnWarnings: true,
+					},
+					"test",
+				),
+				runner: runnerFor({
+					exitCode: 0,
+					stderr: "",
+					stdout: warningOutput(documentFinding),
+				}),
+			}),
+		);
+		expect(results[0]?.status).toBe("failed");
+		expect(results[0]?.reported).toEqual([
+			{ ...documentFinding, severity: "error" },
+		]);
+		expect(results[0]?.warnings).toEqual([]);
+	});
 
 	test("marks output that is not JSON as an error", async () => {
 		const results = await runEngines(
 			createOptions({
-				config: parseConfig({ engines: { "tsdoc-check": true } }, "test"),
+				config: parseConfig({ "tsdoc-check": { enabled: true } }, "test"),
 				runner: runnerFor({ exitCode: 0, stderr: "", stdout: "not json" }),
 			}),
 		);

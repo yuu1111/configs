@@ -1,0 +1,671 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"additionalProperties": false,
+	"description": "quality-checkの設定 file",
+	"properties": {
+		"$schema": {
+			"type": "string"
+		},
+		"baseline": {
+			"anyOf": [
+				{
+					"minLength": 1,
+					"type": "string"
+				},
+				{
+					"const": false
+				}
+			]
+		},
+		"failOnWarnings": {
+			"type": "boolean"
+		},
+		"biome": {
+			"additionalProperties": false,
+			"properties": {
+				"args": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"targets": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				}
+			},
+			"type": "object"
+		},
+		"typecheck": {
+			"additionalProperties": false,
+			"properties": {
+				"args": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"projects": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				}
+			},
+			"type": "object"
+		},
+		"knip": {
+			"additionalProperties": false,
+			"properties": {
+				"args": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"enabled": {
+					"type": "boolean"
+				}
+			},
+			"type": "object"
+		},
+		"code-style-check": {
+			"additionalProperties": false,
+			"properties": {
+				"args": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"targets": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"ignore": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				}
+			},
+			"type": "object"
+		},
+		"comment-check": {
+			"additionalProperties": false,
+			"properties": {
+				"args": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"targets": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"ignore": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"rules": {
+					"additionalProperties": false,
+					"properties": {
+						"preset": {
+							"enum": [
+								"recommended",
+								"all",
+								"none"
+							],
+							"type": "string"
+						},
+						"suppression": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"broad-suppression": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"undocumented-directive": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						},
+						"shape": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"cramped-comment": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"separator-comment": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						},
+						"content": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"placeholder-comment": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"japanese-period": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						}
+					},
+					"type": "object"
+				}
+			},
+			"type": "object"
+		},
+		"document-style-check": {
+			"additionalProperties": false,
+			"properties": {
+				"args": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"targets": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"ignore": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"rules": {
+					"additionalProperties": false,
+					"properties": {
+						"preset": {
+							"enum": [
+								"recommended",
+								"all",
+								"none"
+							],
+							"type": "string"
+						},
+						"whitespace": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"consecutive-blank-lines": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"hard-break-html": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"trailing-backslash": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"trailing-whitespace": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						},
+						"typography": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"full-width-alphanumeric": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"japanese-comma": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"japanese-period": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						},
+						"structure": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"code-fence-language": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"heading-level-jump": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"list-marker-consistency": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						},
+						"content": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"date-anchored-statement": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										},
+										"empty-link": {
+											"enum": [
+												"off",
+												"on"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						}
+					},
+					"type": "object"
+				}
+			},
+			"type": "object"
+		},
+		"tsdoc-check": {
+			"additionalProperties": false,
+			"properties": {
+				"args": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"targets": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"ignore": {
+					"items": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"rules": {
+					"additionalProperties": false,
+					"properties": {
+						"preset": {
+							"enum": [
+								"recommended",
+								"all",
+								"none"
+							],
+							"type": "string"
+						},
+						"syntax": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on",
+										"error"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"single-line-doc": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"tsdoc-syntax": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"tsdoc-tag": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						},
+						"documentation": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on",
+										"error"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"deprecated-without-guidance": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"missing-doc": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"missing-returns": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						},
+						"contract": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on",
+										"error"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"param-mismatch": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"param-order": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"param-untagged": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"type-param-mismatch": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"type-param-untagged": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						},
+						"suppression": {
+							"anyOf": [
+								{
+									"enum": [
+										"off",
+										"on",
+										"error"
+									],
+									"type": "string"
+								},
+								{
+									"additionalProperties": false,
+									"properties": {
+										"suppression": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
+										"suppression-unused": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							]
+						}
+					},
+					"type": "object"
+				}
+			},
+			"type": "object"
+		}
+	},
+	"title": "quality.json",
+	"type": "object"
+}

@@ -173,17 +173,23 @@ async function runFindingEngine(
 			status: "error",
 		};
 	}
+	const promoted = options.config.failOnWarnings
+		? parsed.warnings.map(
+				(finding): NormalizedFinding => ({ ...finding, severity: "error" }),
+			)
+		: [];
+	const errors = [...parsed.errors, ...promoted];
 	const comparison =
 		options.baseline === null
-			? { added: parsed.errors, resolved: [] }
-			: compareWithBaseline(parsed.errors, options.baseline);
+			? { added: errors, resolved: [] }
+			: compareWithBaseline(errors, options.baseline);
 	return {
 		...baseResult(name, result.exitCode, output),
-		detected: parsed.errors,
+		detected: errors,
 		reported: comparison.added,
 		resolved: comparison.resolved.length,
 		status: comparison.added.length > 0 ? "failed" : "passed",
-		warnings: parsed.warnings,
+		warnings: options.config.failOnWarnings ? [] : parsed.warnings,
 	};
 }
 
@@ -220,7 +226,7 @@ async function runEngine(
 	runner: EngineRunner,
 ): Promise<EngineResult> {
 	const executable = (options.resolve ?? resolveExecutable)(name, options.cwd);
-	const skipped = skippedEngineOptions(name, options.config.config?.[name]);
+	const skipped = skippedEngineOptions(name, options.overrides);
 	if (executable === null) {
 		return {
 			...baseResult(name, null, ""),

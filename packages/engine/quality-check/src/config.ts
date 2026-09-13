@@ -1,24 +1,23 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import {
 	OPT_IN_RULE_IDS as COMMENT_CHECK_OPT_IN_RULE_IDS,
+	RULE_GROUPS as COMMENT_CHECK_RULE_GROUPS,
 	RULE_IDS as COMMENT_CHECK_RULE_IDS,
-	type OptInRuleId as CommentCheckRuleName,
 } from "@yuu1111/comment-check/rule-ids";
 import {
 	OPT_IN_RULE_IDS as DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
+	RULE_GROUPS as DOCUMENT_STYLE_CHECK_RULE_GROUPS,
 	RULE_IDS as DOCUMENT_STYLE_CHECK_RULE_IDS,
-	type OptInRuleId as DocumentStyleCheckRuleName,
 } from "@yuu1111/document-style-check/rule-ids";
 import {
 	OPT_IN_RULE_IDS as TSDOC_CHECK_OPT_IN_RULE_IDS,
+	RULE_GROUPS as TSDOC_CHECK_RULE_GROUPS,
 	KNOWN_RULE_NAMES as TSDOC_CHECK_RULE_NAMES,
-	type TsdocRule,
 } from "@yuu1111/tsdoc-check/rule-ids";
 
 /**
- * 統合CLIが起動できるengineの名前 並び順が実行順になる
+ * 統合CLIが起動するengineの名前 並び順が実行順になる
  */
 export const ENGINE_NAMES = [
 	"biome",
@@ -36,55 +35,48 @@ export const ENGINE_NAMES = [
 export type EngineName = (typeof ENGINE_NAMES)[number];
 
 /**
+ * rule1つ分の状態 offで無効 onでengineの既定 errorで違反として扱う
+ */
+export type RuleState = "off" | "on" | "error";
+
+/**
  * engineへ渡す起動条件
  */
 export interface EngineOptions {
-	/** 検査から外すpath engineが受け取れないときはreportへ出す */
-	ignore?: string[];
-	/** 検査する対象path engineが受け取れないときはreportへ出す */
-	targets?: string[];
 	/** engineの既定引数の後ろへ足す引数 */
-	args?: string[];
-}
-
-/**
- * comment-checkへ渡す起動条件
- */
-export interface CommentCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleを全て有効にする */
-	enable?: boolean;
-	/** rule名ごとの状態 offで無効 onで有効 省略したruleはengineの既定に従う */
-	rules?: Partial<Record<CommentCheckRuleName, "off" | "on">>;
-}
-
-/**
- * document-style-checkへ渡す起動条件
- */
-export interface DocumentStyleCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleを全て有効にする */
-	enable?: boolean;
-	/** rule名ごとの状態 offで無効 onで有効 省略したruleはengineの既定に従う */
-	rules?: Partial<Record<DocumentStyleCheckRuleName, "off" | "on">>;
-}
-
-/**
- * TSDoc検査へ渡す起動条件
- */
-export interface TsdocCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleを全て有効にする */
-	enable?: boolean;
-	/** 全てのruleを違反として扱う opt-in ruleは有効にしてから上げる */
-	error?: boolean;
-	/** rule名ごとの状態 offで無効 onで既定のseverity errorで違反として扱う */
-	rules?: Partial<Record<TsdocRule, "off" | "on" | "error">>;
+	args: string[];
+	/** 検査から外すpath */
+	ignore: string[];
+	/** 検査する対象path */
+	targets: string[];
 }
 
 /**
  * 型検査へ渡す起動条件
  */
 export interface TypecheckOptions extends EngineOptions {
-	/** 型検査するtsconfigのpath 省略時はカレントのtsconfig.jsonを1回だけ読む */
-	projects?: string[];
+	/** 型検査するtsconfigのpath */
+	projects: string[];
+}
+
+/**
+ * ruleの指定をengineへ渡す引数へ展開した結果
+ */
+export interface RuleSelection {
+	/** --disableへ渡すrule名 */
+	disable: string[];
+	/** --enableへ渡すrule名 */
+	enable: string[];
+	/** --errorへ渡すrule名 */
+	error: string[];
+}
+
+/**
+ * ruleを持つengineへ渡す起動条件
+ */
+export interface RuleEngineOptions extends EngineOptions {
+	/** 展開済みのrule選択 */
+	rules: RuleSelection;
 }
 
 /**
@@ -95,75 +87,71 @@ export interface EngineConfigMap {
 	typecheck: TypecheckOptions;
 	knip: EngineOptions;
 	"code-style-check": EngineOptions;
-	"comment-check": CommentCheckOptions;
-	"document-style-check": DocumentStyleCheckOptions;
-	"tsdoc-check": TsdocCheckOptions;
+	"comment-check": RuleEngineOptions;
+	"document-style-check": RuleEngineOptions;
+	"tsdoc-check": RuleEngineOptions;
 }
 
 /**
- * rule名ごとの状態
+ * quality.jsonが表す統合検査の設定
  */
-export type RuleState = "off" | "on" | "error";
+export interface QualityConfig {
+	/** 起動するengine 値がfalseのengineは起動しない */
+	engines: Partial<Record<EngineName, boolean>>;
+	/** engineごとの起動条件 */
+	config: Partial<EngineConfigMap>;
+	/** warningを阻害する検出として扱うか */
+	failOnWarnings: boolean;
+	/** baseline fileのpath falseなら差分判定を行わない */
+	baseline: string | false;
+}
 
 /**
- * engineが公開するrule語彙 全ruleと既定で無効のopt-in ruleを持つ
+ * engineが公開するrule語彙
  */
-export const RULE_VOCABULARY: Record<
-	EngineName,
-	{ all: readonly string[]; optIn: readonly string[]; promotes: boolean }
-> = {
-	biome: { all: [], optIn: [], promotes: false },
-	typecheck: { all: [], optIn: [], promotes: false },
-	knip: { all: [], optIn: [], promotes: false },
-	"code-style-check": { all: [], optIn: [], promotes: false },
+interface EngineVocabulary {
+	/** engineが知る全rule */
+	all: readonly string[];
+	/** ruleをまとめたgroup */
+	groups: Record<string, readonly string[]>;
+	/** 既定で実行しないrule */
+	optIn: readonly string[];
+	/** ruleを違反へ上げられるか */
+	promotes: boolean;
+}
+
+/**
+ * engineが公開するrule語彙 engineのrule-idsが唯一の出所になる
+ */
+export const RULE_VOCABULARY: Record<EngineName, EngineVocabulary> = {
+	biome: { all: [], groups: {}, optIn: [], promotes: false },
+	typecheck: { all: [], groups: {}, optIn: [], promotes: false },
+	knip: { all: [], groups: {}, optIn: [], promotes: false },
+	"code-style-check": { all: [], groups: {}, optIn: [], promotes: false },
 	"comment-check": {
 		all: COMMENT_CHECK_RULE_IDS,
+		groups: COMMENT_CHECK_RULE_GROUPS,
 		optIn: COMMENT_CHECK_OPT_IN_RULE_IDS,
 		promotes: false,
 	},
 	"document-style-check": {
 		all: DOCUMENT_STYLE_CHECK_RULE_IDS,
+		groups: DOCUMENT_STYLE_CHECK_RULE_GROUPS,
 		optIn: DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
 		promotes: false,
 	},
 	"tsdoc-check": {
 		all: TSDOC_CHECK_RULE_NAMES,
+		groups: TSDOC_CHECK_RULE_GROUPS,
 		optIn: TSDOC_CHECK_OPT_IN_RULE_IDS,
 		promotes: true,
 	},
 };
 
 /**
- * quality.config.tsが受け付ける統合検査の設定
- */
-export interface QualityConfig {
-	/** 起動するengine 値がfalseまたは未指定のengineは起動しない */
-	engines: Partial<Record<EngineName, boolean>>;
-	/** engineごとの起動条件 省略したengineは既定値で起動する */
-	config?: Partial<EngineConfigMap>;
-	/** baseline fileのpath falseなら差分判定を行わない */
-	baseline?: string | false;
-}
-
-/**
- * 設定fileを型付けするための恒等関数
- *
- * @param config - 型付けする統合検査の設定
- * @returns 引数をそのまま返した統合検査の設定
- */
-export function defineConfig(config: QualityConfig): QualityConfig {
-	return config;
-}
-
-/**
  * config fileを探索する既定のfile名
  */
-export const DEFAULT_CONFIG_FILES = [
-	"quality.config.ts",
-	"quality.config.mts",
-	"quality.config.js",
-	"quality.config.mjs",
-] as const;
+export const DEFAULT_CONFIG_FILES = ["quality.json"] as const;
 
 /**
  * baseline fileの既定名
@@ -172,6 +160,37 @@ export const DEFAULT_BASELINE_FILE = "quality-baseline.json";
 
 type JsonObject = Record<string, unknown>;
 
+const RULE_ENGINE_NAMES: readonly string[] = [
+	"comment-check",
+	"document-style-check",
+	"tsdoc-check",
+];
+
+const TARGET_ENGINE_NAMES: readonly string[] = [
+	"biome",
+	"code-style-check",
+	"comment-check",
+	"document-style-check",
+	"tsdoc-check",
+];
+
+const IGNORE_ENGINE_NAMES: readonly string[] = [
+	"code-style-check",
+	"comment-check",
+	"document-style-check",
+	"tsdoc-check",
+];
+
+const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
+	biome: ["args", "enabled", "targets"],
+	typecheck: ["args", "enabled", "projects"],
+	knip: ["args", "enabled"],
+	"code-style-check": ["args", "enabled", "ignore", "targets"],
+	"comment-check": ["args", "enabled", "ignore", "rules", "targets"],
+	"document-style-check": ["args", "enabled", "ignore", "rules", "targets"],
+	"tsdoc-check": ["args", "enabled", "ignore", "rules", "targets"],
+};
+
 function isJsonObject(value: unknown): value is JsonObject {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -179,16 +198,6 @@ function isJsonObject(value: unknown): value is JsonObject {
 function isEngineName(value: string): value is EngineName {
 	return (ENGINE_NAMES as readonly string[]).includes(value);
 }
-
-const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
-	biome: ["args", "ignore", "targets"],
-	typecheck: ["args", "ignore", "projects", "targets"],
-	knip: ["args", "ignore", "targets"],
-	"code-style-check": ["args", "ignore", "targets"],
-	"comment-check": ["args", "enable", "ignore", "rules", "targets"],
-	"document-style-check": ["args", "enable", "ignore", "rules", "targets"],
-	"tsdoc-check": ["args", "enable", "error", "ignore", "rules", "targets"],
-};
 
 function readStringArray(value: unknown, field: string): string[] | undefined {
 	if (value === undefined) {
@@ -213,44 +222,6 @@ function readBoolean(value: unknown, field: string): boolean | undefined {
 	return value;
 }
 
-/**
- * rule名ごとの状態を読み取る engineが公開する語彙とengineが受け付ける状態で検証する
- */
-function readRuleStates(
-	value: unknown,
-	field: string,
-	name: EngineName,
-): Record<string, RuleState> | undefined {
-	if (value === undefined) {
-		return undefined;
-	}
-	if (!isJsonObject(value)) {
-		throw new Error(`${field} must be an object`);
-	}
-	const vocabulary = RULE_VOCABULARY[name];
-	const states: Record<string, RuleState> = {};
-	for (const [rule, state] of Object.entries(value)) {
-		if (!vocabulary.all.includes(rule)) {
-			throw new Error(`${field} has an unknown rule: ${rule}`);
-		}
-		if (state !== "off" && state !== "on" && state !== "error") {
-			throw new Error(`${field}.${rule} must be "off", "on" or "error"`);
-		}
-		if (state === "error" && !vocabulary.promotes) {
-			throw new Error(
-				`${field}.${rule}: ${name} cannot treat a rule as an error`,
-			);
-		}
-		if (state === "off" && !vocabulary.optIn.includes(rule)) {
-			throw new Error(
-				`${field}.${rule}: ${name} cannot turn off a rule that is on by default`,
-			);
-		}
-		states[rule] = state;
-	}
-	return states;
-}
-
 function readBaseline(
 	value: unknown,
 	source: string,
@@ -264,172 +235,241 @@ function readBaseline(
 	throw new Error(`${source}: baseline must be a path string or false`);
 }
 
-function parseEngines(
+/**
+ * rule1つ分の状態を読み取る engineが昇格できないruleはerrorを拒否する
+ */
+function readRuleState(
 	value: unknown,
-	source: string,
-): Partial<Record<EngineName, boolean>> {
-	if (!isJsonObject(value)) {
-		throw new Error(`${source} must export an engines object`);
+	field: string,
+	vocabulary: EngineVocabulary,
+): RuleState {
+	if (value !== "off" && value !== "on" && value !== "error") {
+		throw new Error(`${field} must be "off", "on" or "error"`);
 	}
-	const engines: Partial<Record<EngineName, boolean>> = {};
-	for (const [name, enabled] of Object.entries(value)) {
-		if (!isEngineName(name)) {
-			throw new Error(`${source}: unknown engine: ${name}`);
-		}
-		if (typeof enabled !== "boolean") {
-			throw new Error(
-				`${source}: engines.${name} must be a boolean 起動条件はconfigへ置く`,
-			);
-		}
-		engines[name] = enabled;
+	if (value === "error" && !vocabulary.promotes) {
+		throw new Error(`${field} cannot treat a rule as an error`);
 	}
-	if (ENGINE_NAMES.every((name) => !engines[name])) {
-		throw new Error(`${source} must enable at least one engine`);
-	}
-	return engines;
+	return value;
 }
-
-type ParsedEngineOptions = EngineOptions & {
-	enable?: boolean;
-	error?: boolean;
-	projects?: string[];
-	rules?: Record<string, RuleState>;
-};
 
 /**
- * engine名ごとにしか受け取らない起動条件を読み取る
+ * presetの指定をruleの状態へ反映する
+ *
+ * @param states - 反映先のrule名ごとの状態
+ * @param value - presetの値
+ * @param field - errorメッセージへ載せる位置
+ * @param vocabulary - 反映先engineの語彙
  */
-function parseEngineExtras(
-	value: JsonObject,
-	source: string,
-	name: EngineName,
-): ParsedEngineOptions {
-	const extras: ParsedEngineOptions = {};
-	if (
-		name === "comment-check" ||
-		name === "document-style-check" ||
-		name === "tsdoc-check"
-	) {
-		const enable = readBoolean(
-			value.enable,
-			`${source}: config.${name}.enable`,
-		);
-		if (enable !== undefined) {
-			extras.enable = enable;
-		}
-		const rules = readRuleStates(
-			value.rules,
-			`${source}: config.${name}.rules`,
-			name,
-		);
-		if (rules !== undefined) {
-			extras.rules = rules;
-		}
+function applyRulePreset(
+	states: Map<string, RuleState>,
+	value: unknown,
+	field: string,
+	vocabulary: EngineVocabulary,
+): void {
+	if (value === undefined || value === "recommended") {
+		return;
 	}
-	if (name === "tsdoc-check") {
-		const error = readBoolean(value.error, `${source}: config.${name}.error`);
-		if (error !== undefined) {
-			extras.error = error;
-		}
+	if (value !== "all" && value !== "none") {
+		throw new Error(`${field} must be "recommended", "all" or "none"`);
 	}
-	if (name === "typecheck") {
-		const projects = readStringArray(
-			value.projects,
-			`${source}: config.${name}.projects`,
-		);
-		if (projects !== undefined) {
-			if (projects.length === 0) {
-				throw new Error(`${source}: config.${name}.projects must not be empty`);
-			}
-			extras.projects = projects;
-		}
+	for (const rule of vocabulary.all) {
+		states.set(rule, value === "all" ? "on" : "off");
 	}
-	return extras;
 }
 
+/**
+ * group単位の指定をruleの状態へ反映する 文字列はgroup全体  objectはrule名ごとの状態
+ *
+ * @param states - 反映先のrule名ごとの状態
+ * @param group - 反映するgroup名
+ * @param entry - groupに渡された値
+ * @param field - errorメッセージへ載せる位置
+ * @param vocabulary - 反映先engineの語彙
+ */
+function applyRuleGroup(
+	states: Map<string, RuleState>,
+	group: string,
+	entry: unknown,
+	field: string,
+	vocabulary: EngineVocabulary,
+): void {
+	const members = vocabulary.groups[group];
+	if (members === undefined) {
+		throw new Error(`${field} has an unknown rule group: ${group}`);
+	}
+	if (typeof entry === "string") {
+		const state = readRuleState(entry, `${field}.${group}`, vocabulary);
+		for (const rule of members) {
+			states.set(rule, state);
+		}
+		return;
+	}
+	if (!isJsonObject(entry)) {
+		throw new Error(`${field}.${group} must be a state or an object`);
+	}
+	for (const [rule, state] of Object.entries(entry)) {
+		if (!members.includes(rule)) {
+			throw new Error(`${field}.${group} has an unknown rule: ${rule}`);
+		}
+		states.set(
+			rule,
+			readRuleState(state, `${field}.${group}.${rule}`, vocabulary),
+		);
+	}
+}
+
+/**
+ * ruleの状態をengineへ渡すrule名の一覧へ展開する
+ *
+ * @param states - rule名ごとの状態
+ * @param vocabulary - 展開するengineの語彙
+ * @returns engineへ渡すrule名の一覧
+ */
+function toRuleSelection(
+	states: Map<string, RuleState>,
+	vocabulary: EngineVocabulary,
+): RuleSelection {
+	const selection: RuleSelection = { disable: [], enable: [], error: [] };
+	for (const [rule, state] of states) {
+		if (state === "off") {
+			if (!vocabulary.optIn.includes(rule)) {
+				selection.disable.push(rule);
+			}
+			continue;
+		}
+		if (vocabulary.optIn.includes(rule)) {
+			selection.enable.push(rule);
+		}
+		if (state === "error") {
+			selection.error.push(rule);
+		}
+	}
+	return selection;
+}
+
+/**
+ * ruleの指定をengineへ渡す引数へ展開する
+ *
+ * presetで全体を選び groupでまとめて上書きし rule名で1つだけ上書きする 具体的な指定が勝つ
+ *
+ * @param value - quality.jsonが持つrulesの値
+ * @param field - errorメッセージへ載せる位置
+ * @param name - 語彙を引くengine名
+ * @returns engineへ渡すrule名の一覧
+ */
+function readRuleSelection(
+	value: unknown,
+	field: string,
+	name: EngineName,
+): RuleSelection {
+	let entries: JsonObject = {};
+	if (value !== undefined) {
+		if (!isJsonObject(value)) {
+			throw new Error(`${field} must be an object`);
+		}
+		entries = value;
+	}
+	const vocabulary = RULE_VOCABULARY[name];
+	const states = new Map<string, RuleState>();
+	for (const rule of vocabulary.all) {
+		states.set(rule, vocabulary.optIn.includes(rule) ? "off" : "on");
+	}
+	applyRulePreset(states, entries.preset, `${field}.preset`, vocabulary);
+	for (const [group, entry] of Object.entries(entries)) {
+		if (group !== "preset") {
+			applyRuleGroup(states, group, entry, field, vocabulary);
+		}
+	}
+	return toRuleSelection(states, vocabulary);
+}
+
+/**
+ * engine1つ分の起動条件を読み取る engineが受け取らないoptionは設定errorにする
+ */
 function parseEngineOptions(
 	value: JsonObject,
 	source: string,
 	name: EngineName,
-): ParsedEngineOptions {
-	const unknown = Object.keys(value).filter(
+): Record<string, unknown> {
+	const unknown = Object.keys(value).find(
 		(key) => !ENGINE_OPTION_KEYS[name].includes(key),
 	);
-	if (unknown.length > 0) {
-		throw new Error(
-			`${source}: config.${name} has an unknown option: ${unknown[0]}`,
+	if (unknown !== undefined) {
+		throw new Error(`${source}: ${name} has an unknown option: ${unknown}`);
+	}
+	const options: Record<string, unknown> = {
+		args: readStringArray(value.args, `${source}: ${name}.args`) ?? [],
+		ignore: [],
+		targets: [],
+	};
+	if (TARGET_ENGINE_NAMES.includes(name)) {
+		options.targets =
+			readStringArray(value.targets, `${source}: ${name}.targets`) ?? [];
+	}
+	if (IGNORE_ENGINE_NAMES.includes(name)) {
+		options.ignore =
+			readStringArray(value.ignore, `${source}: ${name}.ignore`) ?? [];
+	}
+	if (name === "typecheck") {
+		options.projects =
+			readStringArray(value.projects, `${source}: ${name}.projects`) ?? [];
+	}
+	if (RULE_ENGINE_NAMES.includes(name)) {
+		options.rules = readRuleSelection(
+			value.rules,
+			`${source}: ${name}.rules`,
+			name,
 		);
 	}
-	const options: ParsedEngineOptions = {};
-	const ignore = readStringArray(
-		value.ignore,
-		`${source}: config.${name}.ignore`,
-	);
-	if (ignore !== undefined) {
-		options.ignore = ignore;
-	}
-	const targets = readStringArray(
-		value.targets,
-		`${source}: config.${name}.targets`,
-	);
-	if (targets !== undefined) {
-		options.targets = targets;
-	}
-	const args = readStringArray(value.args, `${source}: config.${name}.args`);
-	if (args !== undefined) {
-		options.args = args;
-	}
-	return { ...options, ...parseEngineExtras(value, source, name) };
-}
-
-function parseEngineConfig(
-	value: unknown,
-	source: string,
-): Partial<EngineConfigMap> | undefined {
-	if (value === undefined) {
-		return undefined;
-	}
-	if (!isJsonObject(value)) {
-		throw new Error(`${source}: config must be an object`);
-	}
-	const config: Partial<Record<EngineName, ParsedEngineOptions>> = {};
-	for (const [name, options] of Object.entries(value)) {
-		if (!isEngineName(name)) {
-			throw new Error(`${source}: unknown engine in config: ${name}`);
-		}
-		if (!isJsonObject(options)) {
-			throw new Error(`${source}: config.${name} must be an object`);
-		}
-		config[name] = parseEngineOptions(options, source, name);
-	}
-
-	// rule名はengineが公開するunionで縛る 実行時の入力は文字列として届くため検証済みの値をここで型へ寄せる
-	return config as Partial<EngineConfigMap>;
+	return options;
 }
 
 /**
- * 読み込んだ設定を検証して不足分を補う
+ * 読み込んだ設定を検証して既定値を補う
  *
- * @param value - config fileがexportした検証前の値
+ * @param value - quality.jsonを解析した検証前の値
  * @param source - errorメッセージへ載せるconfig fileのpath
  * @returns 検証して既定値を補った統合検査の設定
  */
 export function parseConfig(value: unknown, source: string): QualityConfig {
 	if (!isJsonObject(value)) {
-		throw new Error(`${source} must export a config object`);
+		throw new Error(`${source} must be a JSON object`);
 	}
-	const config: QualityConfig = {
-		engines: parseEngines(value.engines, source),
+	const unknown = Object.keys(value).find(
+		(key) =>
+			key !== "$schema" &&
+			key !== "baseline" &&
+			key !== "failOnWarnings" &&
+			!isEngineName(key),
+	);
+	if (unknown !== undefined) {
+		throw new Error(`${source} has an unknown option: ${unknown}`);
+	}
+	const engines: Partial<Record<EngineName, boolean>> = {};
+	const options: Partial<Record<EngineName, unknown>> = {};
+	for (const name of ENGINE_NAMES) {
+		const section = value[name];
+		if (section === undefined) {
+			engines[name] = false;
+			continue;
+		}
+		if (!isJsonObject(section)) {
+			throw new Error(`${source}: ${name} must be an object`);
+		}
+		engines[name] =
+			readBoolean(section.enabled, `${source}: ${name}.enabled`) ?? false;
+		options[name] = parseEngineOptions(section, source, name);
+	}
+	if (ENGINE_NAMES.every((name) => engines[name] !== true)) {
+		throw new Error(`${source} must enable at least one engine`);
+	}
+	return {
+		baseline: readBaseline(value.baseline, source) ?? DEFAULT_BASELINE_FILE,
+		config: options as Partial<EngineConfigMap>,
+		engines,
+		failOnWarnings:
+			readBoolean(value.failOnWarnings, `${source}: failOnWarnings`) ?? false,
 	};
-	const engineConfig = parseEngineConfig(value.config, source);
-	if (engineConfig !== undefined) {
-		config.config = engineConfig;
-	}
-	const baseline = readBaseline(value.baseline, source);
-	if (baseline !== undefined) {
-		config.baseline = baseline;
-	}
-	return config;
 }
 
 /**
@@ -439,7 +479,7 @@ export function parseConfig(value: unknown, source: string): QualityConfig {
  * @returns 有効なengine名を実行順に並べた配列
  */
 export function enabledEngines(config: QualityConfig): EngineName[] {
-	return ENGINE_NAMES.filter((name) => Boolean(config.engines[name]));
+	return ENGINE_NAMES.filter((name) => config.engines[name] === true);
 }
 
 /**
@@ -454,10 +494,10 @@ export function engineConfig<K extends EngineName>(
 	config: QualityConfig,
 	name: K,
 ): EngineConfigMap[K] | null {
-	if (!config.engines[name]) {
+	if (config.engines[name] !== true) {
 		return null;
 	}
-	return config.config?.[name] ?? ({} as EngineConfigMap[K]);
+	return config.config[name] ?? ({} as EngineConfigMap[K]);
 }
 
 /**
@@ -482,9 +522,7 @@ export function findConfigFile(cwd: string): string | null {
  * @param path - 読み込むconfig fileのpath
  * @returns 読み込んで検証した統合検査の設定
  */
-export async function loadConfig(path: string): Promise<QualityConfig> {
-	const module: unknown = await import(pathToFileURL(path).href);
-	const value =
-		isJsonObject(module) && "default" in module ? module.default : module;
-	return parseConfig(value, path);
+export function loadConfig(path: string): QualityConfig {
+	const text = readFileSync(path, "utf8").replace(/^\uFEFF/, "");
+	return parseConfig(JSON.parse(text), path);
 }
