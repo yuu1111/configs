@@ -1,31 +1,7 @@
 import type { Located } from "@yuu1111/shared/findings";
+import { OPT_IN_RULE_IDS, type OptInRuleId, type RuleId } from "./rule-ids";
 
-/**
- * comment-checkが報告するruleの識別子一覧
- */
-export const RULE_IDS = [
-	"broad-suppression",
-	"cramped-comment",
-	"undocumented-directive",
-	"placeholder-comment",
-	"separator-comment",
-	"japanese-period",
-] as const;
-
-/**
- * RULE_IDSが定義するrule識別子のunion型
- */
-export type RuleId = (typeof RULE_IDS)[number];
-
-/**
- * 既定では実行せず--enableで明示的に有効にするruleの識別子一覧
- */
-export const OPT_IN_RULE_IDS = ["cramped-comment", "japanese-period"] as const;
-
-/**
- * OPT_IN_RULE_IDSが定義するrule識別子のunion型
- */
-export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
+export type { OptInRuleId };
 
 /**
  * 検出したcomment違反1件の内容と位置

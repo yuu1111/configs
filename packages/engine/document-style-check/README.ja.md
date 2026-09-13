@@ -58,6 +58,8 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 
 `consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため`lint --write`で解消する `list-marker-consistency`も整形できるが、有効にしたときだけ最初に見つけた記号へ揃える `code-fence-language`、`empty-link`、`full-width-alphanumeric`、`japanese-comma`、`japanese-period`は`--write`の後にもerrorとして残る `date-anchored-statement`と`heading-level-jump`は人またはモデルが判断するwarningになる
 
+ruleの識別子は `@yuu1111/document-style-check/rule-ids`（`RuleId`、`OptInRuleId`）として公開し、`quality.config.ts` のようなTypeScriptの設定から参照できる
+
 ## Commands
 
 | Command | 説明 |

@@ -6,60 +6,18 @@ import {
 	positionAt,
 	type Suppression,
 } from "./parse";
+import {
+	KNOWN_RULE_NAMES,
+	OPT_IN_RULE_IDS,
+	type OptInRuleId,
+	type TsdocRule,
+} from "./rule-ids";
 import { parseTsdoc, type TsdocResult } from "./tsdoc";
 
-/**
- * tsdoc-checkが報告するruleの識別子
- */
-export type TsdocRule =
-	| "deprecated-without-guidance"
-	| "missing-doc"
-	| "missing-returns"
-	| "param-mismatch"
-	| "param-order"
-	| "param-untagged"
-	| "single-line-doc"
-	| "suppression"
-	| "suppression-unused"
-	| "tsdoc-syntax"
-	| "tsdoc-tag"
-	| "type-param-mismatch"
-	| "type-param-untagged";
-
-/**
- * 抑制commentと--errorで指定できるrule名の一覧
- */
-export const KNOWN_RULE_NAMES = [
-	"deprecated-without-guidance",
-	"missing-doc",
-	"missing-returns",
-	"param-mismatch",
-	"param-order",
-	"param-untagged",
-	"single-line-doc",
-	"suppression",
-	"suppression-unused",
-	"tsdoc-syntax",
-	"tsdoc-tag",
-	"type-param-mismatch",
-	"type-param-untagged",
-] as const;
+export type { OptInRuleId };
+export { KNOWN_RULE_NAMES };
 
 const KNOWN_RULES = new Set<string>(KNOWN_RULE_NAMES);
-
-/**
- * 既定では実行せず--enableで明示的に有効にするruleの識別子一覧
- */
-export const OPT_IN_RULE_IDS = [
-	"deprecated-without-guidance",
-	"missing-returns",
-	"param-order",
-] as const;
-
-/**
- * OPT_IN_RULE_IDSが定義するrule識別子のunion型
- */
-export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
 
 /**
  * --enableの値を検証して重複を除く 未知のrule名は設定errorにする

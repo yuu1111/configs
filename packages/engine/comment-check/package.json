@@ -12,12 +12,14 @@
 		"comment-check": "bin/cli.js"
 	},
 	"exports": {
-		".": "./dist/scan.js"
+		".": "./dist/scan.js",
+		"./rule-ids": "./src/rule-ids.ts"
 	},
 	"files": [
 		"README.ja.md",
 		"bin",
-		"dist"
+		"dist",
+		"src/rule-ids.ts"
 	],
 	"scripts": {
 		"build": "bun build src/cli.ts src/scan.ts --target=bun --outdir=dist"

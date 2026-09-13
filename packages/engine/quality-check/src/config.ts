@@ -1,6 +1,12 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import type { OptInRuleId as CommentCheckRuleName } from "@yuu1111/comment-check/rule-ids";
+import type { OptInRuleId as DocumentStyleCheckRuleName } from "@yuu1111/document-style-check/rule-ids";
+import type {
+	OptInRuleId as TsdocCheckRuleName,
+	TsdocRule,
+} from "@yuu1111/tsdoc-check/rule-ids";
 
 /**
  * 統合CLIが起動できるengineの名前 並び順が実行順になる
@@ -36,26 +42,26 @@ export interface EngineOptions {
  * comment-checkへ渡す起動条件
  */
 export interface CommentCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleのうち有効にするrule名 */
-	enable?: string[];
+	/** 既定で無効のopt-in ruleのうち有効にするrule名 comment-checkが公開するunionで縛る */
+	enable?: CommentCheckRuleName[];
 }
 
 /**
  * document-style-checkへ渡す起動条件
  */
 export interface DocumentStyleCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleのうち有効にするrule名 */
-	enable?: string[];
+	/** 既定で無効のopt-in ruleのうち有効にするrule名 document-style-checkが公開するunionで縛る */
+	enable?: DocumentStyleCheckRuleName[];
 }
 
 /**
  * TSDoc検査へ渡す起動条件
  */
 export interface TsdocCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleのうち有効にするrule名 */
-	enable?: string[];
-	/** 違反として扱うrule名 */
-	error?: string[];
+	/** 既定で無効のopt-in ruleのうち有効にするrule名 tsdoc-checkが公開するunionで縛る */
+	enable?: TsdocCheckRuleName[];
+	/** 違反として扱うrule名 tsdoc-checkが公開するunionで縛る */
+	error?: TsdocRule[];
 }
 
 /**
@@ -284,7 +290,7 @@ function parseEngineConfig(
 	if (!isJsonObject(value)) {
 		throw new Error(`${source}: config must be an object`);
 	}
-	const config: Partial<EngineConfigMap> = {};
+	const config: Partial<Record<EngineName, ParsedEngineOptions>> = {};
 	for (const [name, options] of Object.entries(value)) {
 		if (!isEngineName(name)) {
 			throw new Error(`${source}: unknown engine in config: ${name}`);
@@ -294,7 +300,9 @@ function parseEngineConfig(
 		}
 		config[name] = parseEngineOptions(options, source, name);
 	}
-	return config;
+
+	// rule名はengineが公開するunionで縛る 実行時の入力は文字列として届くため検証済みの値をここで型へ寄せる
+	return config as Partial<EngineConfigMap>;
 }
 
 /**

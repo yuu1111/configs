@@ -29,6 +29,11 @@
 		"quality",
 		"lint"
 	],
+	"peerDependencies": {
+		"@yuu1111/comment-check": ">=2.2.2",
+		"@yuu1111/document-style-check": ">=0.4.0",
+		"@yuu1111/tsdoc-check": ">=2.1.0"
+	},
 	"devDependencies": {
 		"@yuu1111/shared": "workspace:*"
 	}

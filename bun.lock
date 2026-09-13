@@ -21,11 +21,28 @@
     },
     "packages/config/biome-config": {
       "name": "@yuu1111/biome-config",
-      "version": "2.0.1",
+      "version": "2.1.0",
+    },
+    "packages/config/knip-config": {
+      "name": "@yuu1111/knip-config",
+      "version": "1.0.7",
+      "devDependencies": {
+        "knip": "^6.34.0",
+      },
+      "peerDependencies": {
+        "knip": ">=5.0.0",
+      },
+      "optionalPeers": [
+        "knip",
+      ],
+    },
+    "packages/config/tsconfig": {
+      "name": "@yuu1111/tsconfig",
+      "version": "1.0.7",
     },
     "packages/engine/code-style-check": {
       "name": "@yuu1111/code-style-check",
-      "version": "0.1.0",
+      "version": "0.3.0",
       "bin": {
         "code-style-check": "bin/cli.js",
       },
@@ -39,7 +56,7 @@
     },
     "packages/engine/comment-check": {
       "name": "@yuu1111/comment-check",
-      "version": "2.2.1",
+      "version": "2.2.2",
       "bin": {
         "comment-check": "bin/cli.js",
       },
@@ -49,7 +66,7 @@
     },
     "packages/engine/document-style-check": {
       "name": "@yuu1111/document-style-check",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "bin": {
         "document-style-check": "bin/cli.js",
       },
@@ -57,40 +74,28 @@
         "@yuu1111/shared": "workspace:*",
       },
     },
-    "packages/config/knip-config": {
-      "name": "@yuu1111/knip-config",
-      "version": "1.0.6",
-      "devDependencies": {
-        "knip": "^6.34.0",
-      },
-      "peerDependencies": {
-        "knip": ">=5.0.0",
-      },
-      "optionalPeers": [
-        "knip",
-      ],
-    },
     "packages/engine/quality-check": {
       "name": "@yuu1111/quality-check",
-      "version": "0.7.1",
+      "version": "0.10.0",
       "bin": {
         "quality-check": "bin/cli.js",
       },
       "devDependencies": {
         "@yuu1111/shared": "workspace:*",
       },
+      "peerDependencies": {
+        "@yuu1111/comment-check": ">=2.2.2",
+        "@yuu1111/document-style-check": ">=0.4.0",
+        "@yuu1111/tsdoc-check": ">=2.1.0",
+      },
     },
     "packages/engine/shared": {
       "name": "@yuu1111/shared",
       "version": "0.0.0",
     },
-    "packages/config/tsconfig": {
-      "name": "@yuu1111/tsconfig",
-      "version": "1.0.6",
-    },
     "packages/engine/tsdoc-check": {
       "name": "@yuu1111/tsdoc-check",
-      "version": "2.0.2",
+      "version": "2.1.0",
       "bin": {
         "tsdoc-check": "bin/cli.js",
       },

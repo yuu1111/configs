@@ -47,6 +47,8 @@ comment-check --enable cramped-comment .
 | `separator-comment` | error | true | 記号だけで作った装飾comment |
 | `japanese-period` | error | false | 日本語の文を終える `。` を含むcomment |
 
+ruleの識別子は `@yuu1111/comment-check/rule-ids`（`RuleId`、`OptInRuleId`）として公開し、`quality.config.ts` のようなTypeScriptの設定から参照できる
+
 ## Options
 
 | Option | 説明 |

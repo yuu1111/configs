@@ -49,6 +49,8 @@ npm パッケージとして publish する
 - Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
 - check engine は @yuu1111/shared を build 時に bundle して配布する (shared は private なので publish しない)
+- engine の rule 語彙は engine の `src/rule-ids.ts` へ置き、import を持たせず `./rule-ids` として公開する (公開する型を private な @yuu1111/shared へ依存させないため)
+- `quality-check` の `enable` / `error` は engine が公開する union を type import するため 3 engine を `peerDependencies` に持つ (型は導入された engine から来るため範囲は下限だけの `>=` で示す)
 - check package の `bin` は commit した `bin/cli.js` を指し、そこで `dist/cli.js` の `run` を呼ぶ (Bun は install 時に target が存在しない workspace の `bin` を `node_modules/.bin` へ link しないため)
 - workspace の `bin` を変えるときは `bun.lock` の workspaces entry も同じ変更で更新する (Bun は既存 lockfile の workspaces を再計算しないため)
 - GitHub Release tag は `biome-config-vX.Y.Z`、`code-style-check-vX.Y.Z`、`comment-check-vX.Y.Z`、`document-style-check-vX.Y.Z`、`knip-config-vX.Y.Z`、`quality-check-vX.Y.Z`、`tsdoc-check-vX.Y.Z`、または `tsconfig-vX.Y.Z`

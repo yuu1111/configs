@@ -45,6 +45,8 @@ tsdoc-check --enable missing-returns --enable param-order --enable deprecated-wi
 
 検査対象はトップレベルのexported宣言だけ parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は検査しない
 
+ruleの識別子は `@yuu1111/tsdoc-check/rule-ids`（`TsdocRule`、`OptInRuleId`）として公開し、`quality.config.ts` のようなTypeScriptの設定から参照できる
+
 ## Suppressions
 
 例外は宣言の隣に理由を添えて示す

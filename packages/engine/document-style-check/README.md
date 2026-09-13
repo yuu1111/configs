@@ -62,6 +62,8 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 `code-fence-language`, `empty-link`, `full-width-alphanumeric`, `japanese-comma`, and `japanese-period` stay errors after `--write`.
 `date-anchored-statement` and `heading-level-jump` are warnings for a human or a model to judge.
 
+The rule identifiers are published as `@yuu1111/document-style-check/rule-ids` (`RuleId`, `OptInRuleId`) for a TypeScript config such as `quality.config.ts`.
+
 ## Commands
 
 | Command | Description |

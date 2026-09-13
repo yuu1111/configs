@@ -7,10 +7,5 @@ export default {
 	workspaces: {
 		".": { entry },
 	},
-	ignoreDependencies: [
-		"@yuu1111/code-style-check",
-		"@yuu1111/comment-check",
-		"@yuu1111/document-style-check",
-		"@yuu1111/tsdoc-check",
-	],
+	ignoreDependencies: ["@yuu1111/code-style-check"],
 };

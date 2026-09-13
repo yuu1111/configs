@@ -10,7 +10,10 @@ Projectごとのscriptから個別に呼んでいたBiome、型検査、Knip、c
 bun add -D @yuu1111/quality-check
 ```
 
-engineのbinaryは利用Projectの `node_modules/.bin` から実行時に解決する engineを自分のscriptから呼ばないProjectではKnipが `@yuu1111/comment-check` などを未使用依存として報告するため `knip.ts` の `ignoreDependencies` で理由付きに宣言する
+このCLIは `comment-check`、`document-style-check`、`tsdoc-check` を、configの型がengineの公開するrule名を取り込むためpeer dependencyとして持つ
+package managerはこのCLIと一緒に導入し、engineのbinaryは利用Projectの `node_modules/.bin` から実行時に解決する
+
+`@yuu1111/code-style-check` を宣言するProjectではKnipが未使用依存として報告するため `knip.ts` の `ignoreDependencies` で理由付きに宣言する
 
 ## Usage
 
@@ -103,7 +106,7 @@ biome: ignore skipped (biome.json holds its settings)
 ```
 
 `enable` は `comment-check` と `document-style-check` と `tsdoc-check` の `--enable <rule>` になり、他のengineでは拒否される
-このCLIはengineを同梱しないため、opt-in ruleを有効にするProjectは対応するengine packageも同じ変更で更新する
+値は導入済みengineが `rule-ids` で公開するrule名で型付けするため、engineが知らない名前は起動時の失敗ではなく型errorになる
 
 `comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する
 新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す

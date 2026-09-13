@@ -47,6 +47,8 @@ comment-check --enable cramped-comment .
 | `separator-comment` | error | true | decorative comments made only of punctuation |
 | `japanese-period` | error | false | a Japanese sentence in a comment that ends with `。` |
 
+The rule identifiers are published as `@yuu1111/comment-check/rule-ids` (`RuleId`, `OptInRuleId`) for a TypeScript config such as `quality.config.ts`.
+
 ## Options
 
 | Option | Description |

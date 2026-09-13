@@ -11,8 +11,10 @@ The baseline diff lives here too.
 bun add -D @yuu1111/quality-check
 ```
 
-An engine binary is resolved at run time from the project's `node_modules/.bin`.
-A project that never calls an engine from its own scripts therefore sees Knip report `@yuu1111/comment-check` and its siblings as unused dependencies, so it declares them in `ignoreDependencies` with the reason.
+`comment-check`, `document-style-check`, and `tsdoc-check` are peer dependencies of this CLI, because the config types embed the rule names those engines publish.
+A package manager installs them with this CLI, and each engine binary is resolved at run time from the project's `node_modules/.bin`.
+
+A project that declares `@yuu1111/code-style-check` sees Knip report it as an unused dependency, so it names it in `ignoreDependencies` with the reason.
 
 ## Usage
 
@@ -106,7 +108,7 @@ biome: ignore skipped (biome.json holds its settings)
 ```
 
 `enable` becomes `--enable <rule>` on `comment-check`, `document-style-check`, and `tsdoc-check`, and the other engines reject the field.
-This CLI ships no engine of its own, so a project that turns an opt-in rule on updates the matching engine package in the same change.
+Each value is typed with the rule names the installed engine publishes from its `rule-ids` entry, so a name that engine does not know is a type error rather than a start-up failure.
 
 `comment-check` runs with an unwritten baseline path so that it reports every finding.
 The new-and-resolved diff is done by this CLI from a single baseline file, so an existing `comment-baseline.json` is moved over with `--update-baseline`.
