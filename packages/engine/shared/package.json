@@ -8,6 +8,7 @@
 		"./baseline": "./src/baseline.ts",
 		"./cli": "./src/cli.ts",
 		"./color": "./src/color.ts",
+		"./engines": "./src/engines.ts",
 		"./files": "./src/files.ts",
 		"./findings": "./src/findings.ts",
 		"./json": "./src/json.ts",

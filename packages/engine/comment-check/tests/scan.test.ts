@@ -1,25 +1,9 @@
-import { describe, expect, spyOn, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { collectFiles } from "@yuu1111/shared/files";
-import { main, parseArguments } from "../src/cli";
 import { SUPPORTED_EXTENSIONS, scanSource } from "../src/scan";
-
-/**
- * mainの出力を集めて終了codeと一緒に返す
- */
-function runMain(argv: string[]): { code: number; output: string } {
-	let output = "";
-	const spy = spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-		output += `${args.map((arg) => String(arg)).join(" ")}\n`;
-	});
-	try {
-		return { code: main(argv), output };
-	} finally {
-		spy.mockRestore();
-	}
-}
 
 describe("file collection", () => {
 	test("skips an ignored path", () => {
@@ -159,62 +143,6 @@ describe("source scanning", () => {
 	});
 });
 
-describe("command line", () => {
-	test("rejects an unknown rule name", () => {
-		expect(() => parseArguments(["--enable", "period", "."])).toThrow(
-			"unknown rule: period",
-		);
-	});
-
-	test("enables the opt-in rule through --enable", () => {
-		const root = mkdtempSync(join(tmpdir(), "comment-check-cli-"));
-		try {
-			writeFileSync(join(root, "a.ts"), "// 説明。\n");
-			const { code, output } = runMain(["--enable", "japanese-period", root]);
-
-			expect(code).toBe(1);
-			expect(output).toContain("japanese-period");
-			expect(output).toContain("1 errors");
-		} finally {
-			rmSync(root, { force: true, recursive: true });
-		}
-	});
-
-	test("keeps the opt-in rule out without --enable", () => {
-		const root = mkdtempSync(join(tmpdir(), "comment-check-cli-"));
-		try {
-			writeFileSync(join(root, "a.ts"), "// 説明。\n");
-			const { code, output } = runMain([root]);
-
-			expect(code).toBe(0);
-			expect(output).not.toContain("japanese-period");
-			expect(output).toContain("0 errors");
-		} finally {
-			rmSync(root, { force: true, recursive: true });
-		}
-	});
-
-	test("prints the findings as errors and warnings", () => {
-		const root = mkdtempSync(join(tmpdir(), "comment-check-cli-"));
-		try {
-			writeFileSync(join(root, "a.ts"), "// TODO: remove\\n");
-			const { code, output } = runMain(["--json", root]);
-			const report = JSON.parse(output);
-
-			expect(code).toBe(1);
-			expect(report.warnings).toEqual([]);
-			expect(report.errors).toHaveLength(1);
-			expect(report.errors[0].rule).toBe("placeholder-comment");
-			expect(report.errors[0].severity).toBe("error");
-			expect(report.errors[0].message).toBe(
-				"placeholder comment should be resolved or tracked",
-			);
-		} finally {
-			rmSync(root, { force: true, recursive: true });
-		}
-	});
-});
-
 describe("disabled rules", () => {
 	test("drops a finding for a rule turned off by default", () => {
 		expect(
@@ -226,30 +154,5 @@ describe("disabled rules", () => {
 		expect(
 			scanSource("// TODO: remove\n", "src/a.ts", [], ["separator-comment"]),
 		).toHaveLength(1);
-	});
-});
-
-describe("command line --disable", () => {
-	test("rejects an unknown rule name", () => {
-		expect(() => parseArguments(["--disable", "period", "."])).toThrow(
-			"unknown rule: period",
-		);
-	});
-
-	test("turns off a rule that is on by default", () => {
-		const root = mkdtempSync(join(tmpdir(), "comment-check-cli-"));
-		try {
-			writeFileSync(join(root, "a.ts"), "// TODO: remove\n");
-			const { code, output } = runMain([
-				"--disable",
-				"placeholder-comment",
-				root,
-			]);
-
-			expect(code).toBe(0);
-			expect(output).toContain("0 errors");
-		} finally {
-			rmSync(root, { force: true, recursive: true });
-		}
 	});
 });

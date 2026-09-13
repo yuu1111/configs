@@ -44,7 +44,6 @@ describe("quality config", () => {
 			"test",
 		);
 		expect(engineConfig(config, "tsdoc-check")).toEqual({
-			args: [],
 			ignore: ["dist"],
 			rules: { disable: [], enable: [], error: [] },
 			targets: [],

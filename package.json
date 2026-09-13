@@ -4,7 +4,7 @@
 	"scripts": {
 		"test": "bun test packages",
 		"format": "biome check --write --unsafe .",
-		"build": "bun run --filter '@yuu1111/comment-check' build && bun run --filter '@yuu1111/tsdoc-check' build && bun run --filter '@yuu1111/document-style-check' build && bun run --filter '@yuu1111/code-style-check' build && bun run --filter '@yuu1111/quality-check' build",
+		"build": "bun run --filter '@yuu1111/quality-check' build",
 		"check:quality": "bun run build && quality-check"
 	},
 	"workspaces": [
@@ -15,12 +15,8 @@
 		"@biomejs/biome": "^2.5.13",
 		"@types/bun": "^1.4.2",
 		"@yuu1111/biome-config": "workspace:*",
-		"@yuu1111/code-style-check": "workspace:*",
-		"@yuu1111/comment-check": "workspace:*",
-		"@yuu1111/document-style-check": "workspace:*",
 		"@yuu1111/knip-config": "workspace:*",
 		"@yuu1111/quality-check": "workspace:*",
-		"@yuu1111/tsdoc-check": "workspace:*",
 		"@yuu1111/tsconfig": "workspace:*",
 		"knip": "^6.35.1",
 		"typescript": "^7.0.2"

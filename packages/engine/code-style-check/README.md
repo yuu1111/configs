@@ -4,23 +4,41 @@
 
 A small source style checker that keeps one blank line between adjacent definitions.
 
-## Install
-
-```bash
-bun add -D @yuu1111/code-style-check
-```
+This engine is a private workspace package bundled into `@yuu1111/quality-check`, and it is enabled through its `code-style-check` section in `quality.json`.
 
 ## Usage
 
-```bash
-code-style-check .
-code-style-check --ignore generated src
+Enable the engine and select its rules in the `code-style-check` section:
+
+```json
+{
+  "code-style-check": {
+    "enabled": true,
+    "targets": ["src"],
+    "ignore": ["generated"],
+    "rules": {
+      "preset": "recommended",
+      "spacing": "on"
+    }
+  }
+}
 ```
 
-```text
-src/worker.ts:8:1 blank-line-between-definitions error the function definition submitRootMessage needs a single blank line before it
-Checked 42 files: 1 errors, 0 warnings
-```
+`spacing` is the only rule group, and it holds every rule this engine reports.
+A rule that is on by default can be turned off with `off` in `rules`.
+
+## Config
+
+| Condition | Description |
+|-----------|-------------|
+| `enabled` | Start the engine; an omitted or `false` section leaves it off |
+| `targets` | Paths to check; omitted falls back to the current directory |
+| `ignore` | Paths to leave out |
+| `rules` | Rule selection at the `preset`, group, and rule levels; the most specific setting wins |
+
+`preset` takes `recommended` for the engine defaults, `all` to turn every rule on, and `none` to turn every rule off.
+A group key names a group that the engine publishes and takes `off` or `on` for that whole group, and an object under a group key names single rules.
+The engine runs in-process, so it takes no `args` condition.
 
 ## Rules
 
@@ -31,9 +49,8 @@ Checked 42 files: 1 errors, 0 warnings
 | `blank-line-between-definitions` | error | true | Adjacent definitions have no blank line |
 | `blank-line-between-definitions` | warning | true | Adjacent definitions have more than one blank line |
 
-The rule identifiers are published as `@yuu1111/code-style-check/rule-ids` (`RuleId`) and are the rule vocabulary that the `$schema` of `quality.json` reads.
-
-A rule that is on by default can be turned off with `--disable`.
+The `spacing` group holds both rules.
+The engine exposes its rule vocabulary as the `./rule-ids` subpath (`RULE_IDS`, `OPT_IN_RULE_IDS`, `RULE_GROUPS`), and that vocabulary is what the `$schema` of `quality.json` reads for this section.
 
 ## Definitions that are checked
 
@@ -60,11 +77,3 @@ A pair of two variable declarations and a pair of two class properties do not ne
 The rule requires exactly one consecutive whitespace-only line between the end of a definition and the start of the next one.
 
 A comment line in between is not counted as a blank line and breaks the run, so the blank line may sit above or below the comment.
-
-## Options
-
-| Option | Description |
-|--------|-------------|
-| `--disable <rule>` | Turn a rule off, repeatable; an unknown name is a configuration error |
-| `--ignore <path>` | Exclude a path, repeatable |
-| `--json` | Print the findings as `errors` and `warnings` JSON |

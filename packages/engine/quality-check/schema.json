@@ -23,15 +23,15 @@
 		"biome": {
 			"additionalProperties": false,
 			"properties": {
+				"enabled": {
+					"type": "boolean"
+				},
 				"args": {
 					"items": {
 						"minLength": 1,
 						"type": "string"
 					},
 					"type": "array"
-				},
-				"enabled": {
-					"type": "boolean"
 				},
 				"targets": {
 					"items": {
@@ -46,15 +46,15 @@
 		"typecheck": {
 			"additionalProperties": false,
 			"properties": {
+				"enabled": {
+					"type": "boolean"
+				},
 				"args": {
 					"items": {
 						"minLength": 1,
 						"type": "string"
 					},
 					"type": "array"
-				},
-				"enabled": {
-					"type": "boolean"
 				},
 				"projects": {
 					"items": {
@@ -69,15 +69,15 @@
 		"knip": {
 			"additionalProperties": false,
 			"properties": {
+				"enabled": {
+					"type": "boolean"
+				},
 				"args": {
 					"items": {
 						"minLength": 1,
 						"type": "string"
 					},
 					"type": "array"
-				},
-				"enabled": {
-					"type": "boolean"
 				}
 			},
 			"type": "object"
@@ -85,13 +85,6 @@
 		"code-style-check": {
 			"additionalProperties": false,
 			"properties": {
-				"args": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
-				},
 				"enabled": {
 					"type": "boolean"
 				},
@@ -160,13 +153,6 @@
 		"comment-check": {
 			"additionalProperties": false,
 			"properties": {
-				"args": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
-				},
 				"enabled": {
 					"type": "boolean"
 				},
@@ -297,13 +283,6 @@
 		"document-style-check": {
 			"additionalProperties": false,
 			"properties": {
-				"args": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
-				},
 				"enabled": {
 					"type": "boolean"
 				},
@@ -493,13 +472,6 @@
 		"tsdoc-check": {
 			"additionalProperties": false,
 			"properties": {
-				"args": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
-				},
 				"enabled": {
 					"type": "boolean"
 				},

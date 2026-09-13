@@ -69,9 +69,11 @@ function rulesSchema(name: RuleEngineName): JsonSchema {
 function engineSchema(name: EngineName): JsonSchema {
 	const capabilities = ENGINE_CAPABILITIES[name];
 	const properties: Record<string, unknown> = {
-		args: STRING_ARRAY,
 		enabled: { type: "boolean" },
 	};
+	if (capabilities.args) {
+		properties.args = STRING_ARRAY;
+	}
 	if (capabilities.skipped.targets === undefined) {
 		properties.targets = STRING_ARRAY;
 	}

@@ -2,13 +2,12 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
 	ENGINE_CAPABILITIES,
-	type EngineName,
 	type EngineOptions,
-	isRuleEngine,
+	type ProcessEngineName,
 	type QualityConfig,
-	type RuleEngineOptions,
-	type RuleSelection,
+	type TypecheckOptions,
 } from "./config";
+import { resolveTargets } from "./options";
 
 /**
  * 子プロセスとして起動したengineの生の結果
@@ -28,15 +27,11 @@ export type EngineRunner = (
 ) => Promise<EngineProcessResult>;
 
 /**
- * engineごとの実行file名
+ * 子プロセスで起動するengineごとの実行file名
  */
-export const ENGINE_BINS: Record<EngineName, string> = {
+export const ENGINE_BINS: Record<ProcessEngineName, string> = {
 	biome: "biome",
-	"code-style-check": "code-style-check",
-	"comment-check": "comment-check",
-	"document-style-check": "document-style-check",
 	knip: "knip",
-	"tsdoc-check": "tsdoc-check",
 	typecheck: "tsc",
 };
 
@@ -70,7 +65,7 @@ export interface EngineCommandContext {
  * @returns 渡さなかった上書きとその理由の一覧
  */
 export function skippedEngineOptions(
-	name: EngineName,
+	name: ProcessEngineName,
 	overrides: RunOverrides,
 ): string[] {
 	const limits = ENGINE_CAPABILITIES[name].skipped;
@@ -85,16 +80,6 @@ export function skippedEngineOptions(
 }
 
 /**
- * 検出をJSONで返すengineか
- *
- * @param name - 判定するengine名
- * @returns 検出をJSONで返すengineならtrue
- */
-export function isFindingEngine(name: EngineName): boolean {
-	return ENGINE_CAPABILITIES[name].findings;
-}
-
-/**
  * node_modules/.binとPATHからengineの実行fileを探す
  *
  * @param name - 実行fileを探すengine名
@@ -102,7 +87,7 @@ export function isFindingEngine(name: EngineName): boolean {
  * @returns 見つけた実行fileのpath PATHにも無ければnull
  */
 export function resolveExecutable(
-	name: EngineName,
+	name: ProcessEngineName,
 	cwd: string,
 ): string | null {
 	const shims = process.platform === "win32" ? WINDOWS_SHIMS : POSIX_SHIMS;
@@ -133,7 +118,7 @@ export function resolveExecutable(
 /**
  * engine自身の出力へ色を付けるための引数を返す
  */
-function colorArguments(name: EngineName, color: boolean): string[] {
+function colorArguments(name: ProcessEngineName, color: boolean): string[] {
 	if (!color) {
 		return [];
 	}
@@ -165,71 +150,12 @@ function buildTypecheckCommand(
 }
 
 /**
- * ruleを持つengineへ渡すrule名を状態ごとに返す
- *
- * @param name - 起動するengine名
- * @param options - engineへ渡す起動条件
- * @returns --enableと--disableと--errorへ渡すrule名の組
- */
-function ruleArguments(
-	name: EngineName,
-	options: EngineOptions,
-): RuleSelection {
-	if (!isRuleEngine(name)) {
-		return { disable: [], enable: [], error: [] };
-	}
-	return (options as RuleEngineOptions).rules;
-}
-
-/**
- * 選んだruleをengineへ渡す引数へ展開する
- *
- * @param name - 起動するengine名
- * @param options - engineへ渡す起動条件
- * @returns --enableと--disableと--errorへ渡す引数
- */
-function ruleArgumentsToFlags(
-	name: EngineName,
-	options: EngineOptions,
-): string[] {
-	const rules = ruleArguments(name, options);
-	return [
-		...rules.enable.flatMap((rule) => ["--enable", rule]),
-		...rules.disable.flatMap((rule) => ["--disable", rule]),
-		...rules.error.flatMap((rule) => ["--error", rule]),
-	];
-}
-
-/**
- * 検査する対象pathを決める 上書きを優先し 無ければengineの指定 それも無ければカレントにする
- *
- * @param overrides - コマンドラインから渡された上書き
- * @param configured - engineのsectionが持つ対象path
- * @returns engineへ渡す対象path
- */
-function resolveTargets(overrides: string[], configured: string[]): string[] {
-	if (overrides.length > 0) {
-		return overrides;
-	}
-	if (configured.length > 0) {
-		return configured;
-	}
-	return ["."];
-}
-
-/**
  * engineのsectionが無いときに使う既定の起動条件を返す
  *
- * @param name - 既定を組み立てるengine名
- * @returns rule語彙を持つengineにも渡せる起動条件
+ * @returns 子プロセスengineへ渡せる起動条件
  */
-function defaultEngineOptions(): RuleEngineOptions {
-	return {
-		args: [],
-		ignore: [],
-		rules: { disable: [], enable: [], error: [] },
-		targets: [],
-	};
+function defaultEngineOptions(): EngineOptions {
+	return { args: [], ignore: [], targets: [] };
 }
 
 /**
@@ -240,78 +166,29 @@ function defaultEngineOptions(): RuleEngineOptions {
  * @param context - 設定と上書きを持つ実行条件
  * @returns engineへ渡す引数を並べたコマンド
  */
-
 export function buildEngineCommand(
-	name: EngineName,
+	name: ProcessEngineName,
 	executable: string,
 	context: EngineCommandContext,
 ): string[] {
 	const options: EngineOptions =
 		context.config.config[name] ?? defaultEngineOptions();
 	const limits = ENGINE_CAPABILITIES[name].skipped;
-	const ruleFlags = ruleArgumentsToFlags(name, options);
-	const extra = options.args;
-	const ignores =
-		limits.ignore === undefined
-			? [...options.ignore, ...context.overrides.ignore]
-			: [];
 	const requested = resolveTargets(context.overrides.targets, options.targets);
 	const targets = limits.targets === undefined ? requested : [];
-	const ignoreArguments = ignores.flatMap((ignore) => ["--ignore", ignore]);
 	if (name === "biome") {
 		return [
 			executable,
 			"check",
 			...colorArguments(name, context.color),
 			...targets,
-			...extra,
+			...options.args,
 		];
 	}
 	if (name === "typecheck") {
 		return buildTypecheckCommand(executable, context, undefined);
 	}
-	if (name === "knip") {
-		return [executable, ...extra];
-	}
-	if (name === "comment-check") {
-		return [
-			executable,
-			"--json",
-			...ruleFlags,
-			...targets,
-			...ignoreArguments,
-			...extra,
-		];
-	}
-	if (name === "document-style-check") {
-		return [
-			executable,
-			"lint",
-			"--json",
-			...ruleFlags,
-			...targets,
-			...ignoreArguments,
-			...extra,
-		];
-	}
-	if (name === "code-style-check") {
-		return [
-			executable,
-			"--json",
-			...ruleFlags,
-			...targets,
-			...ignoreArguments,
-			...extra,
-		];
-	}
-	return [
-		executable,
-		"--json",
-		...ruleFlags,
-		...targets,
-		...ignoreArguments,
-		...extra,
-	];
+	return [executable, ...options.args];
 }
 
 /**
@@ -323,13 +200,14 @@ export function buildEngineCommand(
  * @returns 起動する順に並べたコマンドの配列
  */
 export function buildEngineCommands(
-	name: EngineName,
+	name: ProcessEngineName,
 	executable: string,
 	context: EngineCommandContext,
 ): string[][] {
 	const projects =
 		name === "typecheck"
-			? (context.config.config.typecheck?.projects ?? [])
+			? ((context.config.config.typecheck as TypecheckOptions | undefined)
+					?.projects ?? [])
 			: [];
 	if (projects.length === 0) {
 		return [buildEngineCommand(name, executable, context)];

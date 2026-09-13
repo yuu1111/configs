@@ -4,37 +4,49 @@
 
 抑制commentとplaceholder commentの増殖を止める小さなcomment検査
 
-## Install
-
-```bash
-bun add -D @yuu1111/comment-check
-```
+このengineはprivateなworkspace packageとして `@yuu1111/quality-check` へ同梱し、`quality.json` の `comment-check` sectionで有効にする
 
 ## Usage
 
-```bash
-comment-check .
-comment-check --ignore generated src
+`comment-check` sectionでengineを有効にしてruleを選ぶ
+
+```json
+{
+  "comment-check": {
+    "enabled": true,
+    "targets": ["src"],
+    "ignore": ["generated"],
+    "rules": {
+      "preset": "recommended",
+      "shape": {
+        "cramped-comment": "on"
+      },
+      "content": {
+        "japanese-period": "on"
+      }
+    }
+  }
+}
 ```
 
-```text
-src/queue.ts:18:2 undocumented-directive error TypeScript directive needs a description
-Checked 42 files: 1 errors, 0 warnings
-```
+`cramped-comment` と `japanese-period` はopt-inのruleで、`preset` だけでは無効のままになる
+`cramped-comment` は複数行のblock commentの直前へ空行を要求し、`japanese-period` はcomment内の日本語の文を `。` で終わらせない
+既定で有効なruleは `rules` の `off` で無効にできる
 
-baselineの差分判定は `@yuu1111/quality-check` が持つため、このCLIは見つけた検出をすべて報告する
+baselineの差分判定は `@yuu1111/quality-check` が持つため、このengineは見つけた検出をすべて報告する
 
-日本語の文末の `。` も止めるProjectはopt-inのruleを指定する
+## Config
 
-```bash
-comment-check --enable japanese-period .
-```
+| Condition | 説明 |
+|-----------|-------------|
+| `enabled` | engineを起動する 省略または `false` のsectionは起動しない |
+| `targets` | 検査するpath 省略時はカレントdirectoryを検査する |
+| `ignore` | 検査から外すpath |
+| `rules` | `preset`、group、ruleの3段のrule選択 具体的な指定が勝つ |
 
-複数行のcommentを直前の行へ続けず空行で区切るProjectは、もう一つのopt-inのruleを指定する
-
-```bash
-comment-check --enable cramped-comment .
-```
+`preset` は `recommended` でengineの既定、`all` で全rule有効、`none` で全rule無効にする
+group名のkeyはengineが公開するgroupで、そのgroup全体へ `off` と `on` を渡し、group名の下のobjectはruleを1つずつ選ぶ
+このengineはin-processで走るため `args` の条件を取らない
 
 ## Rules
 
@@ -47,15 +59,5 @@ comment-check --enable cramped-comment .
 | `separator-comment` | error | true | 記号だけで作った装飾comment |
 | `japanese-period` | error | false | 日本語の文を終える `。` を含むcomment |
 
-ruleの識別子は `@yuu1111/comment-check/rule-ids`（`RuleId`、`OptInRuleId`）として公開し、`quality.json` の `$schema` が読むrule語彙の出所になる
-
-既定で有効なruleも `--disable` で無効にできる
-
-## Options
-
-| Option | 説明 |
-|--------|-------------|
-| `--enable <rule>` | opt-in ruleを実行する、複数指定できる、未知の名前は設定error |
-| `--disable <rule>` | ruleを無効にする、複数指定できる、未知の名前は設定error、`--enable`と同じruleは指定できない |
-| `--ignore <path>` | 検査から外すpath、複数指定できる |
-| `--json` | 検出を `errors` と `warnings` として出力する |
+`suppression`、`shape`、`content` groupがこれらのruleを持つ
+このengineはrule語彙を `./rule-ids` subpath（`RULE_IDS`、`OPT_IN_RULE_IDS`、`RULE_GROUPS`）として公開し、その語彙を `quality.json` の `$schema` がこのsectionのために読む

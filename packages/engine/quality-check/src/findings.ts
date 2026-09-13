@@ -1,5 +1,5 @@
 import type { Located, Severity } from "@yuu1111/shared/findings";
-import { type ReportFinding, readReport } from "@yuu1111/shared/report";
+import type { EngineReport, ReportFinding } from "@yuu1111/shared/report";
 import type { EngineName } from "./config";
 
 /**
@@ -13,7 +13,7 @@ export interface NormalizedFinding extends Located {
 }
 
 /**
- * engineが--jsonで返した検出の分類
+ * engineが返した検出の分類
  */
 export interface ParsedFindings {
 	errors: NormalizedFinding[];
@@ -36,17 +36,16 @@ function normalize(
 }
 
 /**
- * engineの--json出力を検出へ変換する 解析できない出力は例外にする
+ * engineが返した報告を検出へ変換する
  *
- * @param engine - 出力を解釈するengine名
- * @param stdout - engineが--jsonで出力した文字列
+ * @param engine - 報告を出したengine名
+ * @param report - engineが返した報告
  * @returns 阻害する検出と警告に分けた検出
  */
-export function parseFindings(
+export function normalizeReport(
 	engine: EngineName,
-	stdout: string,
+	report: EngineReport,
 ): ParsedFindings {
-	const report = readReport(engine, stdout);
 	return {
 		errors: report.errors.map((finding) => normalize(engine, finding)),
 		warnings: report.warnings.map((finding) => normalize(engine, finding)),

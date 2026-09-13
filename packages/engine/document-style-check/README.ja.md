@@ -4,40 +4,46 @@
 
 判断記録を持つ小さなMarkdown検査で、機械的に意味のない違反を文書から除き、残りへ書かれた判断を要求する
 
-## Install
-
-```bash
-bun add -D @yuu1111/document-style-check
-```
+このengineはprivateなworkspace packageとして `@yuu1111/quality-check` へ同梱し、`quality.json` の `document-style-check` sectionで有効にする
 
 ## Usage
 
-意味を持たない違反を報告または整形する
+`document-style-check` sectionでengineを有効にしてruleを選ぶ
 
-```bash
-document-style-check lint .
-document-style-check lint --write .
+```json
+{
+  "document-style-check": {
+    "enabled": true,
+    "targets": ["docs"],
+    "ignore": ["CHANGELOG.md"],
+    "rules": {
+      "preset": "recommended",
+      "typography": {
+        "japanese-period": "on"
+      },
+      "structure": {
+        "list-marker-consistency": "on"
+      }
+    }
+  }
+}
 ```
 
-```text
-AGENTS.md:18:1 hard-break-html error an HTML hard break adds spacing without meaning
-Checked 14 files: 1 errors, 0 warnings
-```
+`typography` と `structure` は4つあるrule groupのうちの2つで、この選択はopt-inのruleを2つ有効にしつつ `preset` でengineの既定を保つ
+既定で有効なruleは `rules` の `off` で無効にできる
 
-日本語の文末の `。` や半角カンマ、全角英数字も止めるProjectはopt-inのruleを指定する
+## Config
 
-```bash
-document-style-check lint --enable japanese-period --enable japanese-comma --enable full-width-alphanumeric .
-```
+| Condition | 説明 |
+|-----------|-------------|
+| `enabled` | engineを起動する 省略または `false` のsectionは起動しない |
+| `targets` | 検査するpath 省略時はカレントdirectoryを検査する |
+| `ignore` | 検査から外すpath |
+| `rules` | `preset`、group、ruleの3段のrule選択 具体的な指定が勝つ |
 
-判断が要る候補を記録し、埋めてから確認する
-
-```bash
-document-style-check scan doc.md --rules SKILL.md --review review.json
-document-style-check check doc.md --rules SKILL.md --review review.json
-```
-
-記録は本文と基準のhashを固定するため、どちらかを編集すると無効になる `check`が保証するのは全項目に判断と根拠があることだけで、文体判断の正しさは別に確認する
+`preset` は `recommended` でengineの既定、`all` で全rule有効、`none` で全rule無効にする
+group名のkeyはengineが公開するgroupで、そのgroup全体へ `off` と `on` を渡し、group名の下のobjectはruleを1つずつ選ぶ
+このengineはin-processで走るため `args` の条件を取らない
 
 ## Rules
 
@@ -56,11 +62,25 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 | `trailing-backslash` | error | true | 本文行の末尾のバックスラッシュ |
 | `trailing-whitespace` | error | true | 行末の空白 |
 
-`consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため`lint --write`で解消する `list-marker-consistency`も整形できるが、有効にしたときだけ最初に見つけた記号へ揃える `code-fence-language`、`empty-link`、`full-width-alphanumeric`、`japanese-comma`、`japanese-period`は`--write`の後にもerrorとして残る `date-anchored-statement`と`heading-level-jump`は人またはモデルが判断するwarningになる
+`whitespace`、`typography`、`structure`、`content` groupがこれらのruleを持つ
+`consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため `quality-check document-style lint --write` で解消する
+`list-marker-consistency` も整形できるが、有効にしたときだけ最初に見つけた記号へ揃える
+`code-fence-language`、`empty-link`、`full-width-alphanumeric`、`japanese-comma`、`japanese-period` は `--write` の後にもerrorとして残る
+`date-anchored-statement` と `heading-level-jump` は人またはモデルが判断するwarningになる
 
-ruleの識別子は `@yuu1111/document-style-check/rule-ids`（`RuleId`、`OptInRuleId`）として公開し、`quality.json` の `$schema` が読むrule語彙の出所になる
+このengineはrule語彙を `./rule-ids` subpath（`RULE_IDS`、`OPT_IN_RULE_IDS`、`RULE_GROUPS`）として公開し、その語彙を `quality.json` の `$schema` がこのsectionのために読む
 
 ## Commands
+
+このengineの検証記録は唯一のbinaryから起動する
+
+```bash
+quality-check document-style lint .
+quality-check document-style lint --write .
+quality-check document-style lint --enable japanese-period .
+quality-check document-style scan doc.md --rules SKILL.md --review review.json
+quality-check document-style check doc.md --rules SKILL.md --review review.json
+```
 
 | Command | 説明 |
 |---------|-------------|
@@ -68,7 +88,10 @@ ruleの識別子は `@yuu1111/document-style-check/rule-ids`（`RuleId`、`OptIn
 | `check` | 埋めた検証記録を現在の本文と基準に対して確認する |
 | `lint` | 機械的な違反を報告し、`--write`で整形する |
 
-## Options
+記録は本文と基準のhashを固定するため、どちらかを編集すると無効になる
+`check` が保証するのは全項目に判断と根拠があることだけで、文体判断の正しさは別に確認する
+
+### Options
 
 | Option | 説明 |
 |--------|-------------|
@@ -78,4 +101,3 @@ ruleの識別子は `@yuu1111/document-style-check/rule-ids`（`RuleId`、`OptIn
 | `--disable <rule>` | 既定で有効なruleも含めて無効にする、複数指定できる、未知の名前は設定error、`--enable`と同じruleは指定できない |
 | `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--write` | 報告の代わりに整形を適用する |
-| `--json` | 検出をJSONで出力する |

@@ -1,7 +1,6 @@
-#!/usr/bin/env bun
 import { readFileSync, writeFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
+import { parseArgv, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import {
 	describeReportFinding,
@@ -218,15 +217,4 @@ export function main(argv: string[]): number {
 		return runCheck(options);
 	}
 	return runLint(options);
-}
-
-/**
- * CLIの本体を起動する launcherと直接実行の両方から呼ぶ
- */
-export function run(): void {
-	runCli(main);
-}
-
-if (import.meta.main) {
-	run();
 }

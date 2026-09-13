@@ -2,21 +2,32 @@ import {
 	type BaselineFile,
 	compareWithBaseline,
 } from "@yuu1111/shared/baseline";
-import { type EngineName, enabledEngines, type QualityConfig } from "./config";
 import {
-	buildEngineCommand,
+	type EngineName,
+	enabledEngines,
+	type FindingEngineName,
+	type ProcessEngineName,
+	type QualityConfig,
+	type RuleEngineOptions,
+} from "./config";
+import {
+	FINDING_ENGINES,
+	type FindingEngineRegistry,
+	isFindingEngine,
+} from "./engines";
+import { type NormalizedFinding, normalizeReport } from "./findings";
+import { resolveTargets } from "./options";
+import {
 	buildEngineCommands,
 	ENGINE_BINS,
 	type EngineCommandContext,
 	type EngineProcessResult,
 	type EngineRunner,
-	isFindingEngine,
 	type RunOverrides,
 	resolveExecutable,
 	runEngineProcess,
 	skippedEngineOptions,
-} from "./engines";
-import { type NormalizedFinding, parseFindings } from "./findings";
+} from "./process";
 
 /**
  * engine1つ分の実行状態
@@ -31,6 +42,7 @@ export interface EngineResult {
 	detected: NormalizedFinding[];
 	/** engineの起動から結果の解釈までの所要ms 起動しなかった場合はnull */
 	durationMs: number | null;
+	/** 子プロセスengineの終了code in-processのengineはnull */
 	exitCode: number | null;
 	message?: string;
 	name: EngineName;
@@ -59,10 +71,12 @@ export interface RunOptions {
 	color: boolean;
 	config: QualityConfig;
 	cwd: string;
+	/** in-processのengine実装 テストでは差し替える */
+	findingEngines?: FindingEngineRegistry;
 	/** コマンドラインから渡された起動条件の上書き */
 	overrides: RunOverrides;
 	/** engineの実行fileを解決する関数 テストでは差し替える */
-	resolve?: (name: EngineName, cwd: string) => string | null;
+	resolve?: (name: ProcessEngineName, cwd: string) => string | null;
 	runner?: EngineRunner;
 }
 
@@ -143,56 +157,8 @@ async function runCommands(
 	return { exitCode, output };
 }
 
-async function runFindingEngine(
-	name: EngineName,
-	options: RunOptions,
-	executable: string,
-	context: EngineCommandContext,
-	runner: EngineRunner,
-): Promise<EngineOutcome> {
-	const result = await runner(buildEngineCommand(name, executable, context), {
-		cwd: options.cwd,
-	});
-	const output = joinOutput(result);
-	if (result.exitCode === 2) {
-		return {
-			...baseResult(name, 2, output),
-			message: `${name} could not finish`,
-			status: "error",
-		};
-	}
-	let parsed: ReturnType<typeof parseFindings>;
-	try {
-		parsed = parseFindings(name, result.stdout);
-	} catch (error) {
-		return {
-			...baseResult(name, result.exitCode, output),
-			message: describeError(error),
-			status: "error",
-		};
-	}
-	const promoted = options.config.failOnWarnings
-		? parsed.warnings.map(
-				(finding): NormalizedFinding => ({ ...finding, severity: "error" }),
-			)
-		: [];
-	const errors = [...parsed.errors, ...promoted];
-	const comparison =
-		options.baseline === null
-			? { added: errors, resolved: [] }
-			: compareWithBaseline(errors, options.baseline);
-	return {
-		...baseResult(name, result.exitCode, output),
-		detected: errors,
-		reported: comparison.added,
-		resolved: comparison.resolved.length,
-		status: comparison.added.length > 0 ? "failed" : "passed",
-		warnings: options.config.failOnWarnings ? [] : parsed.warnings,
-	};
-}
-
 async function runProcessEngine(
-	name: EngineName,
+	name: ProcessEngineName,
 	options: RunOptions,
 	executable: string,
 	context: EngineCommandContext,
@@ -217,12 +183,75 @@ async function runProcessEngine(
 	};
 }
 
+/**
+ * 検出engineが無いときに使う既定のrule選択を返す
+ *
+ * @returns どのruleも選ばない起動条件
+ */
+function defaultRuleOptions(): RuleEngineOptions {
+	return {
+		ignore: [],
+		rules: { disable: [], enable: [], error: [] },
+		targets: [],
+	};
+}
+
+/**
+ * 検出engineをin-processで起動し baselineを適用する
+ */
+function runFindingEngine(
+	name: FindingEngineName,
+	options: RunOptions,
+): EngineResult {
+	const engine = (options.findingEngines ?? FINDING_ENGINES)[name];
+	const configured = options.config.config[name] ?? defaultRuleOptions();
+	const startedAt = performance.now();
+	try {
+		const report = engine({
+			cwd: options.cwd,
+			ignores: [...configured.ignore, ...options.overrides.ignore],
+			rules: configured.rules,
+			targets: resolveTargets(options.overrides.targets, configured.targets),
+		});
+		const parsed = normalizeReport(name, report);
+		const promoted = options.config.failOnWarnings
+			? parsed.warnings.map(
+					(finding): NormalizedFinding => ({ ...finding, severity: "error" }),
+				)
+			: [];
+		const errors = [...parsed.errors, ...promoted];
+		const comparison =
+			options.baseline === null
+				? { added: errors, resolved: [] }
+				: compareWithBaseline(errors, options.baseline);
+		return {
+			...baseResult(name, null, ""),
+			detected: errors,
+			durationMs: performance.now() - startedAt,
+			reported: comparison.added,
+			resolved: comparison.resolved.length,
+			status: comparison.added.length > 0 ? "failed" : "passed",
+			warnings: options.config.failOnWarnings ? [] : parsed.warnings,
+		};
+	} catch (error) {
+		return {
+			...baseResult(name, null, ""),
+			durationMs: performance.now() - startedAt,
+			message: `${name} could not finish: ${describeError(error)}`,
+			status: "error",
+		};
+	}
+}
+
 async function runEngine(
 	name: EngineName,
 	options: RunOptions,
 	context: EngineCommandContext,
 	runner: EngineRunner,
 ): Promise<EngineResult> {
+	if (isFindingEngine(name)) {
+		return runFindingEngine(name, options);
+	}
 	const executable = (options.resolve ?? resolveExecutable)(name, options.cwd);
 	const skipped = skippedEngineOptions(name, options.overrides);
 	if (executable === null) {
@@ -235,9 +264,13 @@ async function runEngine(
 		};
 	}
 	const startedAt = performance.now();
-	const result = isFindingEngine(name)
-		? await runFindingEngine(name, options, executable, context, runner)
-		: await runProcessEngine(name, options, executable, context, runner);
+	const result = await runProcessEngine(
+		name,
+		options,
+		executable,
+		context,
+		runner,
+	);
 	return {
 		...result,
 		durationMs: performance.now() - startedAt,

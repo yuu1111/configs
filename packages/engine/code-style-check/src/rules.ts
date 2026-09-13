@@ -1,5 +1,5 @@
 import type { Located, Severity } from "@yuu1111/shared/findings";
-import { RULE_IDS, type RuleId } from "./rule-ids";
+import type { RuleId } from "./rule-ids";
 
 /**
  * 空行で区切る対象になる定義の種類
@@ -25,26 +25,6 @@ export interface Finding extends Located {
 	message: string;
 	rule: RuleId;
 	severity: Severity;
-}
-
-/**
- * --disableで渡されたrule名を検証して重複を除く
- *
- * @param values - --disableで指定されたrule名の一覧
- * @returns 検証済みで重複のない無効化するruleの一覧
- */
-export function parseDisabledRules(values: readonly string[]): RuleId[] {
-	const disabled: RuleId[] = [];
-	for (const value of values) {
-		if (!(RULE_IDS as readonly string[]).includes(value)) {
-			throw new Error(`unknown rule: ${value}`);
-		}
-		const rule = value as RuleId;
-		if (!disabled.includes(rule)) {
-			disabled.push(rule);
-		}
-	}
-	return disabled;
 }
 
 /**

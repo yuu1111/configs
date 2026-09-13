@@ -1,7 +1,7 @@
 {
 	"name": "@yuu1111/quality-check",
 	"version": "3.0.0",
-	"description": "Integrated quality check runner",
+	"description": "Integrated quality check runner with the check engines built in",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",
@@ -12,32 +12,26 @@
 		"quality-check": "bin/cli.js"
 	},
 	"exports": {
-		".": "./src/config.ts",
-		"./engines": "./src/engines.ts",
 		"./schema.json": "./schema.json"
 	},
 	"files": [
 		"README.ja.md",
 		"bin",
-		"schema.json",
-		"src/config.ts",
-		"src/engines.ts",
-		"dist"
+		"dist",
+		"schema.json"
 	],
 	"scripts": {
-		"build": "bun build src/cli.ts --target=bun --outdir=dist --external @yuu1111/code-style-check/rule-ids --external @yuu1111/comment-check/rule-ids --external @yuu1111/document-style-check/rule-ids --external @yuu1111/tsdoc-check/rule-ids && bun run src/generate-schema.ts"
+		"build": "bun build src/cli.ts --target=bun --outdir=dist && bun run src/generate-schema.ts"
 	},
 	"keywords": [
 		"quality",
 		"lint"
 	],
-	"peerDependencies": {
-		"@yuu1111/code-style-check": ">=0.4.0",
-		"@yuu1111/comment-check": ">=3.0.0",
-		"@yuu1111/document-style-check": ">=0.6.0",
-		"@yuu1111/tsdoc-check": ">=2.3.0"
-	},
 	"devDependencies": {
-		"@yuu1111/shared": "workspace:*"
+		"@yuu1111/code-style-check": "workspace:*",
+		"@yuu1111/comment-check": "workspace:*",
+		"@yuu1111/document-style-check": "workspace:*",
+		"@yuu1111/shared": "workspace:*",
+		"@yuu1111/tsdoc-check": "workspace:*"
 	}
 }

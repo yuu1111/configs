@@ -4,17 +4,51 @@
 
 Shared TSDoc checker for exported declarations.
 
-## Install
-
-```bash
-bun add -D @yuu1111/tsdoc-check
-```
+This engine is a private workspace package bundled into `@yuu1111/quality-check`, and it is enabled through its `tsdoc-check` section in `quality.json`.
 
 ## Usage
 
-```bash
-tsdoc-check src
+Enable the engine and select its rules in the `tsdoc-check` section:
+
+```json
+{
+  "tsdoc-check": {
+    "enabled": true,
+    "targets": ["src"],
+    "ignore": ["generated"],
+    "rules": {
+      "preset": "recommended",
+      "syntax": {
+        "tsdoc-tag": "error"
+      },
+      "documentation": {
+        "missing-returns": "on",
+        "deprecated-without-guidance": "on"
+      },
+      "contract": {
+        "param-order": "on"
+      }
+    }
+  }
+}
 ```
+
+`tsdoc-check` is the only built-in engine that takes `error`, which raises a rule and turns an opt-in rule on first.
+`preset` alone leaves `param-order`, `missing-returns`, and `deprecated-without-guidance` off, so they need `on`.
+
+## Config
+
+| Condition | Description |
+|-----------|-------------|
+| `enabled` | Start the engine; an omitted or `false` section leaves it off |
+| `targets` | Paths to check; omitted falls back to the current directory |
+| `ignore` | Paths to leave out |
+| `rules` | Rule selection at the `preset`, group, and rule levels; the most specific setting wins |
+
+`preset` takes `recommended` for the engine defaults, `all` to turn every rule on, and `none` to turn every rule off.
+A group key names a group that the engine publishes and takes `off`, `on`, or `error` for that whole group, and an object under a group key names single rules.
+`error` is accepted only here, because `tsdoc-check` is the only built-in engine that promotes a rule.
+The engine runs in-process, so it takes no `args` condition.
 
 ## Rules
 
@@ -33,21 +67,16 @@ tsdoc-check src
 | `deprecated-without-guidance` | warning | false | A `@deprecated` tag that points to no replacement |
 
 A tag that TSDoc does not define is a warning under `tsdoc-tag`, so `@description` and any other non-standard tag are reported there.
-`--error tsdoc-tag` raises every one of them to an error.
+Setting `tsdoc-tag` to `error` under the `syntax` group raises every one of them to an error.
 
-`param-order`, `missing-returns`, and `deprecated-without-guidance` stay off until `--enable` names them:
-
-```bash
-tsdoc-check --enable missing-returns --enable param-order --enable deprecated-without-guidance src
-```
-
+`param-order`, `missing-returns`, and `deprecated-without-guidance` stay off until `rules` sets them to `on`, as the usage example does.
 `missing-returns` reads an explicit return type only, so a function without an annotation is left alone, and `Promise<void>` counts as no return value.
 `deprecated-without-guidance` accepts a `@see` tag or a `{@link}` in the deprecation message as the pointer to the replacement.
 
 Only top-level exported declarations are checked.
 A file that does not parse is left to the TypeScript compiler and to Biome, so its declarations are not checked.
 
-The rule identifiers are published as `@yuu1111/tsdoc-check/rule-ids` (`TsdocRule`, `OptInRuleId`) and is the rule vocabulary that the `$schema` of `quality.json` reads.
+The engine exposes its rule vocabulary as the `./rule-ids` subpath (`KNOWN_RULE_NAMES`, `OPT_IN_RULE_IDS`, `RULE_GROUPS`), and that vocabulary is what the `$schema` of `quality.json` reads for this section.
 
 ## Suppressions
 
@@ -59,13 +88,3 @@ export const value = 1
 ```
 
 A suppression without a reason, with an unknown rule, or without any rule is an error, and a suppression that covers nothing is a warning.
-
-## Options
-
-| Option | Description |
-|--------|-------------|
-| `--enable <rule>` | Turn on an opt-in rule, repeatable |
-| `--error <rule>` | Raise the rule to an error, repeatable |
-| `--disable <rule>` | Turn a rule off, including one that is on by default, repeatable; a rule cannot be both disabled and enabled or promoted |
-| `--ignore <path>` | Path to leave out, repeatable |
-| `--json` | Print the findings as JSON |

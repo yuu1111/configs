@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { resolve } from "node:path";
+import { main as documentStyleMain } from "@yuu1111/document-style-check/cli";
 import {
 	createBaseline,
 	readBaseline,
@@ -16,8 +17,10 @@ import {
 import { formatEngineSection, formatSummary, toJsonReport } from "./report";
 import { runEngines } from "./run";
 
-const USAGE =
-	"Usage: quality-check [--config <path>] [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]";
+const USAGE = [
+	"Usage: quality-check [--config <path>] [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]",
+	"       quality-check document-style <scan|check|lint> [options] [path...]",
+].join("\n");
 
 interface Options {
 	baselinePath: string | undefined;
@@ -65,6 +68,10 @@ function resolveConfigPath(options: Options, cwd: string): string | null {
 }
 
 async function main(argv: string[]): Promise<number> {
+	const [subcommand, ...rest] = argv;
+	if (subcommand === "document-style") {
+		return documentStyleMain(rest);
+	}
 	if (wantsHelp(argv)) {
 		console.log(USAGE);
 		return 0;

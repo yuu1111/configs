@@ -11,10 +11,9 @@ The baseline diff lives here too.
 bun add -D @yuu1111/quality-check
 ```
 
-`code-style-check`, `comment-check`, `document-style-check`, and `tsdoc-check` are peer dependencies of this CLI, because the config types embed the rule names those engines publish.
-A package manager installs them with this CLI, and each engine binary is resolved at run time from the project's `node_modules/.bin`.
-
-A project that declares `@yuu1111/code-style-check` sees Knip report it as an unused dependency, so it names it in `ignoreDependencies` with the reason.
+The four finding engines `code-style-check`, `comment-check`, `document-style-check`, and `tsdoc-check` are built into this package.
+`bun build` bundles those private workspace packages into `dist/cli.js`, so installing this package is enough and no engine package has to be installed or resolved at run time.
+Biome, `tsc`, and Knip stay child processes and resolve from the project's `node_modules/.bin`.
 
 ## Usage
 
@@ -83,7 +82,7 @@ Exit code 0 means every engine passed, 1 that at least one failed, and 2 that th
 | Field | Description |
 |-------|-------------|
 | `<engine>` | One section per engine; `enabled` starts it |
-| `<engine>.rules` | Rule selection of the three rule engines |
+| `<engine>.rules` | Rule selection of the four built-in finding engines |
 | `failOnWarnings` | Treat every warning as a blocking finding |
 | `baseline` | Baseline file path; `false` disables the diff |
 
@@ -91,19 +90,19 @@ Engines run in the order `biome`, `typecheck`, `knip`, `code-style-check`, `comm
 
 Each engine owns a top-level section that holds `enabled` and the conditions that engine takes.
 A condition an engine does not take is rejected, so a typo fails at start-up instead of being ignored.
-Each engine runs:
+`biome`, `typecheck`, and `knip` run as child processes, and the four finding engines run in-process.
 
 | Engine | Command | Conditions |
 |--------|---------|------------|
 | `biome` | `biome check` | `targets`, `args`; `biome.json` holds the excluded paths |
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
-| `code-style-check` | `code-style-check --json` | `ignore`, `targets`, `args`, `rules` |
-| `comment-check` | `comment-check --json` | `ignore`, `targets`, `args`, `rules` |
-| `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args`, `rules` |
-| `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `rules` |
+| `code-style-check` | in-process | `ignore`, `targets`, `rules` |
+| `comment-check` | in-process | `ignore`, `targets`, `rules` |
+| `document-style-check` | in-process | `ignore`, `targets`, `rules` |
+| `tsdoc-check` | in-process | `ignore`, `targets`, `rules` |
 
-`args` is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
+`args` applies only to the child-process engines and is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
 
 A command line override an engine does not take is not passed on, and the section says so:
 
@@ -112,7 +111,7 @@ A command line override an engine does not take is not passed on, and the sectio
 biome: ignore skipped (biome.json holds its settings)
 ```
 
-`rules` picks which rules run and how they are reported.
+`rules` selects which rules of the built-in engines run and how they are reported.
 `rules.preset` selects in bulk: `recommended` is the engine default, `all` turns every rule on, and `none` turns every rule off.
 A group key names one of the rule groups the engine publishes and takes `off`, `on`, or `error` for every rule in that group.
 An object under a group key names single rules.
@@ -120,12 +119,33 @@ The most specific setting wins, so a preset, a group, and a rule may be written 
 `off` also works for a rule that is on by default, and `on` keeps the engine default severity.
 Only `tsdoc-check` takes `error`, which raises the rule and turns an opt-in rule on first.
 A group or rule name that the engine does not know is a configuration error, and the published `schema.json` teaches an editor the same names.
-Each selected rule becomes `--enable <rule>`, `--disable <rule>`, or, on `tsdoc-check`, `--error <rule>`.
+The selection is handed to the built-in engines directly, so the CLI no longer turns it into `--enable`, `--disable`, or `--error` arguments.
 
 No check engine keeps a baseline of its own, so the new-and-resolved diff is done by this CLI from a single baseline file.
 A `comment-baseline.json` written by comment-check 2.x is not read anymore, so move it over with `--update-baseline`.
 
 `typecheck` starts `tsc --noEmit -p <path>` once per path in `projects`, and falls back to the current `tsconfig.json`.
+
+## Commands
+
+`quality-check document-style` runs the review ledger of the built-in `document-style-check` engine:
+
+```bash
+quality-check document-style lint .
+quality-check document-style lint --write .
+quality-check document-style lint --enable japanese-period .
+quality-check document-style scan doc.md --rules SKILL.md --review review.json
+quality-check document-style check doc.md --rules SKILL.md --review review.json
+```
+
+| Command | Description |
+|---------|-------------|
+| `scan` | Write an unconfirmed review record for the given documents |
+| `check` | Verify a filled review record against the current documents and rules |
+| `lint` | Report mechanical violations, or fix them with `--write` |
+
+The review file pins the document bytes and the rules bytes by hash, so editing either one invalidates the record.
+`check` only confirms that every candidate carries a decision and a reason; it does not judge the writing.
 
 ## Options
 
@@ -136,8 +156,21 @@ A `comment-baseline.json` written by comment-check 2.x is not read anymore, so m
 | `--ignore <path>` | Add an excluded path, repeatable |
 | `--update-baseline` | Replace the baseline with the current findings |
 | `--json` | Print the per-engine results as JSON |
+| `document-style <command>` | Run the review ledger (`scan`, `check`, or `lint`) |
 
 `--ignore` and the positional targets reach only the engines that take them.
+
+### document-style
+
+| Option | Description |
+|--------|-------------|
+| `--rules <path>` | Rules file that holds the criteria, required by `scan` and `check` |
+| `--review <path>` | Review file to write or read |
+| `--enable <rule>` | Run an opt-in rule, repeatable |
+| `--disable <rule>` | Turn a rule off, repeatable |
+| `--ignore <path>` | Path to leave out, repeatable |
+| `--write` | Apply `lint` fixes instead of reporting them |
+| `--json` | Print findings as JSON |
 
 Color is added only when stdout is a terminal.
 `NO_COLOR` turns it off and `FORCE_COLOR` turns it on; the `--json` output stays plain.

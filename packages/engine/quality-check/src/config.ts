@@ -15,6 +15,7 @@ import {
 	RULE_GROUPS as DOCUMENT_STYLE_CHECK_RULE_GROUPS,
 	RULE_IDS as DOCUMENT_STYLE_CHECK_RULE_IDS,
 } from "@yuu1111/document-style-check/rule-ids";
+import type { RuleSelection } from "@yuu1111/shared/engines";
 import {
 	OPT_IN_RULE_IDS as TSDOC_CHECK_OPT_IN_RULE_IDS,
 	RULE_GROUPS as TSDOC_CHECK_RULE_GROUPS,
@@ -22,16 +23,36 @@ import {
 } from "@yuu1111/tsdoc-check/rule-ids";
 
 /**
- * 統合CLIが起動するengineの名前 並び順が実行順になる
+ * 子プロセスで起動するengineの名前
  */
-export const ENGINE_NAMES = [
-	"biome",
-	"typecheck",
-	"knip",
+export const PROCESS_ENGINE_NAMES = ["biome", "typecheck", "knip"] as const;
+
+/**
+ * 子プロセスengine名のunion型
+ */
+export type ProcessEngineName = (typeof PROCESS_ENGINE_NAMES)[number];
+
+/**
+ * in-processで起動するengineの名前
+ */
+export const FINDING_ENGINE_NAMES = [
 	"code-style-check",
 	"comment-check",
 	"document-style-check",
 	"tsdoc-check",
+] as const;
+
+/**
+ * 検出engine名のunion型
+ */
+export type FindingEngineName = (typeof FINDING_ENGINE_NAMES)[number];
+
+/**
+ * 統合CLIが起動するengineの名前 並び順が実行順になる
+ */
+export const ENGINE_NAMES = [
+	...PROCESS_ENGINE_NAMES,
+	...FINDING_ENGINE_NAMES,
 ] as const;
 
 /**
@@ -65,23 +86,15 @@ export interface TypecheckOptions extends EngineOptions {
 }
 
 /**
- * ruleの指定をengineへ渡す引数へ展開した結果
+ * 検出engineへ渡す起動条件 検出engineはin-processで走るため追加の引数は持たない
  */
-export interface RuleSelection {
-	/** --disableへ渡すrule名 */
-	disable: string[];
-	/** --enableへ渡すrule名 */
-	enable: string[];
-	/** --errorへ渡すrule名 */
-	error: string[];
-}
-
-/**
- * ruleを持つengineへ渡す起動条件
- */
-export interface RuleEngineOptions extends EngineOptions {
+export interface RuleEngineOptions {
+	/** 検査から外すpath */
+	ignore: string[];
 	/** 展開済みのrule選択 */
 	rules: RuleSelection;
+	/** 検査する対象path */
+	targets: string[];
 }
 
 /**
@@ -186,7 +199,9 @@ type JsonObject = Record<string, unknown>;
  * engineが受け取る検出と起動条件
  */
 export interface EngineCapabilities {
-	/** `--json` の検出を返し baseline の対象になるか */
+	/** 追加の引数を受け取るか 受け取るengineは子プロセスで起動する */
+	args: boolean;
+	/** 検出を返し baseline の対象になるか 検出engineはin-processで起動する */
 	findings: boolean;
 	/** 受け取らない起動条件とその理由 受け取るときは undefined */
 	skipped: Partial<Record<"ignore" | "targets", string>>;
@@ -197,10 +212,12 @@ export interface EngineCapabilities {
  */
 export const ENGINE_CAPABILITIES: Record<EngineName, EngineCapabilities> = {
 	biome: {
+		args: true,
 		findings: false,
 		skipped: { ignore: "biome.json holds its settings" },
 	},
 	typecheck: {
+		args: true,
 		findings: false,
 		skipped: {
 			ignore: "tsconfig.json holds its settings",
@@ -208,16 +225,17 @@ export const ENGINE_CAPABILITIES: Record<EngineName, EngineCapabilities> = {
 		},
 	},
 	knip: {
+		args: true,
 		findings: false,
 		skipped: {
 			ignore: "knip.ts holds its settings",
 			targets: "knip analyzes the whole project",
 		},
 	},
-	"code-style-check": { findings: true, skipped: {} },
-	"comment-check": { findings: true, skipped: {} },
-	"document-style-check": { findings: true, skipped: {} },
-	"tsdoc-check": { findings: true, skipped: {} },
+	"code-style-check": { args: false, findings: true, skipped: {} },
+	"comment-check": { args: false, findings: true, skipped: {} },
+	"document-style-check": { args: false, findings: true, skipped: {} },
+	"tsdoc-check": { args: false, findings: true, skipped: {} },
 };
 
 /**
@@ -227,7 +245,10 @@ export const ENGINE_CAPABILITIES: Record<EngineName, EngineCapabilities> = {
  * @returns sectionで許すoption名の一覧
  */
 function engineOptionKeys(name: EngineName): readonly string[] {
-	const keys = ["args", "enabled"];
+	const keys = ["enabled"];
+	if (ENGINE_CAPABILITIES[name].args) {
+		keys.push("args");
+	}
 	if (ENGINE_CAPABILITIES[name].skipped.targets === undefined) {
 		keys.push("targets");
 	}
@@ -450,10 +471,12 @@ function parseEngineOptions(
 		throw new Error(`${source}: ${name} has an unknown option: ${unknown}`);
 	}
 	const options: Record<string, unknown> = {
-		args: readStringArray(value.args, `${source}: ${name}.args`) ?? [],
 		ignore: [],
 		targets: [],
 	};
+	if (ENGINE_CAPABILITIES[name].args) {
+		options.args = readStringArray(value.args, `${source}: ${name}.args`) ?? [];
+	}
 	if (ENGINE_CAPABILITIES[name].skipped.targets === undefined) {
 		options.targets =
 			readStringArray(value.targets, `${source}: ${name}.targets`) ?? [];

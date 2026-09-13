@@ -1,13 +1,18 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { isJsonObject } from "@yuu1111/shared/json";
-import { ENGINE_NAMES, isRuleEngine, RULE_VOCABULARY } from "../src/config";
+import {
+	ENGINE_NAMES,
+	FINDING_ENGINE_NAMES,
+	PROCESS_ENGINE_NAMES,
+	RULE_VOCABULARY,
+} from "../src/config";
+import { FINDING_ENGINES } from "../src/engines";
 
 const repositoryRoot = join(import.meta.dir, "..", "..", "..", "..");
 const engineRoot = join(repositoryRoot, "packages", "engine");
 const qualityCheckManifest = readManifest(join(engineRoot, "quality-check"));
-const ruleEngines = ENGINE_NAMES.filter((name) => isRuleEngine(name));
 
 /**
  * package.jsonをobjectとして読み取る
@@ -27,7 +32,9 @@ function readManifest(directory: string): Record<string, unknown> {
 
 describe("engine contract", () => {
 	test("covers every rule of a vocabulary exactly once", () => {
-		for (const name of ruleEngines) {
+		for (const name of Object.keys(
+			RULE_VOCABULARY,
+		) as (keyof typeof RULE_VOCABULARY)[]) {
 			const vocabulary = RULE_VOCABULARY[name];
 			const grouped = Object.values(vocabulary.groups)
 				.flatMap((rules) => [...rules])
@@ -36,31 +43,44 @@ describe("engine contract", () => {
 		}
 	});
 
-	test("publishes the rule ids of every rule engine", () => {
-		for (const name of ruleEngines) {
-			const manifest = readManifest(join(engineRoot, name));
-			const entries = manifest.exports as Record<string, string>;
-			const files = manifest.files as string[];
-			expect(entries["./rule-ids"], name).toBe("./src/rule-ids.ts");
-			expect(files, name).toContain("src/rule-ids.ts");
+	test("runs every finding engine from the in-process registry", () => {
+		expect(Object.keys(FINDING_ENGINES).sort()).toEqual(
+			[...FINDING_ENGINE_NAMES].sort(),
+		);
+		for (const name of FINDING_ENGINE_NAMES) {
+			expect(existsSync(join(engineRoot, name, "src", "run.ts")), name).toBe(
+				true,
+			);
+			expect(
+				existsSync(join(engineRoot, name, "src", "rule-ids.ts")),
+				name,
+			).toBe(true);
 		}
 	});
 
-	test("declares every rule engine as a peer dependency", () => {
-		const peers = qualityCheckManifest.peerDependencies as Record<
+	test("keeps the process engines out of the finding registry", () => {
+		for (const name of PROCESS_ENGINE_NAMES) {
+			expect(name in FINDING_ENGINES, name).toBe(false);
+		}
+	});
+
+	test("lists every engine exactly once", () => {
+		expect([...ENGINE_NAMES].sort()).toEqual(
+			[...PROCESS_ENGINE_NAMES, ...FINDING_ENGINE_NAMES].sort(),
+		);
+	});
+
+	test("keeps every finding engine private and out of the published dependencies", () => {
+		for (const name of FINDING_ENGINE_NAMES) {
+			expect(readManifest(join(engineRoot, name)).private, name).toBe(true);
+		}
+		expect(qualityCheckManifest.peerDependencies).toBeUndefined();
+		const dependencies = (qualityCheckManifest.dependencies ?? {}) as Record<
 			string,
 			string
 		>;
-		for (const name of ruleEngines) {
-			expect(peers[`@yuu1111/${name}`], name).toBeString();
-		}
-	});
-
-	test("reads the rule ids of every peer engine at runtime", () => {
-		const scripts = qualityCheckManifest.scripts as Record<string, string>;
-		const build = scripts.build ?? "";
-		for (const name of ruleEngines) {
-			expect(build, name).toContain(`--external @yuu1111/${name}/rule-ids`);
+		for (const name of FINDING_ENGINE_NAMES) {
+			expect(dependencies[`@yuu1111/${name}`], name).toBeUndefined();
 		}
 	});
 });

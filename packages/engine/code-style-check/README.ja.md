@@ -5,23 +5,41 @@
 baselineを持たない小さなsource style検査
 隣接する定義の間隔を1つの空行へ揃える
 
-## Install
-
-```bash
-bun add -D @yuu1111/code-style-check
-```
+このengineはprivateなworkspace packageとして `@yuu1111/quality-check` へ同梱し、`quality.json` の `code-style-check` sectionで有効にする
 
 ## Usage
 
-```bash
-code-style-check .
-code-style-check --ignore generated src
+`code-style-check` sectionでengineを有効にしてruleを選ぶ
+
+```json
+{
+  "code-style-check": {
+    "enabled": true,
+    "targets": ["src"],
+    "ignore": ["generated"],
+    "rules": {
+      "preset": "recommended",
+      "spacing": "on"
+    }
+  }
+}
 ```
 
-```text
-src/worker.ts:8:1 blank-line-between-definitions error the function definition submitRootMessage needs a single blank line before it
-Checked 42 files: 1 errors, 0 warnings
-```
+`spacing` が唯一のrule groupで、このengineが報告する全ruleをまとめる
+既定で有効なruleは `rules` の `off` で無効にできる
+
+## Config
+
+| Condition | 説明 |
+|-----------|-------------|
+| `enabled` | engineを起動する 省略または `false` のsectionは起動しない |
+| `targets` | 検査するpath 省略時はカレントdirectoryを検査する |
+| `ignore` | 検査から外すpath |
+| `rules` | `preset`、group、ruleの3段のrule選択 具体的な指定が勝つ |
+
+`preset` は `recommended` でengineの既定、`all` で全rule有効、`none` で全rule無効にする
+group名のkeyはengineが公開するgroupで、そのgroup全体へ `off` と `on` を渡し、group名の下のobjectはruleを1つずつ選ぶ
+このengineはin-processで走るため `args` の条件を取らない
 
 ## Rules
 
@@ -32,11 +50,10 @@ Checked 42 files: 1 errors, 0 warnings
 | `blank-line-between-definitions` | error | true | 隣接する定義の間に空行が無い |
 | `blank-line-between-definitions` | warning | true | 隣接する定義の間に空行が2行以上ある |
 
-ruleの識別子は `@yuu1111/code-style-check/rule-ids`（`RuleId`）として公開し、`quality.json` の `$schema` が読むrule語彙の出所になる
+`spacing` groupが両ruleを持つ
+このengineはrule語彙を `./rule-ids` subpath（`RULE_IDS`、`OPT_IN_RULE_IDS`、`RULE_GROUPS`）として公開し、その語彙を `quality.json` の `$schema` がこのsectionのために読む
 
-既定で有効なruleも `--disable` で無効にできる
-
-## 検査する定義
+## Definitions that are checked
 
 - `function` 宣言（`export`、`async`、generatorを含む）
 - `class` 宣言
@@ -56,16 +73,8 @@ ruleの識別子は `@yuu1111/code-style-check/rule-ids`（`RuleId`）として�
 
 変数宣言と変数宣言の組、class property同士の組には空行を要求しないため、まとめて書ける
 
-## 空行の数え方
+## How the blank line is counted
 
 定義の終端と次の定義の開始の間で、連続する空白だけの行がちょうど1行あることを要求する
 
 間にあるcommentの行は空行として数えず、空行の連続を途切れさせる
-
-## Options
-
-| Option | 説明 |
-|--------|-------------|
-| `--disable <rule>` | ruleを無効にする、複数指定できる、未知の名前は設定error |
-| `--ignore <path>` | 検査から外すpath、複数指定できる |
-| `--json` | 検出を `errors` と `warnings` のJSONで出力する |

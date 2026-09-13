@@ -53,22 +53,6 @@ jobs:
               package_dir="packages/config/tsconfig"
               release_version="${RELEASE_TAG#tsconfig-v}"
               ;;
-            code-style-check-v*)
-              package_dir="packages/engine/code-style-check"
-              release_version="${RELEASE_TAG#code-style-check-v}"
-              ;;
-            comment-check-v*)
-              package_dir="packages/engine/comment-check"
-              release_version="${RELEASE_TAG#comment-check-v}"
-              ;;
-            tsdoc-check-v*)
-              package_dir="packages/engine/tsdoc-check"
-              release_version="${RELEASE_TAG#tsdoc-check-v}"
-              ;;
-            document-style-check-v*)
-              package_dir="packages/engine/document-style-check"
-              release_version="${RELEASE_TAG#document-style-check-v}"
-              ;;
             quality-check-v*)
               package_dir="packages/engine/quality-check"
               release_version="${RELEASE_TAG#quality-check-v}"

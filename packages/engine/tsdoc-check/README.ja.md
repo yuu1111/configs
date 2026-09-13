@@ -4,17 +4,51 @@
 
 exported宣言のための共有TSDoc checker
 
-## Install
-
-```bash
-bun add -D @yuu1111/tsdoc-check
-```
+このengineはprivateなworkspace packageとして `@yuu1111/quality-check` へ同梱し、`quality.json` の `tsdoc-check` sectionで有効にする
 
 ## Usage
 
-```bash
-tsdoc-check src
+`tsdoc-check` sectionでengineを有効にしてruleを選ぶ
+
+```json
+{
+  "tsdoc-check": {
+    "enabled": true,
+    "targets": ["src"],
+    "ignore": ["generated"],
+    "rules": {
+      "preset": "recommended",
+      "syntax": {
+        "tsdoc-tag": "error"
+      },
+      "documentation": {
+        "missing-returns": "on",
+        "deprecated-without-guidance": "on"
+      },
+      "contract": {
+        "param-order": "on"
+      }
+    }
+  }
+}
 ```
+
+`error` を取れるのは `tsdoc-check` だけで、そのruleを違反へ上げ opt-inのruleは先に有効にする
+`preset` だけでは `param-order`、`missing-returns`、`deprecated-without-guidance` が無効のままなので `on` が要る
+
+## Config
+
+| Condition | 説明 |
+|-----------|-------------|
+| `enabled` | engineを起動する 省略または `false` のsectionは起動しない |
+| `targets` | 検査するpath 省略時はカレントdirectoryを検査する |
+| `ignore` | 検査から外すpath |
+| `rules` | `preset`、group、ruleの3段のrule選択 具体的な指定が勝つ |
+
+`preset` は `recommended` でengineの既定、`all` で全rule有効、`none` で全rule無効にする
+group名のkeyはengineが公開するgroupで、そのgroup全体へ `off`、`on`、`error` を渡し、group名の下のobjectはruleを1つずつ選ぶ
+`error` を取れるのはここだけで、`tsdoc-check` が唯一ruleを違反へ上げるengineだからである
+このengineはin-processで走るため `args` の条件を取らない
 
 ## Rules
 
@@ -32,20 +66,15 @@ tsdoc-check src
 | `missing-returns` | warning | false | `@returns` の無い値を返す関数 |
 | `deprecated-without-guidance` | warning | false | 代替先を示さない `@deprecated` |
 
-TSDocが定義していないtagは `tsdoc-tag` のwarningになる `@description` などの独自tagもそこで報告し、`--error tsdoc-tag` ですべてerrorへ上げる
+TSDocが定義していないtagは `tsdoc-tag` のwarningになる `@description` などの独自tagもそこで報告し、`syntax` groupの `tsdoc-tag` を `error` にするとすべてerrorへ上がる
 
-`param-order` と `missing-returns` と `deprecated-without-guidance` は `--enable` で指定するまで実行しない
-
-```bash
-tsdoc-check --enable missing-returns --enable param-order --enable deprecated-without-guidance src
-```
-
+`param-order` と `missing-returns` と `deprecated-without-guidance` は `rules` が `on` にするまで実行しない 例はUsageにある
 `missing-returns` は明示した戻り値型だけを読み、注釈の無い関数は対象外にする `Promise<void>` は値を返さない扱いにする
 `deprecated-without-guidance` は `@see` か `@deprecated` の文中の `{@link}` を代替先として受け入れる
 
 検査対象はトップレベルのexported宣言だけ parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は検査しない
 
-ruleの識別子は `@yuu1111/tsdoc-check/rule-ids`（`TsdocRule`、`OptInRuleId`）として公開し、`quality.json` の `$schema` が読むrule語彙の出所になる
+このengineはrule語彙を `./rule-ids` subpath（`KNOWN_RULE_NAMES`、`OPT_IN_RULE_IDS`、`RULE_GROUPS`）として公開し、その語彙を `quality.json` の `$schema` がこのsectionのために読む
 
 ## Suppressions
 
@@ -58,13 +87,3 @@ export const value = 1
 
 理由の無い抑制、未知のrule、ruleを書いていない抑制はerror
 何も抑制しない抑制はwarning
-
-## Options
-
-| Option | 説明 |
-|--------|-------------|
-| `--enable <rule>` | opt-in ruleを有効にする、複数指定できる |
-| `--error <rule>` | 指定したruleをerrorへ上げる、複数指定できる |
-| `--disable <rule>` | 既定で有効なruleも含めて無効にする、複数指定できる、`--enable`と`--error`と同じruleは指定できない |
-| `--ignore <path>` | 検査から外すpath、複数指定できる |
-| `--json` | 検出をJSONで出力する |

@@ -8,13 +8,9 @@
         "@biomejs/biome": "^2.5.13",
         "@types/bun": "^1.4.2",
         "@yuu1111/biome-config": "workspace:*",
-        "@yuu1111/code-style-check": "workspace:*",
-        "@yuu1111/comment-check": "workspace:*",
-        "@yuu1111/document-style-check": "workspace:*",
         "@yuu1111/knip-config": "workspace:*",
         "@yuu1111/quality-check": "workspace:*",
         "@yuu1111/tsconfig": "workspace:*",
-        "@yuu1111/tsdoc-check": "workspace:*",
         "knip": "^6.35.1",
         "typescript": "^7.0.2",
       },
@@ -43,34 +39,25 @@
     "packages/engine/code-style-check": {
       "name": "@yuu1111/code-style-check",
       "version": "0.4.0",
-      "bin": {
-        "code-style-check": "bin/cli.js",
-      },
       "dependencies": {
         "@babel/parser": "^8.0.5",
+        "@yuu1111/shared": "workspace:*",
       },
       "devDependencies": {
         "@babel/types": "^8.0.5",
-        "@yuu1111/shared": "workspace:*",
       },
     },
     "packages/engine/comment-check": {
       "name": "@yuu1111/comment-check",
       "version": "3.0.0",
-      "bin": {
-        "comment-check": "bin/cli.js",
-      },
-      "devDependencies": {
+      "dependencies": {
         "@yuu1111/shared": "workspace:*",
       },
     },
     "packages/engine/document-style-check": {
       "name": "@yuu1111/document-style-check",
       "version": "0.6.0",
-      "bin": {
-        "document-style-check": "bin/cli.js",
-      },
-      "devDependencies": {
+      "dependencies": {
         "@yuu1111/shared": "workspace:*",
       },
     },
@@ -81,13 +68,11 @@
         "quality-check": "bin/cli.js",
       },
       "devDependencies": {
+        "@yuu1111/code-style-check": "workspace:*",
+        "@yuu1111/comment-check": "workspace:*",
+        "@yuu1111/document-style-check": "workspace:*",
         "@yuu1111/shared": "workspace:*",
-      },
-      "peerDependencies": {
-        "@yuu1111/code-style-check": ">=0.4.0",
-        "@yuu1111/comment-check": ">=3.0.0",
-        "@yuu1111/document-style-check": ">=0.6.0",
-        "@yuu1111/tsdoc-check": ">=2.3.0",
+        "@yuu1111/tsdoc-check": "workspace:*",
       },
     },
     "packages/engine/shared": {
@@ -97,16 +82,13 @@
     "packages/engine/tsdoc-check": {
       "name": "@yuu1111/tsdoc-check",
       "version": "2.3.0",
-      "bin": {
-        "tsdoc-check": "bin/cli.js",
-      },
       "dependencies": {
         "@babel/parser": "^8.0.5",
         "@microsoft/tsdoc": "^0.16.0",
+        "@yuu1111/shared": "workspace:*",
       },
       "devDependencies": {
         "@babel/types": "^8.0.5",
-        "@yuu1111/shared": "workspace:*",
       },
     },
   },

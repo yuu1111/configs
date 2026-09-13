@@ -1,39 +1,18 @@
 {
 	"name": "@yuu1111/code-style-check",
 	"version": "0.4.0",
-	"description": "Shared source code style checker",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/yuu1111/configs.git",
-		"directory": "packages/engine/code-style-check"
-	},
+	"private": true,
+	"description": "Function spacing checker built into @yuu1111/quality-check",
 	"type": "module",
-	"bin": {
-		"code-style-check": "bin/cli.js"
-	},
 	"exports": {
-		".": "./dist/scan.js",
-		"./rule-ids": "./src/rule-ids.ts"
+		"./rule-ids": "./src/rule-ids.ts",
+		"./run": "./src/run.ts"
 	},
-	"files": [
-		"README.ja.md",
-		"bin",
-		"dist",
-		"src/rule-ids.ts"
-	],
-	"scripts": {
-		"build": "bun build src/cli.ts src/scan.ts --target=bun --outdir=dist --external @babel/parser"
-	},
-	"keywords": [
-		"style",
-		"lint",
-		"source"
-	],
 	"dependencies": {
-		"@babel/parser": "^8.0.5"
+		"@babel/parser": "^8.0.5",
+		"@yuu1111/shared": "workspace:*"
 	},
 	"devDependencies": {
-		"@babel/types": "^8.0.5",
-		"@yuu1111/shared": "workspace:*"
+		"@babel/types": "^8.0.5"
 	}
 }

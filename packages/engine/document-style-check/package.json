@@ -1,37 +1,15 @@
 {
 	"name": "@yuu1111/document-style-check",
 	"version": "0.6.0",
-	"description": "Shared document style checker and review ledger",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/yuu1111/configs.git",
-		"directory": "packages/engine/document-style-check"
-	},
+	"private": true,
+	"description": "Markdown checker and review ledger built into @yuu1111/quality-check",
 	"type": "module",
-	"bin": {
-		"document-style-check": "bin/cli.js"
-	},
 	"exports": {
-		".": "./dist/scan.js",
-		"./audit": "./dist/audit.js",
-		"./rule-ids": "./src/rule-ids.ts"
+		"./cli": "./src/cli.ts",
+		"./rule-ids": "./src/rule-ids.ts",
+		"./run": "./src/run.ts"
 	},
-	"files": [
-		"README.ja.md",
-		"bin",
-		"dist",
-		"src/rule-ids.ts"
-	],
-	"scripts": {
-		"build": "bun build src/cli.ts src/scan.ts src/audit.ts --target=bun --outdir=dist"
-	},
-	"keywords": [
-		"documentation",
-		"lint",
-		"markdown",
-		"style"
-	],
-	"devDependencies": {
+	"dependencies": {
 		"@yuu1111/shared": "workspace:*"
 	}
 }

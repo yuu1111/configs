@@ -1,8 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { createBaseline } from "@yuu1111/shared/baseline";
-import { parseConfig } from "../src/config";
-import type { EngineProcessResult, EngineRunner } from "../src/engines";
+import type { FindingEngine } from "@yuu1111/shared/engines";
+import type { Severity } from "@yuu1111/shared/findings";
+import type { EngineReport, ReportFinding } from "@yuu1111/shared/report";
+import { type FindingEngineName, parseConfig } from "../src/config";
+import type { FindingEngineRegistry } from "../src/engines";
 import type { NormalizedFinding } from "../src/findings";
+import type { EngineProcessResult, EngineRunner } from "../src/process";
 import { type RunOptions, runEngines } from "../src/run";
 
 const documentFinding: NormalizedFinding = {
@@ -36,37 +40,76 @@ const periodFinding: NormalizedFinding = {
 };
 
 /**
- * engineの`--json`出力を組み立てる
- *
- * @param errors - errorとして返す検出
- * @param warnings - warningとして返す検出
- * @returns 検出のtextをmessageへ詰め替えたJSON text
+ * 正規化した検出をengineが返す報告の1件へ戻す
  */
-function reportOutput(
-	errors: NormalizedFinding[],
-	warnings: NormalizedFinding[] = [],
-): string {
-	const toFinding = (finding: NormalizedFinding) => ({
+function toReportFinding(
+	finding: NormalizedFinding,
+	severity: Severity,
+): ReportFinding {
+	return {
 		column: finding.column,
 		file: finding.file,
 		line: finding.line,
 		message: finding.text,
 		rule: finding.rule,
-	});
-	return JSON.stringify({
-		errors: errors.map(toFinding),
-		warnings: warnings.map(toFinding),
-	});
+		severity,
+	};
 }
 
 /**
- * warning1件だけを返すengineの出力を組み立てる
+ * engineが返す報告を組み立てる
  *
- * @param finding - warningとして返す検出
- * @returns warningだけを持つJSON text
+ * @param errors - errorとして返す検出
+ * @param warnings - warningとして返す検出
+ * @returns severityを補った報告
  */
-function warningOutput(finding: NormalizedFinding): string {
-	return reportOutput([], [finding]);
+function reportOf(
+	errors: NormalizedFinding[],
+	warnings: NormalizedFinding[] = [],
+): EngineReport {
+	return {
+		errors: errors.map((finding) => toReportFinding(finding, "error")),
+		warnings: warnings.map((finding) => toReportFinding(finding, "warning")),
+	};
+}
+
+/**
+ * どのruleも検出しないengine実装を返す
+ */
+function emptyRegistry(): FindingEngineRegistry {
+	const empty: FindingEngine = () => ({ errors: [], warnings: [] });
+	return {
+		"code-style-check": empty,
+		"comment-check": empty,
+		"document-style-check": empty,
+		"tsdoc-check": empty,
+	};
+}
+
+/**
+ * 1つのengineだけが報告を返す実装を組み立てる
+ */
+function registryFor(
+	name: FindingEngineName,
+	report: EngineReport,
+): FindingEngineRegistry {
+	const engines = emptyRegistry();
+	engines[name] = () => report;
+	return engines;
+}
+
+/**
+ * 1つのengineだけが例外を投げる実装を組み立てる
+ */
+function throwingRegistry(
+	name: FindingEngineName,
+	message: string,
+): FindingEngineRegistry {
+	const engines = emptyRegistry();
+	engines[name] = () => {
+		throw new Error(message);
+	};
+	return engines;
 }
 
 function runnerFor(result: EngineProcessResult): EngineRunner {
@@ -194,6 +237,7 @@ describe("engine orchestration", () => {
 		expect(results[0]?.message).toBe("biome is not installed");
 		expect(results[0]?.durationMs).toBeNull();
 	});
+
 	test("reports a condition that the engine could not take", async () => {
 		const results = await runEngines(
 			createOptions({
@@ -211,29 +255,27 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				runner: runnerFor({
-					exitCode: 1,
-					stderr: "",
-					stdout: reportOutput([commentFinding]),
-				}),
+				findingEngines: registryFor(
+					"comment-check",
+					reportOf([commentFinding]),
+				),
 			}),
 		);
 		expect(results[0]?.status).toBe("failed");
 		expect(results[0]?.reported).toHaveLength(1);
 	});
 
-	test("treats document-style-check as a finding engine", async () => {
+	test("runs document-style-check as a finding engine", async () => {
 		const results = await runEngines(
 			createOptions({
 				config: parseConfig(
 					{ "document-style-check": { enabled: true } },
 					"test",
 				),
-				runner: runnerFor({
-					exitCode: 1,
-					stderr: "",
-					stdout: reportOutput([documentFinding]),
-				}),
+				findingEngines: registryFor(
+					"document-style-check",
+					reportOf([documentFinding]),
+				),
 			}),
 		);
 		expect(results[0]?.status).toBe("failed");
@@ -245,11 +287,10 @@ describe("engine orchestration", () => {
 			createOptions({
 				baseline: createBaseline([commentFinding]),
 				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				runner: runnerFor({
-					exitCode: 1,
-					stderr: "",
-					stdout: reportOutput([commentFinding]),
-				}),
+				findingEngines: registryFor(
+					"comment-check",
+					reportOf([commentFinding]),
+				),
 			}),
 		);
 		expect(results[0]?.status).toBe("passed");
@@ -262,11 +303,10 @@ describe("engine orchestration", () => {
 			createOptions({
 				baseline: createBaseline([commentFinding]),
 				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				runner: runnerFor({
-					exitCode: 1,
-					stderr: "",
-					stdout: reportOutput([commentFinding, periodFinding]),
-				}),
+				findingEngines: registryFor(
+					"comment-check",
+					reportOf([commentFinding, periodFinding]),
+				),
 			}),
 		);
 		expect(results[0]?.status).toBe("failed");
@@ -279,11 +319,7 @@ describe("engine orchestration", () => {
 			createOptions({
 				baseline: createBaseline([periodFinding]),
 				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				runner: runnerFor({
-					exitCode: 1,
-					stderr: "",
-					stdout: reportOutput([periodFinding]),
-				}),
+				findingEngines: registryFor("comment-check", reportOf([periodFinding])),
 			}),
 		);
 		expect(results[0]?.status).toBe("passed");
@@ -296,16 +332,13 @@ describe("engine orchestration", () => {
 			createOptions({
 				baseline: createBaseline([periodFinding]),
 				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				runner: runnerFor({
-					exitCode: 0,
-					stderr: "",
-					stdout: reportOutput([]),
-				}),
+				findingEngines: registryFor("comment-check", reportOf([])),
 			}),
 		);
 		expect(results[0]?.status).toBe("passed");
 		expect(results[0]?.resolved).toBe(1);
 	});
+
 	test("keeps a warning out of the report by default", async () => {
 		const results = await runEngines(
 			createOptions({
@@ -313,11 +346,10 @@ describe("engine orchestration", () => {
 					{ "document-style-check": { enabled: true } },
 					"test",
 				),
-				runner: runnerFor({
-					exitCode: 0,
-					stderr: "",
-					stdout: warningOutput(documentFinding),
-				}),
+				findingEngines: registryFor(
+					"document-style-check",
+					reportOf([], [documentFinding]),
+				),
 			}),
 		);
 		expect(results[0]?.status).toBe("passed");
@@ -334,11 +366,10 @@ describe("engine orchestration", () => {
 					},
 					"test",
 				),
-				runner: runnerFor({
-					exitCode: 0,
-					stderr: "",
-					stdout: warningOutput(documentFinding),
-				}),
+				findingEngines: registryFor(
+					"document-style-check",
+					reportOf([], [documentFinding]),
+				),
 			}),
 		);
 		expect(results[0]?.status).toBe("failed");
@@ -348,14 +379,14 @@ describe("engine orchestration", () => {
 		expect(results[0]?.warnings).toEqual([]);
 	});
 
-	test("marks output that is not JSON as an error", async () => {
+	test("marks a finding engine that throws as an error", async () => {
 		const results = await runEngines(
 			createOptions({
 				config: parseConfig({ "tsdoc-check": { enabled: true } }, "test"),
-				runner: runnerFor({ exitCode: 0, stderr: "", stdout: "not json" }),
+				findingEngines: throwingRegistry("tsdoc-check", "boom"),
 			}),
 		);
 		expect(results[0]?.status).toBe("error");
-		expect(results[0]?.message).toBe("tsdoc-check did not print JSON");
+		expect(results[0]?.message).toBe("tsdoc-check could not finish: boom");
 	});
 });
