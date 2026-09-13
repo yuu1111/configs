@@ -35,3 +35,23 @@ export const OPT_IN_RULE_IDS = [
  * OPT_IN_RULE_IDSが定義するrule識別子のunion型
  */
 export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
+
+/**
+ * ruleをgroupへまとめた対応表 `rules` のgroup単位の指定が使う
+ */
+export const RULE_GROUPS = {
+	syntax: ["single-line-doc", "tsdoc-syntax", "tsdoc-tag"],
+	documentation: [
+		"deprecated-without-guidance",
+		"missing-doc",
+		"missing-returns",
+	],
+	contract: [
+		"param-mismatch",
+		"param-order",
+		"param-untagged",
+		"type-param-mismatch",
+		"type-param-untagged",
+	],
+	suppression: ["suppression", "suppression-unused"],
+} as const satisfies Record<string, readonly TsdocRule[]>;

@@ -217,3 +217,44 @@ describe("command line", () => {
 		}
 	});
 });
+
+describe("disabled rules", () => {
+	test("drops a finding for a rule turned off by default", () => {
+		expect(
+			scanSource("// TODO: remove\n", "src/a.ts", [], ["placeholder-comment"]),
+		).toEqual([]);
+	});
+
+	test("keeps the findings of the other rules", () => {
+		expect(
+			scanSource("// TODO: remove\n", "src/a.ts", [], ["separator-comment"]),
+		).toHaveLength(1);
+	});
+});
+
+describe("command line --disable", () => {
+	test("rejects an unknown rule name", () => {
+		expect(() => parseArguments(["--disable", "period", "."])).toThrow(
+			"unknown rule: period",
+		);
+	});
+
+	test("turns off a rule that is on by default", () => {
+		const root = mkdtempSync(join(tmpdir(), "comment-check-cli-"));
+		try {
+			writeFileSync(join(root, "a.ts"), "// TODO: remove\n");
+			const { code, output } = runMain([
+				"--disable",
+				"placeholder-comment",
+				"--baseline",
+				join(root, "baseline.json"),
+				root,
+			]);
+
+			expect(code).toBe(0);
+			expect(output).toContain("0 new");
+		} finally {
+			rmSync(root, { force: true, recursive: true });
+		}
+	});
+});

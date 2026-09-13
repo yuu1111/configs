@@ -47,7 +47,7 @@ tsdoc-check --enable missing-returns --enable param-order --enable deprecated-wi
 Only top-level exported declarations are checked.
 A file that does not parse is left to the TypeScript compiler and to Biome, so its declarations are not checked.
 
-The rule identifiers are published as `@yuu1111/tsdoc-check/rule-ids` (`TsdocRule`, `OptInRuleId`) for a TypeScript config such as `quality.config.ts`.
+The rule identifiers are published as `@yuu1111/tsdoc-check/rule-ids` (`TsdocRule`, `OptInRuleId`) and is the rule vocabulary that the `$schema` of `quality.json` reads.
 
 ## Suppressions
 
@@ -66,5 +66,6 @@ A suppression without a reason, with an unknown rule, or without any rule is an 
 |--------|-------------|
 | `--enable <rule>` | Turn on an opt-in rule, repeatable |
 | `--error <rule>` | Raise the rule to an error, repeatable |
+| `--disable <rule>` | Turn a rule off, including one that is on by default, repeatable; a rule cannot be both disabled and enabled or promoted |
 | `--ignore <path>` | Path to leave out, repeatable |
 | `--json` | Print the findings as JSON |

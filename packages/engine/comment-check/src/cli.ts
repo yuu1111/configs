@@ -8,8 +8,8 @@ import {
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
-import type { OptInRuleId } from "./rule-ids";
-import { type Finding, parseEnabledRules } from "./rules";
+import type { OptInRuleId, RuleId } from "./rule-ids";
+import { type Finding, parseDisabledRules, parseEnabledRules } from "./rules";
 import { SUPPORTED_EXTENSIONS, scanFiles } from "./scan";
 
 const DEFAULT_BASELINE = "comment-baseline.json";
@@ -25,13 +25,14 @@ const RULE_MESSAGES: Record<string, string> = {
 };
 
 const USAGE =
-	"Usage: comment-check [--baseline <path>] [--enable <rule>] [--ignore <path>] [--update-baseline] [--json] [path...]";
+	"Usage: comment-check [--baseline <path>] [--enable <rule>] [--disable <rule>] [--ignore <path>] [--update-baseline] [--json] [path...]";
 
 /**
  * 解析した起動条件
  */
 export interface Options {
 	baselinePath: string;
+	disabled: RuleId[];
 	enabled: OptInRuleId[];
 	ignores: string[];
 	json: boolean;
@@ -48,11 +49,13 @@ export interface Options {
 export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
 		flags: ["json", "update-baseline"],
-		values: ["baseline", "enable", "ignore"],
+		values: ["baseline", "disable", "enable", "ignore"],
 	});
+	const enabled = parseEnabledRules(parsed.values.get("enable") ?? []);
 	return {
 		baselinePath: parsed.values.get("baseline")?.at(-1) ?? DEFAULT_BASELINE,
-		enabled: parseEnabledRules(parsed.values.get("enable") ?? []),
+		disabled: parseDisabledRules(parsed.values.get("disable") ?? [], enabled),
+		enabled,
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
 		targets: parsed.targets.length > 0 ? parsed.targets : ["."],
@@ -82,7 +85,12 @@ export function main(argv: string[]): number {
 		extensions: SUPPORTED_EXTENSIONS,
 		ignores: options.ignores,
 	});
-	const findings = scanFiles(files, process.cwd(), options.enabled);
+	const findings = scanFiles(
+		files,
+		process.cwd(),
+		options.enabled,
+		options.disabled,
+	);
 	if (options.update) {
 		const baseline = createBaseline(findings);
 		writeBaseline(options.baselinePath, baseline);

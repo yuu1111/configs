@@ -37,6 +37,38 @@ export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
 }
 
 /**
+ * --disableで渡されたrule名を検証して重複を除く --enableで有効にしたruleと--errorで昇格したruleは無効にできない
+ *
+ * @param values - --disableで渡されたrule名の一覧
+ * @param enabled - --enableで有効にしたopt-in ruleの一覧
+ * @param promoted - --errorで昇格したruleの一覧
+ * @returns 検証済みで重複のない無効化するruleの一覧
+ */
+export function parseDisabledRules(
+	values: readonly string[],
+	enabled: readonly OptInRuleId[] = [],
+	promoted: readonly string[] = [],
+): TsdocRule[] {
+	const disabled: TsdocRule[] = [];
+	for (const value of values) {
+		if (!KNOWN_RULES.has(value)) {
+			throw new Error(`unknown rule: ${value}`);
+		}
+		const rule = value as TsdocRule;
+		if ((enabled as readonly string[]).includes(rule)) {
+			throw new Error(`a rule cannot be enabled and disabled: ${value}`);
+		}
+		if (promoted.includes(rule)) {
+			throw new Error(`a rule cannot be promoted and disabled: ${value}`);
+		}
+		if (!disabled.includes(rule)) {
+			disabled.push(rule);
+		}
+	}
+	return disabled;
+}
+
+/**
  * TSDocに定義がないtagは構文errorではなく報告に留める
  */
 const TAG_MESSAGE_IDS = new Set(["tsdoc-undefined-tag"]);

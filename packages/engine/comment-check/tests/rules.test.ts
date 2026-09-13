@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { RULE_GROUPS, RULE_IDS } from "../src/rule-ids";
 import {
 	classifyComment,
 	findJapanesePeriod,
 	isCrampedComment,
+	parseDisabledRules,
 	parseEnabledRules,
 } from "../src/rules";
 
@@ -82,4 +84,26 @@ describe("opt-in rules", () => {
 			false,
 		);
 	});
+});
+
+describe("disabled rules", () => {
+	test("validates the name and rejects a rule that is also enabled", () => {
+		expect(parseDisabledRules(["placeholder-comment"])).toEqual([
+			"placeholder-comment",
+		]);
+		expect(
+			parseDisabledRules(["placeholder-comment", "placeholder-comment"]),
+		).toEqual(["placeholder-comment"]);
+		expect(() => parseDisabledRules(["period"])).toThrow(
+			"unknown rule: period",
+		);
+		expect(() =>
+			parseDisabledRules(["japanese-period"], ["japanese-period"]),
+		).toThrow("a rule cannot be enabled and disabled: japanese-period");
+	});
+});
+
+test("全てのruleがgroupへ重複なく入る", () => {
+	const grouped = Object.values(RULE_GROUPS).flatMap((rules) => [...rules]);
+	expect(grouped.slice().sort()).toEqual([...RULE_IDS].sort());
 });

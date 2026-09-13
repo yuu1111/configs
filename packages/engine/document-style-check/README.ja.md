@@ -58,7 +58,7 @@ document-style-check check doc.md --rules SKILL.md --review review.json
 
 `consecutive-blank-lines`、`hard-break-html`、`trailing-backslash`、`trailing-whitespace`は整形できるため`lint --write`で解消する `list-marker-consistency`も整形できるが、有効にしたときだけ最初に見つけた記号へ揃える `code-fence-language`、`empty-link`、`full-width-alphanumeric`、`japanese-comma`、`japanese-period`は`--write`の後にもerrorとして残る `date-anchored-statement`と`heading-level-jump`は人またはモデルが判断するwarningになる
 
-ruleの識別子は `@yuu1111/document-style-check/rule-ids`（`RuleId`、`OptInRuleId`）として公開し、`quality.config.ts` のようなTypeScriptの設定から参照できる
+ruleの識別子は `@yuu1111/document-style-check/rule-ids`（`RuleId`、`OptInRuleId`）として公開し、`quality.json` の `$schema` が読むrule語彙の出所になる
 
 ## Commands
 
@@ -75,6 +75,7 @@ ruleの識別子は `@yuu1111/document-style-check/rule-ids`（`RuleId`、`OptIn
 | `--rules <path>` | `## 判断基準`を持つ基準fileで、`scan`と`check`では必須 |
 | `--review <path>` | 読み書きする検証記録file |
 | `--enable <rule>` | opt-in ruleを実行する、複数指定できる、未知の名前は設定error |
+| `--disable <rule>` | 既定で有効なruleも含めて無効にする、複数指定できる、未知の名前は設定error、`--enable`と同じruleは指定できない |
 | `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--write` | 報告の代わりに整形を適用する |
 | `--json` | 検出をJSONで出力する |

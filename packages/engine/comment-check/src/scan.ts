@@ -3,7 +3,7 @@ import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { extractComments } from "./comments";
-import type { OptInRuleId } from "./rule-ids";
+import type { OptInRuleId, RuleId } from "./rule-ids";
 import {
 	classifyComment,
 	type Finding,
@@ -47,12 +47,14 @@ function positionAt(
  * @param source - 走査するsource文字列
  * @param file - 指摘に載せるfileのpath
  * @param enabled - 追加で有効にするopt-in ruleの一覧
+ * @param disabled - 追加で無効にするruleの一覧
  * @returns 検出したcomment違反の一覧
  */
 export function scanSource(
 	source: string,
 	file: string,
 	enabled: readonly OptInRuleId[] = [],
+	disabled: readonly RuleId[] = [],
 ): Finding[] {
 	const findings: Finding[] = [];
 	for (const comment of extractComments(source)) {
@@ -99,7 +101,7 @@ export function scanSource(
 			text,
 		});
 	}
-	return findings;
+	return findings.filter((finding) => !disabled.includes(finding.rule));
 }
 
 /**
@@ -108,17 +110,20 @@ export function scanSource(
  * @param file - 読み込むfileのpath
  * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
  * @param enabled - 追加で有効にするopt-in ruleの一覧
+ * @param disabled - 追加で無効にするruleの一覧
  * @returns 検出したcomment違反の一覧
  */
 export function scanFile(
 	file: string,
 	cwd = process.cwd(),
 	enabled: readonly OptInRuleId[] = [],
+	disabled: readonly RuleId[] = [],
 ): Finding[] {
 	return scanSource(
 		readFileSync(file, "utf8"),
 		normalizePath(relative(cwd, file)),
 		enabled,
+		disabled,
 	);
 }
 
@@ -128,16 +133,18 @@ export function scanFile(
  * @param files - 検査するfileのpath一覧
  * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
  * @param enabled - 追加で有効にするopt-in ruleの一覧
+ * @param disabled - 追加で無効にするruleの一覧
  * @returns 位置順に並べたcomment違反の一覧
  */
 export function scanFiles(
 	files: string[],
 	cwd = process.cwd(),
 	enabled: readonly OptInRuleId[] = [],
+	disabled: readonly RuleId[] = [],
 ): Finding[] {
 	const findings: Finding[] = [];
 	for (const file of files) {
-		findings.push(...scanFile(file, cwd, enabled));
+		findings.push(...scanFile(file, cwd, enabled, disabled));
 	}
 	return findings.sort(compareFindings);
 }

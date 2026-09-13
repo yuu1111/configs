@@ -1,6 +1,11 @@
 import type { Located, Severity } from "@yuu1111/shared/findings";
 import { type MarkdownLine, markdownLines } from "./audit";
-import { OPT_IN_RULE_IDS, type OptInRuleId, type RuleId } from "./rule-ids";
+import {
+	OPT_IN_RULE_IDS,
+	type OptInRuleId,
+	RULE_IDS,
+	type RuleId,
+} from "./rule-ids";
 
 /**
  * 検出した違反1件の内容と位置
@@ -62,6 +67,33 @@ export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
 		}
 	}
 	return enabled;
+}
+
+/**
+ * --disableで渡されたrule名を検証して重複を除く --enableで有効にしたruleは無効にできない
+ *
+ * @param values - --disableで渡されたrule名の一覧
+ * @param enabled - --enableで有効にしたopt-in ruleの一覧
+ * @returns 検証済みで重複のない無効化するruleの一覧
+ */
+export function parseDisabledRules(
+	values: readonly string[],
+	enabled: readonly OptInRuleId[] = [],
+): RuleId[] {
+	const disabled: RuleId[] = [];
+	for (const value of values) {
+		if (!(RULE_IDS as readonly string[]).includes(value)) {
+			throw new Error(`unknown rule: ${value}`);
+		}
+		const rule = value as RuleId;
+		if ((enabled as readonly string[]).includes(rule)) {
+			throw new Error(`a rule cannot be enabled and disabled: ${value}`);
+		}
+		if (!disabled.includes(rule)) {
+			disabled.push(rule);
+		}
+	}
+	return disabled;
 }
 
 /**
@@ -427,12 +459,14 @@ function lintBodyLine(
  * @param source - 検査するMarkdownの本文文字列
  * @param file - 指摘に載せるfileのpath
  * @param enabled - 追加で有効にするopt-in ruleの識別子
+ * @param disabled - 追加で無効にするruleの一覧
  * @returns 検出した違反の一覧
  */
 export function lintSource(
 	source: string,
 	file: string,
 	enabled: readonly OptInRuleId[] = [],
+	disabled: readonly RuleId[] = [],
 ): Finding[] {
 	const findings: Finding[] = [];
 	let blankStreak = 0;
@@ -462,19 +496,44 @@ export function lintSource(
 			findings.push(...markerFinding(item, markers, file));
 		}
 	}
-	return findings;
+	return findings.filter((finding) => !disabled.includes(finding.rule));
 }
 
 /**
  * 1行から、意味を変えずに取り除ける違反を除いた行を返す
  */
-function fixLine(item: MarkdownLine): string {
-	let line = item.line.replace(/[ \t]+$/, "");
-	line = replaceOutsideInlineCode(line, HARD_BREAK, "");
-	if (!item.structural) {
+function fixLine(item: MarkdownLine, disabled: readonly RuleId[]): string {
+	let line = item.line;
+	if (!disabled.includes("trailing-whitespace")) {
+		line = line.replace(/[ \t]+$/, "");
+	}
+	if (!disabled.includes("hard-break-html")) {
+		line = replaceOutsideInlineCode(line, HARD_BREAK, "");
+	}
+	if (!item.structural && !disabled.includes("trailing-backslash")) {
 		line = line.replace(/\\+$/, "");
 	}
-	return line.replace(/[ \t]+$/, "");
+	if (!disabled.includes("trailing-whitespace")) {
+		line = line.replace(/[ \t]+$/, "");
+	}
+	return line;
+}
+
+/**
+ * 空行を結果へ積む 連続空行をそのまま積む指定のときは直前が空行でも積む
+ *
+ * @param result - 積み先の行一覧
+ * @param keepConsecutive - 連続空行をそのまま積むか
+ * @param previousBlank - 直前の行が空行か
+ */
+function appendBlankLine(
+	result: string[],
+	keepConsecutive: boolean,
+	previousBlank: boolean,
+): void {
+	if (keepConsecutive || !previousBlank) {
+		result.push("");
+	}
 }
 
 /**
@@ -482,11 +541,13 @@ function fixLine(item: MarkdownLine): string {
  *
  * @param source - 整形するMarkdownの本文文字列
  * @param enabled - 整形に加えて適用するopt-in ruleの識別子
+ * @param disabled - 追加で無効にするruleの一覧
  * @returns 整形後の本文文字列
  */
 export function fixSource(
 	source: string,
 	enabled: readonly OptInRuleId[] = [],
+	disabled: readonly RuleId[] = [],
 ): string {
 	const bom = source.startsWith("\uFEFF") ? "\uFEFF" : "";
 	const body = bom === "" ? source : source.slice(1);
@@ -494,14 +555,16 @@ export function fixSource(
 	const result: string[] = [];
 	let previousBlank = false;
 	const markers: MarkerState = { marker: undefined };
-	const consistentMarkers = enabled.includes("list-marker-consistency");
+	const consistentMarkers =
+		enabled.includes("list-marker-consistency") &&
+		!disabled.includes("list-marker-consistency");
 	for (const item of markdownLines(body)) {
 		if (item.region !== "body") {
 			previousBlank = false;
 			result.push(item.line);
 			continue;
 		}
-		let line = fixLine(item);
+		let line = fixLine(item, disabled);
 		if (consistentMarkers && line !== "") {
 			line = alignListMarker(line, markers);
 		}
@@ -510,10 +573,12 @@ export function fixSource(
 			result.push(line);
 			continue;
 		}
-		if (!previousBlank) {
-			previousBlank = true;
-			result.push("");
-		}
+		appendBlankLine(
+			result,
+			disabled.includes("consecutive-blank-lines"),
+			previousBlank,
+		);
+		previousBlank = true;
 	}
 	return bom + result.join(eol);
 }

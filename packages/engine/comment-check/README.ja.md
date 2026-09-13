@@ -47,7 +47,9 @@ comment-check --enable cramped-comment .
 | `separator-comment` | error | true | 記号だけで作った装飾comment |
 | `japanese-period` | error | false | 日本語の文を終える `。` を含むcomment |
 
-ruleの識別子は `@yuu1111/comment-check/rule-ids`（`RuleId`、`OptInRuleId`）として公開し、`quality.config.ts` のようなTypeScriptの設定から参照できる
+ruleの識別子は `@yuu1111/comment-check/rule-ids`（`RuleId`、`OptInRuleId`）として公開し、`quality.json` の `$schema` が読むrule語彙の出所になる
+
+既定で有効なruleも `--disable` で無効にできる
 
 ## Options
 
@@ -55,6 +57,7 @@ ruleの識別子は `@yuu1111/comment-check/rule-ids`（`RuleId`、`OptInRuleId`
 |--------|-------------|
 | `--baseline <path>` | 読み書きするbaseline file（既定は `comment-baseline.json`） |
 | `--enable <rule>` | opt-in ruleを実行する、複数指定できる、未知の名前は設定error |
+| `--disable <rule>` | ruleを無効にする、複数指定できる、未知の名前は設定error、`--enable`と同じruleは指定できない |
 | `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--update-baseline` | baselineを現在の検出で置き換える |
 | `--json` | 新規と解消済みの検出をJSONで出力する |

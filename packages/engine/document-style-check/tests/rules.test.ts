@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import type { OptInRuleId } from "../src/rule-ids";
+import { type OptInRuleId, RULE_GROUPS, RULE_IDS } from "../src/rule-ids";
 import { fixSource, lintSource } from "../src/rules";
 
 /**
@@ -397,4 +397,28 @@ test("画像の空のラベルは対象外にする", () => {
 
 test("ラベルがインラインコードだけのリンクは対象外にする", () => {
 	expect(rulesOf("[`label`](url)\n")).toEqual([]);
+});
+
+test("--disableで既定で有効なruleの検出を取り消す", () => {
+	const source = "本文です  \n";
+	expect(lintSource(source, "doc.md", [], ["trailing-whitespace"])).toEqual([]);
+});
+
+test("--disableで既定で有効なruleの整形を取り消す", () => {
+	const source = "本文です  \n";
+	expect(fixSource(source, [], ["trailing-whitespace"])).toBe(source);
+});
+
+test("--disableは無効にしていないruleの整形を止めない", () => {
+	expect(fixSource("本文です  \n", [], ["hard-break-html"])).toBe("本文です\n");
+});
+
+test("--disableで連続空行の圧縮を取り消す", () => {
+	const source = "本文\n\n\n次の行\n";
+	expect(fixSource(source, [], ["consecutive-blank-lines"])).toBe(source);
+});
+
+test("全てのruleがgroupへ重複なく入る", () => {
+	const grouped = Object.values(RULE_GROUPS).flatMap((rules) => [...rules]);
+	expect(grouped.slice().sort()).toEqual([...RULE_IDS].sort());
 });

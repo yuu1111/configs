@@ -45,7 +45,7 @@ tsdoc-check --enable missing-returns --enable param-order --enable deprecated-wi
 
 検査対象はトップレベルのexported宣言だけ parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は検査しない
 
-ruleの識別子は `@yuu1111/tsdoc-check/rule-ids`（`TsdocRule`、`OptInRuleId`）として公開し、`quality.config.ts` のようなTypeScriptの設定から参照できる
+ruleの識別子は `@yuu1111/tsdoc-check/rule-ids`（`TsdocRule`、`OptInRuleId`）として公開し、`quality.json` の `$schema` が読むrule語彙の出所になる
 
 ## Suppressions
 
@@ -65,5 +65,6 @@ export const value = 1
 |--------|-------------|
 | `--enable <rule>` | opt-in ruleを有効にする、複数指定できる |
 | `--error <rule>` | 指定したruleをerrorへ上げる、複数指定できる |
+| `--disable <rule>` | 既定で有効なruleも含めて無効にする、複数指定できる、`--enable`と`--error`と同じruleは指定できない |
 | `--ignore <path>` | 検査から外すpath、複数指定できる |
 | `--json` | 検出をJSONで出力する |

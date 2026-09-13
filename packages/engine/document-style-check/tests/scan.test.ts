@@ -204,3 +204,26 @@ test("--writeで有効にしたopt-in ruleも整形する", () => {
 		rmSync(root, { force: true, recursive: true });
 	}
 });
+
+test("--enableと--disableに同じruleを渡すと拒否する", () => {
+	expect(() =>
+		parseArguments([
+			"lint",
+			"--enable",
+			"japanese-period",
+			"--disable",
+			"japanese-period",
+			".",
+		]),
+	).toThrow("a rule cannot be enabled and disabled: japanese-period");
+});
+
+test("--disableで既定で有効なruleの検出を取り消す", () => {
+	withTemporaryTree({ "a.md": "本文です  \n" }, (directory) => {
+		const files = [join(directory, "a.md")];
+		expect(lintFiles(files, directory).length).toBeGreaterThan(0);
+		expect(lintFiles(files, directory, [], ["trailing-whitespace"])).toEqual(
+			[],
+		);
+	});
+});

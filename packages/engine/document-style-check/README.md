@@ -62,7 +62,7 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 `code-fence-language`, `empty-link`, `full-width-alphanumeric`, `japanese-comma`, and `japanese-period` stay errors after `--write`.
 `date-anchored-statement` and `heading-level-jump` are warnings for a human or a model to judge.
 
-The rule identifiers are published as `@yuu1111/document-style-check/rule-ids` (`RuleId`, `OptInRuleId`) for a TypeScript config such as `quality.config.ts`.
+The rule identifiers are published as `@yuu1111/document-style-check/rule-ids` (`RuleId`, `OptInRuleId`) and is the rule vocabulary that the `$schema` of `quality.json` reads.
 
 ## Commands
 
@@ -79,6 +79,7 @@ The rule identifiers are published as `@yuu1111/document-style-check/rule-ids` (
 | `--rules <path>` | Rules file that holds the `## 判断基準` criteria, required by `scan` and `check` |
 | `--review <path>` | Review file to write or read |
 | `--enable <rule>` | Run an opt-in rule, repeatable; an unknown name is a configuration error |
+| `--disable <rule>` | Turn a rule off, including one that is on by default, repeatable; an unknown name is a configuration error, and a rule cannot be both enabled and disabled |
 | `--ignore <path>` | Path to leave out, repeatable |
 | `--write` | Apply the fixes instead of reporting them |
 | `--json` | Print findings as JSON |

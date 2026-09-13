@@ -47,7 +47,9 @@ comment-check --enable cramped-comment .
 | `separator-comment` | error | true | decorative comments made only of punctuation |
 | `japanese-period` | error | false | a Japanese sentence in a comment that ends with `。` |
 
-The rule identifiers are published as `@yuu1111/comment-check/rule-ids` (`RuleId`, `OptInRuleId`) for a TypeScript config such as `quality.config.ts`.
+The rule identifiers are published as `@yuu1111/comment-check/rule-ids` (`RuleId`, `OptInRuleId`) and is the rule vocabulary that the `$schema` of `quality.json` reads.
+
+A rule that is on by default can be turned off with `--disable`.
 
 ## Options
 
@@ -55,6 +57,7 @@ The rule identifiers are published as `@yuu1111/comment-check/rule-ids` (`RuleId
 |--------|-------------|
 | `--baseline <path>` | Baseline file to read or write (default `comment-baseline.json`) |
 | `--enable <rule>` | Run an opt-in rule, repeatable; an unknown name is a configuration error |
+| `--disable <rule>` | Turn a rule off, repeatable; an unknown name is a configuration error, and a rule cannot be both enabled and disabled |
 | `--ignore <path>` | Path to leave out, repeatable |
 | `--update-baseline` | Replace the baseline with the current findings |
 | `--json` | Print new and resolved findings as JSON |

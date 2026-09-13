@@ -5,8 +5,8 @@ import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
 import { snapshot, verify } from "./audit";
-import type { OptInRuleId } from "./rule-ids";
-import { type Finding, parseEnabledRules } from "./rules";
+import type { OptInRuleId, RuleId } from "./rule-ids";
+import { type Finding, parseDisabledRules, parseEnabledRules } from "./rules";
 import { DOCUMENT_EXTENSIONS, fixFiles, lintFiles } from "./scan";
 
 type Action = "check" | "lint" | "scan";
@@ -16,6 +16,7 @@ type Action = "check" | "lint" | "scan";
  */
 export interface Options {
 	action: Action;
+	disabled: RuleId[];
 	enabled: OptInRuleId[];
 	ignores: string[];
 	json: boolean;
@@ -30,7 +31,7 @@ const USAGE = [
 	"",
 	"  scan  <path...> --rules <file> --review <file>   確認候補と検証記録を作る",
 	"  check <path...> --rules <file> --review <file>   埋めた検証記録を確認する",
-	"  lint  [--write] [--enable <rule>] [--ignore <path>] [--json] [path...]",
+	"  lint  [--write] [--enable <rule>] [--disable <rule>] [--ignore <path>] [--json] [path...]",
 	"                                                  機械的な違反を報告または整形する",
 ].join("\n");
 
@@ -53,7 +54,7 @@ function toAction(argument: string): Action | undefined {
 export function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
 		flags: ["json", "write"],
-		values: ["enable", "ignore", "review", "rules"],
+		values: ["disable", "enable", "ignore", "review", "rules"],
 	});
 	const [actionArgument, ...targets] = parsed.targets;
 	if (actionArgument === undefined) {
@@ -63,9 +64,11 @@ export function parseArguments(argv: string[]): Options {
 	if (action === undefined) {
 		throw new Error(`unknown action: ${actionArgument}`);
 	}
+	const enabled = parseEnabledRules(parsed.values.get("enable") ?? []);
 	return {
 		action,
-		enabled: parseEnabledRules(parsed.values.get("enable") ?? []),
+		disabled: parseDisabledRules(parsed.values.get("disable") ?? [], enabled),
+		enabled,
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
 		review: parsed.values.get("review")?.at(-1) ?? "",
@@ -158,7 +161,12 @@ function runCheck(options: Options): number {
  * 検出と整形の結果を出力し、errorの有無を終了codeで返す
  */
 function report(options: Options, files: string[]): number {
-	const findings = lintFiles(files, process.cwd(), options.enabled);
+	const findings = lintFiles(
+		files,
+		process.cwd(),
+		options.enabled,
+		options.disabled,
+	);
 	const errors = findings.filter((finding) => finding.severity === "error");
 	const warnings = findings.filter((finding) => finding.severity === "warning");
 	if (options.json) {
@@ -185,7 +193,7 @@ function runLint(options: Options): number {
 		ignores: options.ignores,
 	});
 	if (options.write) {
-		for (const file of fixFiles(files, options.enabled)) {
+		for (const file of fixFiles(files, options.enabled, options.disabled)) {
 			console.log(`Fixed ${normalizePath(relative(process.cwd(), file))}`);
 		}
 	}

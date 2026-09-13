@@ -2,14 +2,20 @@
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
-import { KNOWN_RULE_NAMES, type OptInRuleId } from "./rule-ids";
-import { type Finding, parseEnabledRules, promoteFindings } from "./rules";
+import { KNOWN_RULE_NAMES, type OptInRuleId, type TsdocRule } from "./rule-ids";
+import {
+	type Finding,
+	parseDisabledRules,
+	parseEnabledRules,
+	promoteFindings,
+} from "./rules";
 import { scanFiles, TYPESCRIPT_EXTENSIONS } from "./scan";
 
 const USAGE =
-	"Usage: tsdoc-check [--enable <rule>] [--error <rule>] [--ignore <path>] [--json] [path...]";
+	"Usage: tsdoc-check [--enable <rule>] [--disable <rule>] [--error <rule>] [--ignore <path>] [--json] [path...]";
 
 interface Options {
+	disabled: TsdocRule[];
 	enabled: OptInRuleId[];
 	ignores: string[];
 	json: boolean;
@@ -27,9 +33,10 @@ function applyPromoteOption(options: Options, value: string): void {
 function parseArguments(argv: string[]): Options {
 	const parsed = parseArgv(argv, {
 		flags: ["json"],
-		values: ["enable", "error", "ignore"],
+		values: ["disable", "enable", "error", "ignore"],
 	});
 	const options: Options = {
+		disabled: [],
 		enabled: parseEnabledRules(parsed.values.get("enable") ?? []),
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
@@ -39,6 +46,11 @@ function parseArguments(argv: string[]): Options {
 	for (const value of parsed.values.get("error") ?? []) {
 		applyPromoteOption(options, value);
 	}
+	options.disabled = parseDisabledRules(
+		parsed.values.get("disable") ?? [],
+		options.enabled,
+		options.promote,
+	);
 	return options;
 }
 
@@ -58,7 +70,7 @@ function main(argv: string[]): number {
 		ignores: options.ignores,
 	});
 	const findings = promoteFindings(
-		scanFiles(files, process.cwd(), options.enabled),
+		scanFiles(files, process.cwd(), options.enabled, options.disabled),
 		options.promote,
 	);
 	const errors = findings.filter((finding) => finding.severity === "error");

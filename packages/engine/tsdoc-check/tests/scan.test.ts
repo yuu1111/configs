@@ -368,3 +368,13 @@ describe("tsdoc checks", () => {
 		).toEqual([]);
 	});
 });
+
+describe("disabled rules", () => {
+	test("turns off a rule that is on by default", () => {
+		const source = "/** Runs the task */\nexport function run(): void {}\n";
+		expect(rulesOf(source)).toEqual(["single-line-doc"]);
+		expect(
+			scanSource(source, "src/sample.ts", [], ["single-line-doc"]),
+		).toEqual([]);
+	});
+});

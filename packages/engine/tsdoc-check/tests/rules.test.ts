@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { parseEnabledRules, promoteFindings, returnsValue } from "../src/rules";
+import { KNOWN_RULE_NAMES, RULE_GROUPS } from "../src/rule-ids";
+import {
+	parseDisabledRules,
+	parseEnabledRules,
+	promoteFindings,
+	returnsValue,
+} from "../src/rules";
 import { scanSource } from "../src/scan";
 
 describe("rule promotion", () => {
@@ -59,5 +65,30 @@ describe("return value detection", () => {
 		expect(returnsValue("Promise<User>")).toBe(true);
 		expect(returnsValue("number | undefined")).toBe(true);
 		expect(returnsValue("void | never")).toBe(false);
+	});
+});
+
+describe("disabled rules", () => {
+	test("validates the name and rejects a rule that is also enabled or promoted", () => {
+		expect(parseDisabledRules(["missing-doc"])).toEqual(["missing-doc"]);
+		expect(parseDisabledRules(["missing-doc", "missing-doc"])).toEqual([
+			"missing-doc",
+		]);
+		expect(() => parseDisabledRules(["missing-docs"])).toThrow(
+			"unknown rule: missing-docs",
+		);
+		expect(() =>
+			parseDisabledRules(["missing-returns"], ["missing-returns"]),
+		).toThrow("a rule cannot be enabled and disabled: missing-returns");
+		expect(() =>
+			parseDisabledRules(["missing-doc"], [], ["missing-doc"]),
+		).toThrow("a rule cannot be promoted and disabled: missing-doc");
+	});
+});
+
+describe("rule groups", () => {
+	test("covers every rule once", () => {
+		const grouped = Object.values(RULE_GROUPS).flatMap((rules) => [...rules]);
+		expect(grouped.slice().sort()).toEqual([...KNOWN_RULE_NAMES].sort());
 	});
 });

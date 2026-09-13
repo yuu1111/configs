@@ -1,5 +1,10 @@
 import type { Located } from "@yuu1111/shared/findings";
-import { OPT_IN_RULE_IDS, type OptInRuleId, type RuleId } from "./rule-ids";
+import {
+	OPT_IN_RULE_IDS,
+	type OptInRuleId,
+	RULE_IDS,
+	type RuleId,
+} from "./rule-ids";
 
 /**
  * 検出したcomment違反1件の内容と位置
@@ -34,6 +39,33 @@ export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
 		}
 	}
 	return enabled;
+}
+
+/**
+ * --disableで渡されたrule名を検証して重複を除く --enableで有効にしたruleは無効にできない
+ *
+ * @param values - --disableで渡されたrule名の一覧
+ * @param enabled - --enableで有効にしたopt-in ruleの一覧
+ * @returns 検証済みで重複のない無効化するruleの一覧
+ */
+export function parseDisabledRules(
+	values: readonly string[],
+	enabled: readonly OptInRuleId[] = [],
+): RuleId[] {
+	const disabled: RuleId[] = [];
+	for (const value of values) {
+		if (!(RULE_IDS as readonly string[]).includes(value)) {
+			throw new Error(`unknown rule: ${value}`);
+		}
+		const rule = value as RuleId;
+		if ((enabled as readonly string[]).includes(rule)) {
+			throw new Error(`a rule cannot be enabled and disabled: ${value}`);
+		}
+		if (!disabled.includes(rule)) {
+			disabled.push(rule);
+		}
+	}
+	return disabled;
 }
 
 /**
