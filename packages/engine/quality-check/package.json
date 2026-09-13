@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/quality-check",
-	"version": "0.10.0",
+	"version": "0.11.0",
 	"description": "Integrated quality check runner",
 	"repository": {
 		"type": "git",
@@ -30,9 +30,9 @@
 		"lint"
 	],
 	"peerDependencies": {
-		"@yuu1111/comment-check": ">=2.2.2",
-		"@yuu1111/document-style-check": ">=0.4.0",
-		"@yuu1111/tsdoc-check": ">=2.1.0"
+		"@yuu1111/comment-check": ">=2.3.0",
+		"@yuu1111/document-style-check": ">=0.5.0",
+		"@yuu1111/tsdoc-check": ">=2.2.0"
 	},
 	"devDependencies": {
 		"@yuu1111/shared": "workspace:*"

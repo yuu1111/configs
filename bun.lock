@@ -56,7 +56,7 @@
     },
     "packages/engine/comment-check": {
       "name": "@yuu1111/comment-check",
-      "version": "2.2.2",
+      "version": "2.3.0",
       "bin": {
         "comment-check": "bin/cli.js",
       },
@@ -66,7 +66,7 @@
     },
     "packages/engine/document-style-check": {
       "name": "@yuu1111/document-style-check",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "bin": {
         "document-style-check": "bin/cli.js",
       },
@@ -76,7 +76,7 @@
     },
     "packages/engine/quality-check": {
       "name": "@yuu1111/quality-check",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "bin": {
         "quality-check": "bin/cli.js",
       },
@@ -84,9 +84,9 @@
         "@yuu1111/shared": "workspace:*",
       },
       "peerDependencies": {
-        "@yuu1111/comment-check": ">=2.2.2",
-        "@yuu1111/document-style-check": ">=0.4.0",
-        "@yuu1111/tsdoc-check": ">=2.1.0",
+        "@yuu1111/comment-check": ">=2.3.0",
+        "@yuu1111/document-style-check": ">=0.5.0",
+        "@yuu1111/tsdoc-check": ">=2.2.0",
       },
     },
     "packages/engine/shared": {
@@ -95,7 +95,7 @@
     },
     "packages/engine/tsdoc-check": {
       "name": "@yuu1111/tsdoc-check",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "bin": {
         "tsdoc-check": "bin/cli.js",
       },
