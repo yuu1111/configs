@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/comment-check",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"description": "Shared comment and suppression checker",
 	"repository": {
 		"type": "git",

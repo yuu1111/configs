@@ -50,6 +50,7 @@ bun add -D @yuu1111/biome-config
 | `nursery.noFloatingPromises` | `warn` |
 | `performance.noBarrelFile`、`performance.noReExportAll` | `error` |
 | `complexity.noExcessiveCognitiveComplexity` | `warn` |
+| `style.noExportedImports` | `error` |
 | `style.noNestedTernary`、`style.useErrorCause` | `warn` |
 | `suspicious.noEmptyBlockStatements` | `warn` |
 
@@ -75,7 +76,7 @@ CSSのformatterとlinterを足し、Tailwind directiveを有効にする
 
 | Rule | 重大度 | Default | 検出対象 |
 |------|----------|---------|---------|
-| `no-reexports` | warn | false | 既存bindingを転送するだけのexport（`export type Alias = Imported` など）、`export ... from` の形はbaseのbarrel file ruleが担当する |
+| `no-reexports` | warn | false | 既存bindingを転送するだけのexport（`export type Alias = Imported` など）、`export { imported }` はbaseの `style.noExportedImports`、`export ... from` の形はbaseのbarrel file ruleが担当する |
 | `no-incomplete-implementation` | error, warn | false | placeholderのthrowはerror、logだけのcatch、`null`・`[]`・`{}` へ置き換えたrejected promiseとcatchしたerrorはwarn |
 | `no-type-safety-bypass` | error, warn | false | `as unknown as T` はerror、`Record<string, unknown>` のassertion、未検証のJSON assertion、静的な `Reflect.get`、receiver無しの `Reflect.apply` はwarn |
 | `no-unsafe-errno-assertion` | warn | false | catchした値を検証せず `NodeJS.ErrnoException` のassertion経由で `code` を読むコード |

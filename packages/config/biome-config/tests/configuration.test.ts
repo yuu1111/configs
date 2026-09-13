@@ -170,6 +170,32 @@ describe("published Biome configurations", () => {
 	}
 
 	for (const configExport of ["biome", "react"] as const) {
+		test(`${configExport} export reports a named export of an imported binding`, () => {
+			const consumerDirectory = createConsumer(configExport);
+			try {
+				writeFileSync(
+					join(consumerDirectory, "index.ts"),
+					'import { value } from "./module";\nimport type { Model } from "./module";\nexport { value };\nexport type { Model };\n',
+				);
+				const invalid = runBiome(consumerDirectory, "lint", "index.ts");
+				expect(invalid.exitCode).not.toBe(0);
+				expect(
+					invalid.output.match(/lint\/style\/noExportedImports/g),
+				).toHaveLength(2);
+
+				writeFileSync(
+					join(consumerDirectory, "local.ts"),
+					"const value = 1;\nexport { value };\n",
+				);
+				const valid = runBiome(consumerDirectory, "lint", "local.ts");
+				expect(valid.output).not.toContain("lint/style/noExportedImports");
+			} finally {
+				rmSync(consumerDirectory, { recursive: true, force: true });
+			}
+		});
+	}
+
+	for (const configExport of ["biome", "react"] as const) {
 		test(`${configExport} export warns about nested ternaries`, () => {
 			const consumerDirectory = createConsumer(configExport);
 			try {

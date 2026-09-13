@@ -50,6 +50,7 @@ The `plugins/*` presets only add rules, so list them after `biome` or `react`; t
 | `nursery.noFloatingPromises` | `warn` |
 | `performance.noBarrelFile`, `performance.noReExportAll` | `error` |
 | `complexity.noExcessiveCognitiveComplexity` | `warn` |
+| `style.noExportedImports` | `error` |
 | `style.noNestedTernary`, `style.useErrorCause` | `warn` |
 | `suspicious.noEmptyBlockStatements` | `warn` |
 
@@ -75,7 +76,7 @@ Adds the CSS formatter and linter, with the Tailwind directives enabled.
 
 | Rule | Severity | Default | Detects |
 |------|----------|---------|---------|
-| `no-reexports` | warn | false | An export that only forwards an existing binding, such as `export type Alias = Imported` or `export default imported`; the `export ... from` forms are covered by the base barrel-file rules |
+| `no-reexports` | warn | false | An export that only forwards an existing binding, such as `export type Alias = Imported` or `export default imported`; `export { imported }` is caught by the base `style.noExportedImports` and the `export ... from` forms by the base barrel-file rules |
 | `no-incomplete-implementation` | error, warn | false | A placeholder throw, as an error; a catch block that only logs, or a rejected promise or caught error replaced with `null`, `[]`, or `{}`, as a warning |
 | `no-type-safety-bypass` | error, warn | false | `as unknown as T`, as an error; a `Record<string, unknown>` assertion, an unchecked JSON assertion, static `Reflect.get`, or a receiver-free `Reflect.apply`, as a warning |
 | `no-unsafe-errno-assertion` | warn | false | Reading `code` through a `NodeJS.ErrnoException` assertion without validating the caught value |

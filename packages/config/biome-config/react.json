@@ -29,6 +29,7 @@
 				"noReExportAll": "error"
 			},
 			"style": {
+				"noExportedImports": "error",
 				"noNestedTernary": "warn",
 				"useErrorCause": "warn"
 			},
