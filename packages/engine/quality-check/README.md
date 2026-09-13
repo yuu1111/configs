@@ -2,8 +2,7 @@
 
 # @yuu1111/quality-check
 
-Runs Biome, the type checker, Knip, code-style-check, comment-check, document-style-check, and the TSDoc checker from one CLI instead of one script per project.
-The baseline diff lives here too.
+Integrated CLI that runs the configured engines and owns the baseline diff.
 
 ## Install
 
@@ -124,6 +123,20 @@ The selection is handed to the built-in engines directly, so the CLI no longer t
 No check engine keeps a baseline of its own, so the new-and-resolved diff is done by this CLI from a single baseline file.
 
 `typecheck` starts `tsc --noEmit -p <path>` once per path in `projects`, and falls back to the current `tsconfig.json`.
+
+## Baseline
+
+A project that adopts the checks on an existing tree records the findings it has today in `quality-baseline.json`, so only the findings it adds later fail.
+`--update-baseline` replaces that file with the current findings:
+
+```bash
+quality-check --update-baseline
+```
+
+Every run reports the new findings and counts the baseline entries that no longer appear as `resolved`.
+Fix the new findings, and run `--update-baseline` only when the team accepts one on purpose.
+An entry is identified by its engine, rule, file, and message, so a change to a message re-baselines that rule.
+Set `baseline` to `false` in `quality.json` to diff nothing and report every finding.
 
 ## Commands
 

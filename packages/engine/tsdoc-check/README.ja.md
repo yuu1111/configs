@@ -4,8 +4,6 @@
 
 exported宣言のための共有TSDoc checker
 
-このengineはprivateなworkspace packageとして `@yuu1111/quality-check` へ同梱し、`quality.json` の `tsdoc-check` sectionで有効にする
-
 ## Usage
 
 `tsdoc-check` sectionでengineを有効にしてruleを選ぶ

@@ -2,9 +2,7 @@
 
 # @yuu1111/comment-check
 
-Small comment checker that keeps suppressions and placeholder comments from spreading.
-
-This engine is a private workspace package bundled into `@yuu1111/quality-check`, and it is enabled through its `comment-check` section in `quality.json`.
+Comment checker for TypeScript and JavaScript.
 
 ## Usage
 

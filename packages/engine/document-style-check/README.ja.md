@@ -2,9 +2,7 @@
 
 # @yuu1111/document-style-check
 
-判断記録を持つ小さなMarkdown検査で、機械的に意味のない違反を文書から除き、残りへ書かれた判断を要求する
-
-このengineはprivateなworkspace packageとして `@yuu1111/quality-check` へ同梱し、`quality.json` の `document-style-check` sectionで有効にする
+判断記録を持つMarkdown検査で、機械的に意味のない違反を文書から除き、残りへ書かれた判断を要求する
 
 ## Usage
 

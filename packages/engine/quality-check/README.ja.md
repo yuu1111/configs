@@ -2,7 +2,7 @@
 
 # @yuu1111/quality-check
 
-Projectごとのscriptから個別に呼んでいたBiome、型検査、Knip、code-style-check、comment-check、document-style-check、TSDoc checkerを1つのCLIへまとめる baselineの差分判定もここで行う
+設定したengineを1つのCLIで実行し baselineの差分判定も持つ統合runner
 
 ## Install
 
@@ -123,6 +123,20 @@ engineが知らないgroup名やrule名は設定errorになり、配布する `s
 
 `typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する
 省略時はカレントの `tsconfig.json` を1回だけ読む
+
+## Baseline
+
+既存のtreeへ検査を導入するProjectは、その時点の検出を `quality-baseline.json` へ記録し、後から増えた検出だけを失敗にする
+`--update-baseline` はそのfileを現在の検出で置き換える
+
+```bash
+quality-check --update-baseline
+```
+
+実行のたびに新規の検出を報告し、現れなくなったbaselineのentryを `resolved` として数える
+新規の検出は直し、意図して受け入れるときだけ `--update-baseline` を実行する
+entryの同一性はengineとruleとfileと検出messageで決まるため、messageが変わるとそのruleは再登録が必要になる
+`quality.json` の `baseline` を `false` にすると差分判定を行わず、全ての検出を報告する
 
 ## Commands
 

@@ -2,10 +2,7 @@
 
 # @yuu1111/code-style-check
 
-baselineを持たない小さなsource style検査
-隣接する定義の間隔を1つの空行へ揃える
-
-このengineはprivateなworkspace packageとして `@yuu1111/quality-check` へ同梱し、`quality.json` の `code-style-check` sectionで有効にする
+TypeScriptとJavaScriptのsource style検査
 
 ## Usage
 

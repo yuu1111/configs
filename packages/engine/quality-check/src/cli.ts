@@ -67,7 +67,17 @@ function resolveConfigPath(options: Options, cwd: string): string | null {
 	return findConfigFile(cwd);
 }
 
-async function main(argv: string[]): Promise<number> {
+/**
+ * CLIの本体を起動して終了codeを返す
+ *
+ * @param argv - 起動時に渡されたcommand line引数
+ * @param cwd - configとbaselineを解決する作業ディレクトリ
+ * @returns 処理結果を表す終了code
+ */
+export async function main(
+	argv: string[],
+	cwd = process.cwd(),
+): Promise<number> {
 	const [subcommand, ...rest] = argv;
 	if (subcommand === "document-style") {
 		return documentStyleMain(rest);
@@ -79,7 +89,6 @@ async function main(argv: string[]): Promise<number> {
 	const options = parseArguments(argv);
 	const color = colorEnabled(process.stdout, process.env);
 	const paint = color ? ansiPainter() : plainPainter;
-	const cwd = process.cwd();
 	const configPath = resolveConfigPath(options, cwd);
 	if (configPath === null) {
 		console.error(`quality.json not found in ${cwd}`);

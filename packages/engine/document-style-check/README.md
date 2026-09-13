@@ -2,9 +2,7 @@
 
 # @yuu1111/document-style-check
 
-Small Markdown checker with a review ledger, used to keep mechanical violations out of documents and to record a written judgment on the rest.
-
-This engine is a private workspace package bundled into `@yuu1111/quality-check`, and it is enabled through its `document-style-check` section in `quality.json`.
+Markdown checker with a review ledger, used to keep mechanical violations out of documents and to record a written judgment on the rest.
 
 ## Usage
 

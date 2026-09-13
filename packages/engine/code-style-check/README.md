@@ -2,9 +2,7 @@
 
 # @yuu1111/code-style-check
 
-A small source style checker that keeps one blank line between adjacent definitions.
-
-This engine is a private workspace package bundled into `@yuu1111/quality-check`, and it is enabled through its `code-style-check` section in `quality.json`.
+Source style checker for TypeScript and JavaScript.
 
 ## Usage
 

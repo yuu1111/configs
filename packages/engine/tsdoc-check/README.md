@@ -4,8 +4,6 @@
 
 Shared TSDoc checker for exported declarations.
 
-This engine is a private workspace package bundled into `@yuu1111/quality-check`, and it is enabled through its `tsdoc-check` section in `quality.json`.
-
 ## Usage
 
 Enable the engine and select its rules in the `tsdoc-check` section:

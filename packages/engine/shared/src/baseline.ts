@@ -159,6 +159,9 @@ export function readBaseline(path: string): BaselineFile {
 	) {
 		throw new Error(`${path} is not a baseline`);
 	}
+	if (value.version !== 1) {
+		throw new Error(`${path} is not a version 1 baseline`);
+	}
 	return { entries: value.entries, version: 1 };
 }
 

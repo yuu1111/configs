@@ -17,8 +17,6 @@ export type RuleId = (typeof RULE_IDS)[number];
 export const OPT_IN_RULE_IDS = [] as const;
 
 /**
-
-/**
  * ruleをgroupへまとめた対応表 `rules` のgroup単位の指定が使う
  */
 export const RULE_GROUPS = {

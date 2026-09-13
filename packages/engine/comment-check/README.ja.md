@@ -2,9 +2,7 @@
 
 # @yuu1111/comment-check
 
-抑制commentとplaceholder commentの増殖を止める小さなcomment検査
-
-このengineはprivateなworkspace packageとして `@yuu1111/quality-check` へ同梱し、`quality.json` の `comment-check` sectionで有効にする
+TypeScriptとJavaScriptのcomment検査
 
 ## Usage
 
