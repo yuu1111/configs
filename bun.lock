@@ -76,7 +76,7 @@
     },
     "packages/engine/quality-check": {
       "name": "@yuu1111/quality-check",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "bin": {
         "quality-check": "bin/cli.js",
       },

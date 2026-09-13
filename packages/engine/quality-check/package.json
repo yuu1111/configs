@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/quality-check",
-	"version": "0.11.0",
+	"version": "0.12.0",
 	"description": "Integrated quality check runner",
 	"repository": {
 		"type": "git",
@@ -23,7 +23,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "bun build src/cli.ts --target=bun --outdir=dist"
+		"build": "bun build src/cli.ts --target=bun --outdir=dist --external @yuu1111/comment-check/rule-ids --external @yuu1111/document-style-check/rule-ids --external @yuu1111/tsdoc-check/rule-ids"
 	},
 	"keywords": [
 		"quality",
