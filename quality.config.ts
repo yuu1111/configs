@@ -1,10 +1,7 @@
-import { OPT_IN_RULE_IDS as COMMENT_CHECK_OPT_IN_RULES } from "@yuu1111/comment-check/rule-ids";
-import { OPT_IN_RULE_IDS as DOCUMENT_STYLE_CHECK_OPT_IN_RULES } from "@yuu1111/document-style-check/rule-ids";
+import * as commentCheck from "@yuu1111/comment-check/rule-ids";
+import * as documentStyleCheck from "@yuu1111/document-style-check/rule-ids";
 import { defineConfig } from "@yuu1111/quality-check";
-import {
-	OPT_IN_RULE_IDS as TSDOC_CHECK_OPT_IN_RULES,
-	KNOWN_RULE_NAMES as TSDOC_CHECK_RULE_NAMES,
-} from "@yuu1111/tsdoc-check/rule-ids";
+import * as tsdocCheck from "@yuu1111/tsdoc-check/rule-ids";
 
 export default defineConfig({
 	engines: {
@@ -17,15 +14,11 @@ export default defineConfig({
 		"tsdoc-check": true,
 	},
 	config: {
-		"comment-check": {
-			enable: [...COMMENT_CHECK_OPT_IN_RULES],
-		},
-		"document-style-check": {
-			enable: [...DOCUMENT_STYLE_CHECK_OPT_IN_RULES],
-		},
+		"comment-check": { enable: [...commentCheck.OPT_IN_RULE_IDS] },
+		"document-style-check": { enable: [...documentStyleCheck.OPT_IN_RULE_IDS] },
 		"tsdoc-check": {
-			enable: [...TSDOC_CHECK_OPT_IN_RULES],
-			error: [...TSDOC_CHECK_RULE_NAMES],
+			enable: [...tsdocCheck.OPT_IN_RULE_IDS],
+			error: [...tsdocCheck.KNOWN_RULE_NAMES],
 		},
 	},
 });
