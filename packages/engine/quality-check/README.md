@@ -122,7 +122,6 @@ A group or rule name that the engine does not know is a configuration error, and
 The selection is handed to the built-in engines directly, so the CLI no longer turns it into `--enable`, `--disable`, or `--error` arguments.
 
 No check engine keeps a baseline of its own, so the new-and-resolved diff is done by this CLI from a single baseline file.
-A `comment-baseline.json` written by comment-check 2.x is not read anymore, so move it over with `--update-baseline`.
 
 `typecheck` starts `tsc --noEmit -p <path>` once per path in `projects`, and falls back to the current `tsconfig.json`.
 

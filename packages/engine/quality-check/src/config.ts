@@ -186,7 +186,7 @@ export function isRuleEngine(name: EngineName): name is RuleEngineName {
 /**
  * config fileを探索する既定のfile名
  */
-export const DEFAULT_CONFIG_FILES = ["quality.json"] as const;
+export const DEFAULT_CONFIG_FILE = "quality.json";
 
 /**
  * baseline fileの既定名
@@ -582,13 +582,8 @@ export function engineConfig<K extends EngineName>(
  * @returns 見つけたconfig fileのpath 見つからなければnull
  */
 export function findConfigFile(cwd: string): string | null {
-	for (const name of DEFAULT_CONFIG_FILES) {
-		const candidate = resolve(cwd, name);
-		if (existsSync(candidate)) {
-			return candidate;
-		}
-	}
-	return null;
+	const candidate = resolve(cwd, DEFAULT_CONFIG_FILE);
+	return existsSync(candidate) ? candidate : null;
 }
 
 /**

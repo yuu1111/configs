@@ -145,10 +145,9 @@ function isBaselineEntry(value: unknown): value is BaselineEntry {
  * baseline fileを読み込む 存在しない場合は空のbaselineを返す
  *
  * @param path - 読み込むbaseline fileのpath
- * @param label - 形式が違う場合のエラーに載せるbaselineの名前
  * @returns 読み込んだentry一覧、fileが存在しない場合は空のbaseline
  */
-export function readBaseline(path: string, label: string): BaselineFile {
+export function readBaseline(path: string): BaselineFile {
 	if (!existsSync(path)) {
 		return { entries: [], version: 1 };
 	}
@@ -158,7 +157,7 @@ export function readBaseline(path: string, label: string): BaselineFile {
 		!Array.isArray(value.entries) ||
 		!value.entries.every(isBaselineEntry)
 	) {
-		throw new Error(`${path} is not a ${label} baseline`);
+		throw new Error(`${path} is not a baseline`);
 	}
 	return { entries: value.entries, version: 1 };
 }

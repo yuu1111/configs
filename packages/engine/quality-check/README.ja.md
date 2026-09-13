@@ -120,7 +120,6 @@ engineが知らないgroup名やrule名は設定errorになり、配布する `s
 選んだruleは同梱するengineへ直接渡すため、CLIは `--enable`、`--disable`、`--error` へは変換しない
 
 検出engineはbaselineを持たないため、新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行う
-comment-check 2.xが書いた `comment-baseline.json` はもう読まれないため、`--update-baseline` で統合CLIのbaselineへ移す
 
 `typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する
 省略時はカレントの `tsconfig.json` を1回だけ読む

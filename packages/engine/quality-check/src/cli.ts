@@ -92,7 +92,7 @@ async function main(argv: string[]): Promise<number> {
 		baseline:
 			options.update || baselinePath === null
 				? null
-				: readBaseline(baselinePath, "quality"),
+				: readBaseline(baselinePath),
 		color,
 		config,
 		cwd,
