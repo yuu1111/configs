@@ -45,7 +45,7 @@ npm パッケージとして publish する
 ## 注意点
 
 - package の配置は `packages/config/` (共有設定) と `packages/engine/` (検査engine) に分ける
-- このリポジトリ自身を最厳格な利用例にするため、`quality.config.ts` で全 engine と全 opt-in rule を有効にし、warning は `error` へ上げる
+- このリポジトリ自身を最厳格な利用例にするため、`quality.config.ts` で全 engine と全 opt-in rule を有効にし、warning は `error` へ上げる (rule名は手で列挙せず engine が公開する `./rule-ids` の一覧を import する)
 - Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
 - check engine は @yuu1111/shared を build 時に bundle して配布する (shared は private なので publish しない)
