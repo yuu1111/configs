@@ -1,11 +1,6 @@
 import type { Located, Severity } from "@yuu1111/shared/findings";
 import { type MarkdownLine, markdownLines } from "./audit";
-import {
-	OPT_IN_RULE_IDS,
-	type OptInRuleId,
-	RULE_IDS,
-	type RuleId,
-} from "./rule-ids";
+import type { OptInRuleId, RuleId } from "./rule-ids";
 
 /**
  * 検出した違反1件の内容と位置
@@ -48,53 +43,6 @@ const UNORDERED_LIST_MARKER = /^([ \t]*)([-+*])(?=[ \t]+\S)/;
 const FENCE_OPEN = /^ {0,3}(?:`{3,}|~{3,})/;
 const HEADING = /^(#{1,6})(?:\s|$)/;
 const EMPTY_LINK = /\[([^\]]*)\]\(([^)]*)\)/g;
-
-/**
- * --enableの値を検証して重複を除く 未知のrule名は設定errorにする
- *
- * @param values - --enableで指定されたrule名の一覧
- * @returns 検証を通ったopt-in ruleの識別子
- */
-export function parseEnabledRules(values: readonly string[]): OptInRuleId[] {
-	const enabled: OptInRuleId[] = [];
-	for (const value of values) {
-		if (!(OPT_IN_RULE_IDS as readonly string[]).includes(value)) {
-			throw new Error(`unknown rule: ${value}`);
-		}
-		const rule = value as OptInRuleId;
-		if (!enabled.includes(rule)) {
-			enabled.push(rule);
-		}
-	}
-	return enabled;
-}
-
-/**
- * --disableで渡されたrule名を検証して重複を除く --enableで有効にしたruleは無効にできない
- *
- * @param values - --disableで渡されたrule名の一覧
- * @param enabled - --enableで有効にしたopt-in ruleの一覧
- * @returns 検証済みで重複のない無効化するruleの一覧
- */
-export function parseDisabledRules(
-	values: readonly string[],
-	enabled: readonly OptInRuleId[] = [],
-): RuleId[] {
-	const disabled: RuleId[] = [];
-	for (const value of values) {
-		if (!(RULE_IDS as readonly string[]).includes(value)) {
-			throw new Error(`unknown rule: ${value}`);
-		}
-		const rule = value as RuleId;
-		if ((enabled as readonly string[]).includes(rule)) {
-			throw new Error(`a rule cannot be enabled and disabled: ${value}`);
-		}
-		if (!disabled.includes(rule)) {
-			disabled.push(rule);
-		}
-	}
-	return disabled;
-}
 
 /**
  * 本文行にある最初の日本語句点の位置を返す 無ければ-1を返す

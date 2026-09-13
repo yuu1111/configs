@@ -4,8 +4,6 @@ import {
 	classifyComment,
 	findJapanesePeriod,
 	isCrampedComment,
-	parseDisabledRules,
-	parseEnabledRules,
 } from "../src/rules";
 
 describe("comment classification", () => {
@@ -45,28 +43,9 @@ describe("comment classification", () => {
 });
 
 describe("opt-in rules", () => {
-	test("accepts the Japanese period rule without duplicates", () => {
-		expect(parseEnabledRules([])).toEqual([]);
-		expect(parseEnabledRules(["japanese-period"])).toEqual(["japanese-period"]);
-		expect(parseEnabledRules(["japanese-period", "japanese-period"])).toEqual([
-			"japanese-period",
-		]);
-	});
-
-	test("rejects an unknown rule name", () => {
-		expect(() => parseEnabledRules(["period"])).toThrow("unknown rule: period");
-	});
-
 	test("finds the first Japanese period of a comment body", () => {
 		expect(findJapanesePeriod(" plain comment")).toBe(-1);
 		expect(findJapanesePeriod(" 一つ。二つ。")).toBe(3);
-	});
-
-	test("accepts the cramped comment rule without duplicates", () => {
-		expect(parseEnabledRules(["cramped-comment"])).toEqual(["cramped-comment"]);
-		expect(parseEnabledRules(["cramped-comment", "cramped-comment"])).toEqual([
-			"cramped-comment",
-		]);
 	});
 
 	test("detects a comment that starts under the previous line", () => {
@@ -83,23 +62,6 @@ describe("opt-in rules", () => {
 		expect(isCrampedComment("const a = 1\n// note\n/**\n * b\n */\n", 20)).toBe(
 			false,
 		);
-	});
-});
-
-describe("disabled rules", () => {
-	test("validates the name and rejects a rule that is also enabled", () => {
-		expect(parseDisabledRules(["placeholder-comment"])).toEqual([
-			"placeholder-comment",
-		]);
-		expect(
-			parseDisabledRules(["placeholder-comment", "placeholder-comment"]),
-		).toEqual(["placeholder-comment"]);
-		expect(() => parseDisabledRules(["period"])).toThrow(
-			"unknown rule: period",
-		);
-		expect(() =>
-			parseDisabledRules(["japanese-period"], ["japanese-period"]),
-		).toThrow("a rule cannot be enabled and disabled: japanese-period");
 	});
 });
 

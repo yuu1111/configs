@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 import { resolve } from "node:path";
-import { main as documentStyleMain } from "@yuu1111/document-style-check/cli";
 import {
 	createBaseline,
 	readBaseline,
@@ -14,6 +13,7 @@ import {
 	loadConfig,
 	type QualityConfig,
 } from "./config";
+import { main as documentStyleMain } from "./document";
 import { formatEngineSection, formatSummary, toJsonReport } from "./report";
 import { runEngines } from "./run";
 

@@ -1,11 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { KNOWN_RULE_NAMES, RULE_GROUPS } from "../src/rule-ids";
-import {
-	parseDisabledRules,
-	parseEnabledRules,
-	promoteFindings,
-	returnsValue,
-} from "../src/rules";
+import { promoteFindings, returnsValue } from "../src/rules";
 import { scanSource } from "../src/scan";
 
 describe("rule promotion", () => {
@@ -39,18 +34,6 @@ describe("rule promotion", () => {
 	});
 });
 
-describe("opt-in rules", () => {
-	test("accepts a known rule and drops a duplicate", () => {
-		expect(parseEnabledRules(["param-order", "param-order"])).toEqual([
-			"param-order",
-		]);
-	});
-
-	test("rejects a rule that is not opt-in", () => {
-		expect(() => parseEnabledRules(["missing-doc"])).toThrow("unknown rule");
-	});
-});
-
 describe("return value detection", () => {
 	test("treats void, never, and undefined as no value", () => {
 		expect(returnsValue("void")).toBe(false);
@@ -65,24 +48,6 @@ describe("return value detection", () => {
 		expect(returnsValue("Promise<User>")).toBe(true);
 		expect(returnsValue("number | undefined")).toBe(true);
 		expect(returnsValue("void | never")).toBe(false);
-	});
-});
-
-describe("disabled rules", () => {
-	test("validates the name and rejects a rule that is also enabled or promoted", () => {
-		expect(parseDisabledRules(["missing-doc"])).toEqual(["missing-doc"]);
-		expect(parseDisabledRules(["missing-doc", "missing-doc"])).toEqual([
-			"missing-doc",
-		]);
-		expect(() => parseDisabledRules(["missing-docs"])).toThrow(
-			"unknown rule: missing-docs",
-		);
-		expect(() =>
-			parseDisabledRules(["missing-returns"], ["missing-returns"]),
-		).toThrow("a rule cannot be enabled and disabled: missing-returns");
-		expect(() =>
-			parseDisabledRules(["missing-doc"], [], ["missing-doc"]),
-		).toThrow("a rule cannot be promoted and disabled: missing-doc");
 	});
 });
 

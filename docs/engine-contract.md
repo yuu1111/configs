@@ -18,7 +18,8 @@
 - 公開する `quality-check` が build 時に engine と `@yuu1111/shared` と外部依存を bundle し、runtime dependency を持たない
 - `src/rule-ids.ts` に `RULE_IDS` `OPT_IN_RULE_IDS` `RULE_GROUPS` を置き import を持たせない
 - 全ruleがいずれかのgroupへ重複なく入ることを tests で検査する
-- `./rule-ids` と `./run` を公開する
+- `./rule-ids` と、検出の `./run`、整形の `./fix`、review ledger の `./audit` を公開する
+- engine の package は振る舞いの関数だけを公開し、個別コマンドのargv解析と出力は `quality-check` が持つ
 
 ### in-process 呼び出し
 
@@ -58,10 +59,11 @@ engineの能力は `packages/engine/quality-check/src/config.ts` の `ENGINE_CAP
 
 `args` は子プロセスengineだけが受け取り 既定引数の後ろへ足す
 
-### 単体CLI
+### 個別コマンド
 
-- `document-style-check` の review ledger は `quality-check document-style <scan|check|lint>` として公開する
-- 他の検出engineは単体CLIを持たない
+- `quality-check document-style <scan|check|lint>` が文書向けの個別コマンドになる
+- argv解析と出力は quality-check が持ち、engine は `./run` `./fix` `./audit` の関数だけを公開する
+- `lint` は統合runが使う `./run` と同じ関数を呼ぶ
 
 ### 実行
 

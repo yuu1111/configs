@@ -1,27 +1,26 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
+import { snapshot, verify } from "@yuu1111/document-style-check/audit";
+import { fix } from "@yuu1111/document-style-check/fix";
+import { inspect } from "@yuu1111/document-style-check/run";
 import { parseArgv, wantsHelp } from "@yuu1111/shared/cli";
-import { collectFiles, normalizePath } from "@yuu1111/shared/files";
+import { normalizePath } from "@yuu1111/shared/files";
 import {
 	describeReportFinding,
 	formatReportSummary,
 	printReport,
-	toReport,
 } from "@yuu1111/shared/report";
-import { snapshot, verify } from "./audit";
-import type { OptInRuleId, RuleId } from "./rule-ids";
-import { parseDisabledRules, parseEnabledRules } from "./rules";
-import { DOCUMENT_EXTENSIONS, fixFiles, lintFiles } from "./scan";
+import { RULE_VOCABULARY } from "./config";
 
 type Action = "check" | "lint" | "scan";
 
 /**
  * 解析した起動条件
  */
-export interface Options {
+export interface DocumentOptions {
 	action: Action;
-	disabled: RuleId[];
-	enabled: OptInRuleId[];
+	disabled: string[];
+	enabled: string[];
 	ignores: string[];
 	json: boolean;
 	review: string;
@@ -31,7 +30,7 @@ export interface Options {
 }
 
 const USAGE = [
-	"使い方: document-style-check <scan|check|lint> [options] [path...]",
+	"使い方: quality-check document-style <scan|check|lint> [options] [path...]",
 	"",
 	"  scan  <path...> --rules <file> --review <file>   確認候補と検証記録を作る",
 	"  check <path...> --rules <file> --review <file>   埋めた検証記録を確認する",
@@ -50,12 +49,60 @@ function toAction(argument: string): Action | undefined {
 }
 
 /**
+ * --enableで渡されたrule名を検証して重複を除く
+ *
+ * @param values - --enableで指定されたrule名の一覧
+ * @returns 検証を通ったopt-in ruleの識別子
+ */
+function parseEnabledRules(values: readonly string[]): string[] {
+	const optIn: readonly string[] =
+		RULE_VOCABULARY["document-style-check"].optIn;
+	const enabled: string[] = [];
+	for (const value of values) {
+		if (!optIn.includes(value)) {
+			throw new Error(`unknown rule: ${value}`);
+		}
+		if (!enabled.includes(value)) {
+			enabled.push(value);
+		}
+	}
+	return enabled;
+}
+
+/**
+ * --disableで渡されたrule名を検証して重複を除く --enableで有効にしたruleは無効にできない
+ *
+ * @param values - --disableで指定されたrule名の一覧
+ * @param enabled - --enableで有効にしたopt-in ruleの一覧
+ * @returns 検証済みで重複のない無効化するruleの一覧
+ */
+function parseDisabledRules(
+	values: readonly string[],
+	enabled: readonly string[],
+): string[] {
+	const all: readonly string[] = RULE_VOCABULARY["document-style-check"].all;
+	const disabled: string[] = [];
+	for (const value of values) {
+		if (!all.includes(value)) {
+			throw new Error(`unknown rule: ${value}`);
+		}
+		if (enabled.includes(value)) {
+			throw new Error(`a rule cannot be enabled and disabled: ${value}`);
+		}
+		if (!disabled.includes(value)) {
+			disabled.push(value);
+		}
+	}
+	return disabled;
+}
+
+/**
  * 引数を解析し、行動と対象をまとめる
  *
  * @param argv - 起動時に渡されたcommand line引数
  * @returns 解析した行動・対象・optionの一覧
  */
-export function parseArguments(argv: string[]): Options {
+export function parseArguments(argv: string[]): DocumentOptions {
 	const parsed = parseArgv(argv, {
 		flags: ["json", "write"],
 		values: ["disable", "enable", "ignore", "review", "rules"],
@@ -83,13 +130,9 @@ export function parseArguments(argv: string[]): Options {
 }
 
 /**
- * 検出を1行の文字列へ整える
- */
-
-/**
  * 対象のMarkdownを絶対pathの一覧にする
  */
-function requireDocuments(options: Options): string[] {
+function requireDocuments(options: DocumentOptions): string[] {
 	if (options.targets.length === 0) {
 		throw new Error("対象のMarkdownを1つ以上指定してください");
 	}
@@ -99,7 +142,7 @@ function requireDocuments(options: Options): string[] {
 /**
  * 判断基準のfileを必須にする
  */
-function requireRules(options: Options): string {
+function requireRules(options: DocumentOptions): string {
 	if (options.rules === "") {
 		throw new Error("判断基準のfileを--rulesで指定してください");
 	}
@@ -109,7 +152,7 @@ function requireRules(options: Options): string {
 /**
  * 検証記録のfileを必須にする
  */
-function requireReview(options: Options): string {
+function requireReview(options: DocumentOptions): string {
 	if (options.review === "") {
 		throw new Error("検証記録のfileを--reviewで指定してください");
 	}
@@ -119,7 +162,7 @@ function requireReview(options: Options): string {
 /**
  * 対象文書の検証記録を書き出す
  */
-function runScan(options: Options): number {
+function runScan(options: DocumentOptions): number {
 	const review = snapshot(requireDocuments(options), requireRules(options));
 	const reviewPath = requireReview(options);
 	writeFileSync(reviewPath, `${JSON.stringify(review, null, "\t")}\n`, {
@@ -139,7 +182,7 @@ function runScan(options: Options): number {
 /**
  * 埋めた検証記録を現在の本文と基準に対して確認する
  */
-function runCheck(options: Options): number {
+function runCheck(options: DocumentOptions): number {
 	const review: unknown = JSON.parse(
 		readFileSync(requireReview(options), "utf8").replace(/^\uFEFF/, ""),
 	);
@@ -159,43 +202,30 @@ function runCheck(options: Options): number {
 }
 
 /**
- * 検出と整形の結果を出力し、errorの有無を終了codeで返す
- */
-function report(options: Options, files: string[]): number {
-	const findings = lintFiles(
-		files,
-		process.cwd(),
-		options.enabled,
-		options.disabled,
-	);
-	const result = toReport(findings);
-	if (options.json) {
-		printReport(result);
-		return result.errors.length > 0 ? 1 : 0;
-	}
-	for (const finding of [...result.errors, ...result.warnings]) {
-		console.log(describeReportFinding(finding));
-	}
-	console.log(formatReportSummary(files.length, result));
-	return result.errors.length > 0 ? 1 : 0;
-}
-
-/**
  * 機械的な違反を報告し、--writeでは整形する
  */
-function runLint(options: Options): number {
-	const targets = options.targets.length > 0 ? options.targets : ["."];
-	const files = collectFiles(targets, {
+function runLint(options: DocumentOptions): number {
+	const context = {
 		cwd: process.cwd(),
-		extensions: DOCUMENT_EXTENSIONS,
 		ignores: options.ignores,
-	});
+		rules: { disable: options.disabled, enable: options.enabled, error: [] },
+		targets: options.targets.length > 0 ? options.targets : ["."],
+	};
 	if (options.write) {
-		for (const file of fixFiles(files, options.enabled, options.disabled)) {
-			console.log(`Fixed ${normalizePath(relative(process.cwd(), file))}`);
+		for (const file of fix(context)) {
+			console.log(`Fixed ${normalizePath(relative(context.cwd, file))}`);
 		}
 	}
-	return report(options, files);
+	const { files, report } = inspect(context);
+	if (options.json) {
+		printReport(report);
+		return report.errors.length > 0 ? 1 : 0;
+	}
+	for (const finding of [...report.errors, ...report.warnings]) {
+		console.log(describeReportFinding(finding));
+	}
+	console.log(formatReportSummary(files.length, report));
+	return report.errors.length > 0 ? 1 : 0;
 }
 
 /**

@@ -5,7 +5,8 @@
 	"description": "Markdown checker and review ledger built into @yuu1111/quality-check",
 	"type": "module",
 	"exports": {
-		"./cli": "./src/cli.ts",
+		"./audit": "./src/audit.ts",
+		"./fix": "./src/fix.ts",
 		"./rule-ids": "./src/rule-ids.ts",
 		"./run": "./src/run.ts"
 	},

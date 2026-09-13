@@ -57,6 +57,7 @@ engine 4つと `shared` は private で publish しない 唯一の公開engine 
 - engine 4つと @yuu1111/shared は private のままにし、`quality-check` の build が devDependency として同梱する (private package は公開packageの dependency にできないため)
 - engine の rule 語彙は engine の `src/rule-ids.ts` へ置き、import を持たせず `./rule-ids` として公開する
 - `quality-check` は engine の `./run` を in-process で呼び、`src/engines/index.ts` の `FINDING_ENGINES` に登録する
+- engine の package は `./run` `./fix` `./audit` の関数だけを公開し、個別コマンドのargv解析と出力は `quality-check` が持つ
 - `quality-check` の build は `src/cli.ts` を依存込みで bundle し、公開packageに runtime dependency を持たせない
 - 公開する check package の `bin` は commit した `bin/cli.js` を指し、そこで `dist/cli.js` の `run` を呼ぶ (Bun は install 時に target が存在しない workspace の `bin` を `node_modules/.bin` へ link しないため)
 - workspace の `bin` を変えるときは `bun.lock` の workspaces entry も同じ変更で更新する (Bun は既存 lockfile の workspaces を再計算しないため)
