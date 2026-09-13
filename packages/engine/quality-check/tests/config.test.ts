@@ -13,14 +13,19 @@ describe("quality config", () => {
 	test("reads the conditions of an engine from the config section", () => {
 		const config = parseConfig(
 			{
-				config: { "tsdoc-check": { error: ["missing-doc"], ignore: ["dist"] } },
+				config: {
+					"tsdoc-check": {
+						ignore: ["dist"],
+						rules: { "missing-doc": "error" },
+					},
+				},
 				engines: { "tsdoc-check": true },
 			},
 			"test",
 		);
 		expect(engineConfig(config, "tsdoc-check")).toEqual({
-			error: ["missing-doc"],
 			ignore: ["dist"],
+			rules: { "missing-doc": "error" },
 		});
 	});
 
@@ -46,13 +51,36 @@ describe("quality config", () => {
 		).toThrow("unknown option");
 	});
 
-	test("reads the opt-in rules of the period engines", () => {
+	test("reads the rule presets of the period engines", () => {
 		const config = parseConfig(
 			{
 				config: {
-					"comment-check": { enable: ["japanese-period"] },
-					"document-style-check": { enable: ["japanese-period"] },
-					"tsdoc-check": { enable: ["missing-returns"] },
+					"comment-check": { enable: true },
+					"document-style-check": { enable: true },
+					"tsdoc-check": { error: true },
+				},
+				engines: {
+					"comment-check": true,
+					"document-style-check": true,
+					"tsdoc-check": true,
+				},
+			},
+			"test",
+		);
+		expect(engineConfig(config, "comment-check")).toEqual({ enable: true });
+		expect(engineConfig(config, "document-style-check")).toEqual({
+			enable: true,
+		});
+		expect(engineConfig(config, "tsdoc-check")).toEqual({ error: true });
+	});
+
+	test("reads the rule states of the period engines", () => {
+		const config = parseConfig(
+			{
+				config: {
+					"comment-check": { rules: { "japanese-period": "on" } },
+					"document-style-check": { rules: { "japanese-period": "off" } },
+					"tsdoc-check": { rules: { "missing-returns": "error" } },
 				},
 				engines: {
 					"comment-check": true,
@@ -63,13 +91,13 @@ describe("quality config", () => {
 			"test",
 		);
 		expect(engineConfig(config, "comment-check")).toEqual({
-			enable: ["japanese-period"],
+			rules: { "japanese-period": "on" },
 		});
 		expect(engineConfig(config, "document-style-check")).toEqual({
-			enable: ["japanese-period"],
+			rules: { "japanese-period": "off" },
 		});
 		expect(engineConfig(config, "tsdoc-check")).toEqual({
-			enable: ["missing-returns"],
+			rules: { "missing-returns": "error" },
 		});
 	});
 
@@ -77,7 +105,7 @@ describe("quality config", () => {
 		expect(() =>
 			parseConfig(
 				{
-					config: { biome: { enable: ["japanese-period"] } },
+					config: { biome: { enable: true } },
 					engines: { biome: true },
 				},
 				"test",
@@ -86,7 +114,7 @@ describe("quality config", () => {
 		expect(() =>
 			parseConfig(
 				{
-					config: { knip: { enable: ["japanese-period"] } },
+					config: { knip: { rules: { "placeholder-comment": "on" } } },
 					engines: { knip: true },
 				},
 				"test",
@@ -94,16 +122,82 @@ describe("quality config", () => {
 		).toThrow("unknown option");
 	});
 
-	test("rejects an empty rule name", () => {
+	test("rejects an unknown rule name", () => {
 		expect(() =>
 			parseConfig(
 				{
-					config: { "comment-check": { enable: [""] } },
+					config: { "comment-check": { rules: { "japanese-peroid": "on" } } },
 					engines: { "comment-check": true },
 				},
 				"test",
 			),
-		).toThrow("must be an array of non-empty strings");
+		).toThrow("unknown rule");
+	});
+
+	test("rejects an unknown rule state", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: {
+						"comment-check": { rules: { "japanese-period": "ignore" } },
+					},
+					engines: { "comment-check": true },
+				},
+				"test",
+			),
+		).toThrow('must be "off", "on" or "error"');
+	});
+
+	test("rejects a rule that cannot be turned off", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: {
+						"comment-check": { rules: { "placeholder-comment": "off" } },
+					},
+					engines: { "comment-check": true },
+				},
+				"test",
+			),
+		).toThrow("cannot turn off a rule that is on by default");
+	});
+
+	test("rejects an error state outside the TSDoc engine", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: {
+						"document-style-check": { rules: { "japanese-period": "error" } },
+					},
+					engines: { "document-style-check": true },
+				},
+				"test",
+			),
+		).toThrow("cannot treat a rule as an error");
+	});
+
+	test("rejects a rule preset that is not a boolean", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: { "comment-check": { enable: ["japanese-period"] } },
+					engines: { "comment-check": true },
+				},
+				"test",
+			),
+		).toThrow("must be a boolean");
+	});
+
+	test("rejects a rule map that is not an object", () => {
+		expect(() =>
+			parseConfig(
+				{
+					config: { "comment-check": { rules: ["japanese-period"] } },
+					engines: { "comment-check": true },
+				},
+				"test",
+			),
+		).toThrow("must be an object");
 	});
 
 	test("rejects an empty project list", () => {
@@ -168,7 +262,7 @@ describe("quality config", () => {
 		expect(() =>
 			parseConfig(
 				{
-					config: { biome: { error: ["missing-doc"] } },
+					config: { biome: { error: true } },
 					engines: { biome: true },
 				},
 				"test",

@@ -3,7 +3,8 @@ import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { collectDeclarations } from "./parse";
-import { classifyDeclaration, type Finding, type OptInRuleId } from "./rules";
+import type { OptInRuleId } from "./rule-ids";
+import { classifyDeclaration, type Finding } from "./rules";
 
 /**
  * 検査するTypeScriptの拡張子

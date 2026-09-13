@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parseConfig } from "../src/config";
+import { parseConfig, RULE_VOCABULARY } from "../src/config";
 import {
 	buildEngineCommand,
 	buildEngineCommands,
@@ -27,7 +27,7 @@ function createContext(): EngineCommandContext {
 				config: {
 					biome: { ignore: ["src/generated"] },
 					"comment-check": { ignore: ["src/generated"] },
-					"tsdoc-check": { error: ["missing-doc"] },
+					"tsdoc-check": { rules: { "missing-doc": "error" } },
 				},
 				engines: {
 					biome: true,
@@ -43,6 +43,17 @@ function createContext(): EngineCommandContext {
 		overrides: { ignore: [], targets: ["."] },
 		rawBaseline: "raw.json",
 	};
+}
+
+/**
+ * 組み立てたコマンドから指定したflagへ渡された値だけを抜き出す
+ *
+ * @param command - 調べるコマンドの引数
+ * @param flag - 値を抜き出すflag
+ * @returns flagへ渡された値の一覧
+ */
+function flagsOf(command: string[], flag: string): string[] {
+	return command.filter((_, index) => command[index - 1] === flag);
 }
 
 afterEach(() => {
@@ -178,13 +189,13 @@ describe("engine commands", () => {
 		).toEqual(["code-style-check", "--json", "src", "--ignore", "dist"]);
 	});
 
-	test("passes the opt-in rules to the period engines", () => {
+	test("passes the selected rules to the period engines", () => {
 		const context = createContext();
 		context.config = parseConfig(
 			{
 				config: {
-					"comment-check": { enable: ["japanese-period"] },
-					"document-style-check": { enable: ["japanese-period"] },
+					"comment-check": { rules: { "japanese-period": "on" } },
+					"document-style-check": { rules: { "japanese-period": "on" } },
 				},
 				engines: { "comment-check": true, "document-style-check": true },
 			},
@@ -217,15 +228,15 @@ describe("engine commands", () => {
 		]);
 	});
 
-	test("repeats the enable flag in config order", () => {
+	test("repeats the enable flag in the order of the rules map", () => {
 		const context = createContext();
 		context.config = parseConfig(
 			{
 				config: {
 					"comment-check": {
 						args: ["--extra"],
-						enable: ["japanese-period", "second"],
 						ignore: ["dist"],
+						rules: { "japanese-period": "on", "cramped-comment": "on" },
 					},
 				},
 				engines: { "comment-check": true },
@@ -242,7 +253,7 @@ describe("engine commands", () => {
 			"--enable",
 			"japanese-period",
 			"--enable",
-			"second",
+			"cramped-comment",
 			".",
 			"--ignore",
 			"dist",
@@ -256,14 +267,13 @@ describe("engine commands", () => {
 		).toEqual(["tsdoc-check", "--json", "--error", "missing-doc", "."]);
 	});
 
-	test("passes the opt-in rules and the error rules to the TSDoc engine", () => {
+	test("builds the enable and error flags from the rule states", () => {
 		const context = createContext();
 		context.config = parseConfig(
 			{
 				config: {
 					"tsdoc-check": {
-						enable: ["missing-returns", "param-order"],
-						error: ["param-order"],
+						rules: { "missing-returns": "error", "param-order": "on" },
 					},
 				},
 				engines: { "tsdoc-check": true },
@@ -278,9 +288,46 @@ describe("engine commands", () => {
 			"--enable",
 			"param-order",
 			"--error",
-			"param-order",
+			"missing-returns",
 			".",
 		]);
+	});
+
+	test("turns every rule of the TSDoc engine into an error with the error preset", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{
+				config: { "tsdoc-check": { error: true } },
+				engines: { "tsdoc-check": true },
+			},
+			"test",
+		);
+		const command = buildEngineCommand("tsdoc-check", "tsdoc-check", context);
+		const vocabulary = RULE_VOCABULARY["tsdoc-check"];
+		expect(flagsOf(command, "--enable")).toEqual([...vocabulary.optIn]);
+		expect(flagsOf(command, "--error")).toEqual([...vocabulary.all]);
+	});
+
+	test("turns every opt-in rule on and then clears the rules the map turns off", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{
+				config: {
+					"comment-check": {
+						enable: true,
+						rules: { "japanese-period": "off" },
+					},
+				},
+				engines: { "comment-check": true },
+			},
+			"test",
+		);
+		const command = buildEngineCommand(
+			"comment-check",
+			"comment-check",
+			context,
+		);
+		expect(flagsOf(command, "--enable")).toEqual(["cramped-comment"]);
 	});
 
 	test("adds the command line overrides to the engines that accept them", () => {

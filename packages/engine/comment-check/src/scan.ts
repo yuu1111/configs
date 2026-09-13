@@ -3,13 +3,13 @@ import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { extractComments } from "./comments";
+import type { OptInRuleId } from "./rule-ids";
 import {
 	classifyComment,
 	type Finding,
 	findJapanesePeriod,
 	isCrampedComment,
 	normalizeComment,
-	type OptInRuleId,
 } from "./rules";
 
 /**

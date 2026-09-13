@@ -2,13 +2,8 @@
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
-import {
-	type Finding,
-	KNOWN_RULE_NAMES,
-	type OptInRuleId,
-	parseEnabledRules,
-	promoteFindings,
-} from "./rules";
+import { KNOWN_RULE_NAMES, type OptInRuleId } from "./rule-ids";
+import { type Finding, parseEnabledRules, promoteFindings } from "./rules";
 import { scanFiles, TYPESCRIPT_EXTENSIONS } from "./scan";
 
 const USAGE =

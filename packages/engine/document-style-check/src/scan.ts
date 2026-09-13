@@ -2,7 +2,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
-import { type Finding, fixSource, lintSource, type OptInRuleId } from "./rules";
+import type { OptInRuleId } from "./rule-ids";
+import { type Finding, fixSource, lintSource } from "./rules";
 
 /**
  * 検査するMarkdownの拡張子

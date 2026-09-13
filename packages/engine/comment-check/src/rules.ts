@@ -1,8 +1,6 @@
 import type { Located } from "@yuu1111/shared/findings";
 import { OPT_IN_RULE_IDS, type OptInRuleId, type RuleId } from "./rule-ids";
 
-export type { OptInRuleId };
-
 /**
  * 検出したcomment違反1件の内容と位置
  */

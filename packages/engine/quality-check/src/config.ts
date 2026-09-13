@@ -1,11 +1,20 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { OptInRuleId as CommentCheckRuleName } from "@yuu1111/comment-check/rule-ids";
-import type { OptInRuleId as DocumentStyleCheckRuleName } from "@yuu1111/document-style-check/rule-ids";
-import type {
-	OptInRuleId as TsdocCheckRuleName,
-	TsdocRule,
+import {
+	OPT_IN_RULE_IDS as COMMENT_CHECK_OPT_IN_RULE_IDS,
+	RULE_IDS as COMMENT_CHECK_RULE_IDS,
+	type OptInRuleId as CommentCheckRuleName,
+} from "@yuu1111/comment-check/rule-ids";
+import {
+	OPT_IN_RULE_IDS as DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
+	RULE_IDS as DOCUMENT_STYLE_CHECK_RULE_IDS,
+	type OptInRuleId as DocumentStyleCheckRuleName,
+} from "@yuu1111/document-style-check/rule-ids";
+import {
+	OPT_IN_RULE_IDS as TSDOC_CHECK_OPT_IN_RULE_IDS,
+	KNOWN_RULE_NAMES as TSDOC_CHECK_RULE_NAMES,
+	type TsdocRule,
 } from "@yuu1111/tsdoc-check/rule-ids";
 
 /**
@@ -42,26 +51,32 @@ export interface EngineOptions {
  * comment-checkへ渡す起動条件
  */
 export interface CommentCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleのうち有効にするrule名 comment-checkが公開するunionで縛る */
-	enable?: CommentCheckRuleName[];
+	/** 既定で無効のopt-in ruleを全て有効にする */
+	enable?: boolean;
+	/** rule名ごとの状態 offで無効 onで有効 省略したruleはengineの既定に従う */
+	rules?: Partial<Record<CommentCheckRuleName, "off" | "on">>;
 }
 
 /**
  * document-style-checkへ渡す起動条件
  */
 export interface DocumentStyleCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleのうち有効にするrule名 document-style-checkが公開するunionで縛る */
-	enable?: DocumentStyleCheckRuleName[];
+	/** 既定で無効のopt-in ruleを全て有効にする */
+	enable?: boolean;
+	/** rule名ごとの状態 offで無効 onで有効 省略したruleはengineの既定に従う */
+	rules?: Partial<Record<DocumentStyleCheckRuleName, "off" | "on">>;
 }
 
 /**
  * TSDoc検査へ渡す起動条件
  */
 export interface TsdocCheckOptions extends EngineOptions {
-	/** 既定で無効のopt-in ruleのうち有効にするrule名 tsdoc-checkが公開するunionで縛る */
-	enable?: TsdocCheckRuleName[];
-	/** 違反として扱うrule名 tsdoc-checkが公開するunionで縛る */
-	error?: TsdocRule[];
+	/** 既定で無効のopt-in ruleを全て有効にする */
+	enable?: boolean;
+	/** 全てのruleを違反として扱う opt-in ruleは有効にしてから上げる */
+	error?: boolean;
+	/** rule名ごとの状態 offで無効 onで既定のseverity errorで違反として扱う */
+	rules?: Partial<Record<TsdocRule, "off" | "on" | "error">>;
 }
 
 /**
@@ -84,6 +99,39 @@ export interface EngineConfigMap {
 	"document-style-check": DocumentStyleCheckOptions;
 	"tsdoc-check": TsdocCheckOptions;
 }
+
+/**
+ * rule名ごとの状態
+ */
+export type RuleState = "off" | "on" | "error";
+
+/**
+ * engineが公開するrule語彙 全ruleと既定で無効のopt-in ruleを持つ
+ */
+export const RULE_VOCABULARY: Record<
+	EngineName,
+	{ all: readonly string[]; optIn: readonly string[]; promotes: boolean }
+> = {
+	biome: { all: [], optIn: [], promotes: false },
+	typecheck: { all: [], optIn: [], promotes: false },
+	knip: { all: [], optIn: [], promotes: false },
+	"code-style-check": { all: [], optIn: [], promotes: false },
+	"comment-check": {
+		all: COMMENT_CHECK_RULE_IDS,
+		optIn: COMMENT_CHECK_OPT_IN_RULE_IDS,
+		promotes: false,
+	},
+	"document-style-check": {
+		all: DOCUMENT_STYLE_CHECK_RULE_IDS,
+		optIn: DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
+		promotes: false,
+	},
+	"tsdoc-check": {
+		all: TSDOC_CHECK_RULE_NAMES,
+		optIn: TSDOC_CHECK_OPT_IN_RULE_IDS,
+		promotes: true,
+	},
+};
 
 /**
  * quality.config.tsが受け付ける統合検査の設定
@@ -137,9 +185,9 @@ const ENGINE_OPTION_KEYS: Record<EngineName, readonly string[]> = {
 	typecheck: ["args", "ignore", "projects", "targets"],
 	knip: ["args", "ignore", "targets"],
 	"code-style-check": ["args", "ignore", "targets"],
-	"comment-check": ["args", "enable", "ignore", "targets"],
-	"document-style-check": ["args", "enable", "ignore", "targets"],
-	"tsdoc-check": ["args", "enable", "error", "ignore", "targets"],
+	"comment-check": ["args", "enable", "ignore", "rules", "targets"],
+	"document-style-check": ["args", "enable", "ignore", "rules", "targets"],
+	"tsdoc-check": ["args", "enable", "error", "ignore", "rules", "targets"],
 };
 
 function readStringArray(value: unknown, field: string): string[] | undefined {
@@ -153,6 +201,54 @@ function readStringArray(value: unknown, field: string): string[] | undefined {
 		throw new Error(`${field} must be an array of non-empty strings`);
 	}
 	return [...value] as string[];
+}
+
+function readBoolean(value: unknown, field: string): boolean | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (typeof value !== "boolean") {
+		throw new Error(`${field} must be a boolean`);
+	}
+	return value;
+}
+
+/**
+ * rule名ごとの状態を読み取る engineが公開する語彙とengineが受け付ける状態で検証する
+ */
+function readRuleStates(
+	value: unknown,
+	field: string,
+	name: EngineName,
+): Record<string, RuleState> | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (!isJsonObject(value)) {
+		throw new Error(`${field} must be an object`);
+	}
+	const vocabulary = RULE_VOCABULARY[name];
+	const states: Record<string, RuleState> = {};
+	for (const [rule, state] of Object.entries(value)) {
+		if (!vocabulary.all.includes(rule)) {
+			throw new Error(`${field} has an unknown rule: ${rule}`);
+		}
+		if (state !== "off" && state !== "on" && state !== "error") {
+			throw new Error(`${field}.${rule} must be "off", "on" or "error"`);
+		}
+		if (state === "error" && !vocabulary.promotes) {
+			throw new Error(
+				`${field}.${rule}: ${name} cannot treat a rule as an error`,
+			);
+		}
+		if (state === "off" && !vocabulary.optIn.includes(rule)) {
+			throw new Error(
+				`${field}.${rule}: ${name} cannot turn off a rule that is on by default`,
+			);
+		}
+		states[rule] = state;
+	}
+	return states;
 }
 
 function readBaseline(
@@ -194,9 +290,10 @@ function parseEngines(
 }
 
 type ParsedEngineOptions = EngineOptions & {
-	enable?: string[];
-	error?: string[];
+	enable?: boolean;
+	error?: boolean;
 	projects?: string[];
+	rules?: Record<string, RuleState>;
 };
 
 /**
@@ -213,19 +310,24 @@ function parseEngineExtras(
 		name === "document-style-check" ||
 		name === "tsdoc-check"
 	) {
-		const enable = readStringArray(
+		const enable = readBoolean(
 			value.enable,
 			`${source}: config.${name}.enable`,
 		);
 		if (enable !== undefined) {
 			extras.enable = enable;
 		}
+		const rules = readRuleStates(
+			value.rules,
+			`${source}: config.${name}.rules`,
+			name,
+		);
+		if (rules !== undefined) {
+			extras.rules = rules;
+		}
 	}
 	if (name === "tsdoc-check") {
-		const error = readStringArray(
-			value.error,
-			`${source}: config.${name}.error`,
-		);
+		const error = readBoolean(value.error, `${source}: config.${name}.error`);
 		if (error !== undefined) {
 			extras.error = error;
 		}

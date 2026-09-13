@@ -5,7 +5,8 @@ import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
 import { snapshot, verify } from "./audit";
-import { type Finding, type OptInRuleId, parseEnabledRules } from "./rules";
+import type { OptInRuleId } from "./rule-ids";
+import { type Finding, parseEnabledRules } from "./rules";
 import { DOCUMENT_EXTENSIONS, fixFiles, lintFiles } from "./scan";
 
 type Action = "check" | "lint" | "scan";

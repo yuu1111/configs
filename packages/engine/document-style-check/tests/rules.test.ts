@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { fixSource, lintSource, type OptInRuleId } from "../src/rules";
+import type { OptInRuleId } from "../src/rule-ids";
+import { fixSource, lintSource } from "../src/rules";
 
 /**
  * 検出したrule名だけを位置順に返す

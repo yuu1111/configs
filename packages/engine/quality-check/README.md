@@ -43,15 +43,11 @@ export default defineConfig({
 	},
 	config: {
 		"comment-check": {
-			enable: ["japanese-period"],
 			ignore: ["another-project"],
+			rules: { "japanese-period": "on" },
 		},
-		"document-style-check": {
-			enable: ["japanese-period"],
-		},
-		"tsdoc-check": {
-			error: ["missing-doc"],
-		},
+		"document-style-check": { enable: true },
+		"tsdoc-check": { error: true },
 	},
 });
 ```
@@ -94,9 +90,9 @@ Each engine runs:
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
 | `code-style-check` | `code-style-check --json` | `ignore`, `targets`, `args` |
-| `comment-check` | `comment-check --json` | `ignore`, `targets`, `args`, `enable` (rule names to turn on) |
-| `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args`, `enable` (rule names to turn on) |
-| `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `enable` (rule names to turn on), `error` (rule names to fail on) |
+| `comment-check` | `comment-check --json` | `ignore`, `targets`, `args`, `enable`, `rules` |
+| `document-style-check` | `document-style-check lint --json` | `ignore`, `targets`, `args`, `enable`, `rules` |
+| `tsdoc-check` | `tsdoc-check --json` | `ignore`, `targets`, `args`, `enable`, `error`, `rules` |
 
 `args` is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
 
@@ -107,8 +103,13 @@ A condition that an engine does not take is not passed on, and the section says 
 biome: ignore skipped (biome.json holds its settings)
 ```
 
-`enable` becomes `--enable <rule>` on `comment-check`, `document-style-check`, and `tsdoc-check`, and the other engines reject the field.
-Each value is typed with the rule names the installed engine publishes from its `rule-ids` entry, so a name that engine does not know is a type error rather than a start-up failure.
+`enable` and `error` pick rules in bulk, and `rules` picks one rule at a time.
+`enable: true` turns on every rule the engine keeps off by default.
+`error: true` turns every rule of `tsdoc-check` into an error, enabling the opt-in ones first; it is the only condition that raises a rule.
+A `rules` entry names one rule and gives it `off`, `on`, or `error`, where `on` keeps the engine default and `error` means the same as the `error` preset for that rule.
+The `rules` key is the rule name itself, so the installed engine's union types it and a name that engine does not know is a type error rather than a start-up failure.
+Only `tsdoc-check` takes `error` in `rules`, and only rules that are off by default take `off`, because no engine can turn off a rule that is on by default.
+Each selected rule becomes `--enable <rule>` and, on `tsdoc-check`, `--error <rule>`; the other engines reject the fields.
 
 `comment-check` runs with an unwritten baseline path so that it reports every finding.
 The new-and-resolved diff is done by this CLI from a single baseline file, so an existing `comment-baseline.json` is moved over with `--update-baseline`.

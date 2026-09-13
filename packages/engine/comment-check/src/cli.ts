@@ -8,7 +8,8 @@ import {
 import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { collectFiles, normalizePath } from "@yuu1111/shared/files";
 import { formatLocation } from "@yuu1111/shared/findings";
-import { type Finding, type OptInRuleId, parseEnabledRules } from "./rules";
+import type { OptInRuleId } from "./rule-ids";
+import { type Finding, parseEnabledRules } from "./rules";
 import { SUPPORTED_EXTENSIONS, scanFiles } from "./scan";
 
 const DEFAULT_BASELINE = "comment-baseline.json";

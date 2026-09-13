@@ -14,9 +14,6 @@ import {
 } from "./rule-ids";
 import { parseTsdoc, type TsdocResult } from "./tsdoc";
 
-export type { OptInRuleId };
-export { KNOWN_RULE_NAMES };
-
 const KNOWN_RULES = new Set<string>(KNOWN_RULE_NAMES);
 
 /**

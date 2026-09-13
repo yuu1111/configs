@@ -2,8 +2,6 @@ import type { Located, Severity } from "@yuu1111/shared/findings";
 import { type MarkdownLine, markdownLines } from "./audit";
 import { OPT_IN_RULE_IDS, type OptInRuleId, type RuleId } from "./rule-ids";
 
-export type { OptInRuleId };
-
 /**
  * 検出した違反1件の内容と位置
  */

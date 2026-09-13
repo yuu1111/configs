@@ -5,6 +5,8 @@ import {
 	type EngineOptions,
 	engineConfig,
 	type QualityConfig,
+	RULE_VOCABULARY,
+	type RuleState,
 } from "./config";
 
 /**
@@ -194,12 +196,76 @@ function buildTypecheckCommand(
 }
 
 /**
- * opt-in ruleを有効にするコマンド引数へ展開する
+ * 設定fileが持つruleの指定
  */
-function enableArguments(
-	options: { enable?: string[] } | null | undefined,
-): string[] {
-	return (options?.enable ?? []).flatMap((rule) => ["--enable", rule]);
+interface RuleSelection {
+	enable?: boolean;
+	error?: boolean;
+	rules?: Record<string, RuleState>;
+}
+
+/**
+ * engineが公開するrule語彙
+ */
+type RuleVocabulary = (typeof RULE_VOCABULARY)[EngineName];
+
+/**
+ * 選んだruleを有効の一覧と違反の一覧へ反映する
+ *
+ * @param vocabulary - 反映先engineのrule語彙
+ * @param selected - 反映先のrule名の集合
+ * @param rule - 反映するrule名
+ * @param state - 反映する状態
+ */
+function applyRuleState(
+	vocabulary: RuleVocabulary,
+	selected: { enable: Set<string>; error: Set<string> },
+	rule: string,
+	state: RuleState,
+): void {
+	if (state === "off") {
+		selected.enable.delete(rule);
+		selected.error.delete(rule);
+		return;
+	}
+	if (state === "on") {
+		selected.error.delete(rule);
+	} else {
+		selected.error.add(rule);
+	}
+	if (vocabulary.optIn.includes(rule)) {
+		selected.enable.add(rule);
+	}
+}
+
+/**
+ * ruleの一括指定と個別指定をengineへ渡すruleの一覧へ展開する
+ *
+ * @param name - 展開するengine名
+ * @param options - engineへ渡す起動条件
+ * @returns --enableへ渡すrule名と--errorへ渡すrule名の組
+ */
+function selectRules(
+	name: EngineName,
+	options: EngineOptions | null | undefined,
+): { enable: string[]; error: string[] } {
+	const selection = (options ?? {}) as RuleSelection;
+	const vocabulary = RULE_VOCABULARY[name];
+	const selected = { enable: new Set<string>(), error: new Set<string>() };
+	if (selection.enable === true) {
+		for (const rule of vocabulary.optIn) {
+			selected.enable.add(rule);
+		}
+	}
+	if (selection.error === true) {
+		for (const rule of vocabulary.all) {
+			applyRuleState(vocabulary, selected, rule, "error");
+		}
+	}
+	for (const [rule, state] of Object.entries(selection.rules ?? {})) {
+		applyRuleState(vocabulary, selected, rule, state);
+	}
+	return { enable: [...selected.enable], error: [...selected.error] };
 }
 
 /**
@@ -217,6 +283,12 @@ export function buildEngineCommand(
 ): string[] {
 	const options: EngineOptions = engineConfig(context.config, name) ?? {};
 	const limits = ENGINE_LIMITS[name];
+	const selection = selectRules(name, options);
+	const enableArguments = selection.enable.flatMap((rule) => [
+		"--enable",
+		rule,
+	]);
+	const errorArguments = selection.error.flatMap((rule) => ["--error", rule]);
 	const extra = options.args ?? [];
 	const ignores =
 		limits.ignore === undefined
@@ -228,8 +300,6 @@ export function buildEngineCommand(
 			: (options.targets ?? ["."]);
 	const targets = limits.targets === undefined ? requested : [];
 	const ignoreArguments = ignores.flatMap((ignore) => ["--ignore", ignore]);
-	const rules = engineConfig(context.config, "tsdoc-check")?.error ?? [];
-	const errorArguments = rules.flatMap((rule) => ["--error", rule]);
 	if (name === "biome") {
 		return [
 			executable,
@@ -251,7 +321,7 @@ export function buildEngineCommand(
 			"--json",
 			"--baseline",
 			context.rawBaseline,
-			...enableArguments(engineConfig(context.config, "comment-check")),
+			...enableArguments,
 			...targets,
 			...ignoreArguments,
 			...extra,
@@ -262,7 +332,7 @@ export function buildEngineCommand(
 			executable,
 			"lint",
 			"--json",
-			...enableArguments(engineConfig(context.config, "document-style-check")),
+			...enableArguments,
 			...targets,
 			...ignoreArguments,
 			...extra,
@@ -274,7 +344,7 @@ export function buildEngineCommand(
 	return [
 		executable,
 		"--json",
-		...enableArguments(engineConfig(context.config, "tsdoc-check")),
+		...enableArguments,
 		...errorArguments,
 		...targets,
 		...ignoreArguments,

@@ -42,15 +42,11 @@ export default defineConfig({
 	},
 	config: {
 		"comment-check": {
-			enable: ["japanese-period"],
 			ignore: ["another-project"],
+			rules: { "japanese-period": "on" },
 		},
-		"document-style-check": {
-			enable: ["japanese-period"],
-		},
-		"tsdoc-check": {
-			error: ["missing-doc"],
-		},
+		"document-style-check": { enable: true },
+		"tsdoc-check": { error: true },
 	},
 });
 ```
@@ -91,9 +87,9 @@ engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment
 | `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
 | `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
 | `code-style-check` | `code-style-check --json` | `ignore`、`targets`、`args` |
-| `comment-check` | `comment-check --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名） |
-| `document-style-check` | `document-style-check lint --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名） |
-| `tsdoc-check` | `tsdoc-check --json` | `ignore`、`targets`、`args`、`enable`（有効にするrule名）、`error`（違反として扱うrule名） |
+| `comment-check` | `comment-check --json` | `ignore`、`targets`、`args`、`enable`、`rules` |
+| `document-style-check` | `document-style-check lint --json` | `ignore`、`targets`、`args`、`enable`、`rules` |
+| `tsdoc-check` | `tsdoc-check --json` | `ignore`、`targets`、`args`、`enable`、`error`、`rules` |
 
 `args` はengineの既定引数の後ろへ足す
 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
@@ -105,8 +101,13 @@ engineが受け取らない条件は渡さず、その旨をそのengineのsecti
 biome: ignore skipped (biome.json holds its settings)
 ```
 
-`enable` は `comment-check` と `document-style-check` と `tsdoc-check` の `--enable <rule>` になり、他のengineでは拒否される
-値は導入済みengineが `rule-ids` で公開するrule名で型付けするため、engineが知らない名前は起動時の失敗ではなく型errorになる
+`enable` と `error` はruleをまとめて選び、`rules` はruleを1つずつ選ぶ
+`enable: true` はengineが既定で無効にしているruleを全て有効にする
+`error: true` は `tsdoc-check` の全ruleを違反として扱い、opt-inのruleは先に有効にする 違反へ上げられるのはこのengineだけ
+`rules` はrule名をkeyにして `off`、`on`、`error` のいずれかを渡す `on` はengineの既定のまま、`error` はそのruleだけpresetと同じ扱いにする
+keyがrule名そのものなので導入済みengineのunionで型付けし、engineが知らない名前は起動時の失敗ではなく型errorになる
+`error` を取れるのは `tsdoc-check` だけ、`off` を取れるのは既定で無効のruleだけで、既定で有効なruleを無効にする引数をengineは持たない
+選んだruleは `--enable <rule>` になり、`tsdoc-check` では `--error <rule>` にもなる 他のengineはこれらのoptionを拒否する
 
 `comment-check` はbaseline差分を無効化する未作成のpathを渡して起動する
 新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行うため、既存の `comment-baseline.json` がある場合は `--update-baseline` で移す

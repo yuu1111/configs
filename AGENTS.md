@@ -45,12 +45,13 @@ npm パッケージとして publish する
 ## 注意点
 
 - package の配置は `packages/config/` (共有設定) と `packages/engine/` (検査engine) に分ける
-- このリポジトリ自身を最厳格な利用例にするため、`quality.config.ts` で全 engine と全 opt-in rule を有効にし、warning は `error` へ上げる (rule名は手で列挙せず engine が公開する `./rule-ids` の一覧を import する)
+- このリポジトリ自身を最厳格な利用例にするため、`quality.config.ts` で全 engine を有効にし、`enable: true` と `error: true` の preset で全 opt-in rule を有効にして warning は `error` へ上げる (rule名を手で列挙しない)
 - Biome のネスト設定検出を避けるため、biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`)
 - root の devDependencies に `workspace:*` で自パッケージを参照 (シンボリックリンク用)
 - check engine は @yuu1111/shared を build 時に bundle して配布する (shared は private なので publish しない)
 - engine の rule 語彙は engine の `src/rule-ids.ts` へ置き、import を持たせず `./rule-ids` として公開する (公開する型を private な @yuu1111/shared へ依存させないため)
-- `quality-check` の `enable` / `error` は engine が公開する union を type import するため 3 engine を `peerDependencies` に持つ (型は導入された engine から来るため範囲は下限だけの `>=` で示す)
+- `quality-check` の `rules` は engine が公開する union を type import し、presetの展開と `off` の検証は実行時に engine の `./rule-ids` を読むため 3 engine を `peerDependencies` に持つ (型は導入された engine から来るため範囲は下限だけの `>=` で示す)
+- `quality-check` の build は 3 engine の `./rule-ids` を `--external` にし、rule語彙を実行時に導入済みengineから読む (bundleすると古い一覧が焼き込まれる)
 - check package の `bin` は commit した `bin/cli.js` を指し、そこで `dist/cli.js` の `run` を呼ぶ (Bun は install 時に target が存在しない workspace の `bin` を `node_modules/.bin` へ link しないため)
 - workspace の `bin` を変えるときは `bun.lock` の workspaces entry も同じ変更で更新する (Bun は既存 lockfile の workspaces を再計算しないため)
 - GitHub Release tag は `biome-config-vX.Y.Z`、`code-style-check-vX.Y.Z`、`comment-check-vX.Y.Z`、`document-style-check-vX.Y.Z`、`knip-config-vX.Y.Z`、`quality-check-vX.Y.Z`、`tsdoc-check-vX.Y.Z`、または `tsconfig-vX.Y.Z`
