@@ -3,7 +3,12 @@ import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { collectDeclarations } from "./parse";
-import type { OptInRuleId, TsdocRule } from "./rule-ids";
+import {
+	DEFAULT_DOC_SCOPE,
+	type DocScope,
+	type OptInRuleId,
+	type RuleId,
+} from "./rule-ids";
 import { classifyDeclaration, type Finding } from "./rules";
 
 /**
@@ -23,18 +28,20 @@ export const TYPESCRIPT_EXTENSIONS: ReadonlySet<string> = new Set([
  * @param file - 指摘に載せるfileのpath
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
+ * @param docScope - 検査する宣言をどこまで広げるか
  * @returns 検出したTSDoc違反
  */
 export function scanSource(
 	source: string,
 	file: string,
 	enabled: readonly OptInRuleId[] = [],
-	disabled: readonly TsdocRule[] = [],
+	disabled: readonly RuleId[] = [],
+	docScope: DocScope = DEFAULT_DOC_SCOPE,
 ): Finding[] {
 	try {
 		return collectDeclarations(source, file)
 			.flatMap((declaration) =>
-				classifyDeclaration(declaration, file, source, enabled),
+				classifyDeclaration(declaration, file, source, enabled, docScope),
 			)
 			.filter((finding) => !disabled.includes(finding.rule));
 	} catch {
@@ -50,19 +57,22 @@ export function scanSource(
  * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
+ * @param docScope - 検査する宣言をどこまで広げるか
  * @returns 検出したTSDoc違反
  */
 export function scanFile(
 	file: string,
 	cwd = process.cwd(),
 	enabled: readonly OptInRuleId[] = [],
-	disabled: readonly TsdocRule[] = [],
+	disabled: readonly RuleId[] = [],
+	docScope: DocScope = DEFAULT_DOC_SCOPE,
 ): Finding[] {
 	return scanSource(
 		readFileSync(file, "utf8"),
 		normalizePath(relative(cwd, file)),
 		enabled,
 		disabled,
+		docScope,
 	);
 }
 
@@ -73,17 +83,19 @@ export function scanFile(
  * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
+ * @param docScope - 検査する宣言をどこまで広げるか
  * @returns 位置順に並べたTSDoc違反
  */
 export function scanFiles(
 	files: string[],
 	cwd = process.cwd(),
 	enabled: readonly OptInRuleId[] = [],
-	disabled: readonly TsdocRule[] = [],
+	disabled: readonly RuleId[] = [],
+	docScope: DocScope = DEFAULT_DOC_SCOPE,
 ): Finding[] {
 	const findings: Finding[] = [];
 	for (const file of files) {
-		findings.push(...scanFile(file, cwd, enabled, disabled));
+		findings.push(...scanFile(file, cwd, enabled, disabled, docScope));
 	}
 	return findings.sort(compareFindings);
 }

@@ -686,6 +686,14 @@
 						}
 					},
 					"type": "object"
+				},
+				"docScope": {
+					"enum": [
+						"exported",
+						"documented",
+						"all"
+					],
+					"type": "string"
 				}
 			},
 			"type": "object"

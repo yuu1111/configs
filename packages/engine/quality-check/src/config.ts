@@ -17,9 +17,11 @@ import {
 } from "@yuu1111/document-style-check/rule-ids";
 import type { RuleSelection } from "@yuu1111/shared/engines";
 import {
+	DEFAULT_DOC_SCOPE as TSDOC_CHECK_DEFAULT_DOC_SCOPE,
+	DOC_SCOPES as TSDOC_CHECK_DOC_SCOPES,
 	OPT_IN_RULE_IDS as TSDOC_CHECK_OPT_IN_RULE_IDS,
 	RULE_GROUPS as TSDOC_CHECK_RULE_GROUPS,
-	KNOWN_RULE_NAMES as TSDOC_CHECK_RULE_NAMES,
+	RULE_IDS as TSDOC_CHECK_RULE_IDS,
 } from "@yuu1111/tsdoc-check/rule-ids";
 
 /**
@@ -91,6 +93,8 @@ export interface TypecheckOptions extends EngineOptions {
 export interface RuleEngineOptions {
 	/** 検査から外すpath */
 	ignore: string[];
+	/** engineごとの追加option 統合runnerが検証して渡す */
+	options: Record<string, unknown>;
 	/** 展開済みのrule選択 */
 	rules: RuleSelection;
 	/** 検査する対象path */
@@ -134,6 +138,8 @@ interface EngineVocabulary {
 	groups: Record<string, readonly string[]>;
 	/** 既定で実行しないrule */
 	optIn: readonly string[];
+	/** 検査する宣言を文書の広さで選ぶengineが受け取るdocScopeの一覧 受け取らなければundefined */
+	docScopes?: readonly string[];
 	/** ruleを違反へ上げられるか */
 	promotes: boolean;
 }
@@ -161,7 +167,8 @@ export const RULE_VOCABULARY = {
 		promotes: false,
 	},
 	"tsdoc-check": {
-		all: TSDOC_CHECK_RULE_NAMES,
+		all: TSDOC_CHECK_RULE_IDS,
+		docScopes: TSDOC_CHECK_DOC_SCOPES,
 		groups: TSDOC_CHECK_RULE_GROUPS,
 		optIn: TSDOC_CHECK_OPT_IN_RULE_IDS,
 		promotes: true,
@@ -181,6 +188,18 @@ export type RuleEngineName = keyof typeof RULE_VOCABULARY;
  */
 export function isRuleEngine(name: EngineName): name is RuleEngineName {
 	return name in RULE_VOCABULARY;
+}
+
+/**
+ * engineが受け取るdocScopeの一覧を返す
+ *
+ * @param name - 語彙を引くengine名
+ * @returns 受け取るdocScopeの一覧 受け取らなければundefined
+ */
+export function docScopesOf(
+	name: RuleEngineName,
+): readonly string[] | undefined {
+	return (RULE_VOCABULARY[name] as EngineVocabulary).docScopes;
 }
 
 /**
@@ -260,6 +279,9 @@ function engineOptionKeys(name: EngineName): readonly string[] {
 	}
 	if (isRuleEngine(name)) {
 		keys.push("rules");
+		if (docScopesOf(name) !== undefined) {
+			keys.push("docScope");
+		}
 	}
 	return keys;
 }
@@ -283,6 +305,51 @@ function readStringArray(value: unknown, field: string): string[] | undefined {
 		throw new Error(`${field} must be an array of non-empty strings`);
 	}
 	return [...value] as string[];
+}
+
+/**
+ * docScopeの指定を読み取る
+ *
+ * @param value - sectionが持つdocScopeの値
+ * @param field - errorメッセージへ載せる位置
+ * @param scopes - engineが受け取るdocScopeの一覧
+ * @returns 読み取ったdocScope 指定が無ければundefined
+ */
+function readDocScope(
+	value: unknown,
+	field: string,
+	scopes: readonly string[],
+): string | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (typeof value !== "string" || !scopes.includes(value)) {
+		throw new Error(`${field} must be one of ${scopes.join(", ")}`);
+	}
+	return value;
+}
+
+/**
+ * engineごとの追加optionを読み取る
+ *
+ * @param value - engineのsection
+ * @param name - optionを読み取るengine名
+ * @param source - errorメッセージへ載せるconfig fileのpath
+ * @returns 検証して既定値を補った追加option
+ */
+function readEngineOptions(
+	value: JsonObject,
+	name: RuleEngineName,
+	source: string,
+): Record<string, unknown> {
+	const options: Record<string, unknown> = {};
+	const docScopes = docScopesOf(name);
+	if (docScopes !== undefined) {
+		options.docScope =
+			readDocScope(value.docScope, `${source}: ${name}.docScope`, docScopes) ??
+			TSDOC_CHECK_DEFAULT_DOC_SCOPE;
+	}
+	return options;
 }
 
 function readBoolean(value: unknown, field: string): boolean | undefined {
@@ -490,6 +557,7 @@ function parseEngineOptions(
 			readStringArray(value.projects, `${source}: ${name}.projects`) ?? [];
 	}
 	if (isRuleEngine(name)) {
+		options.options = readEngineOptions(value, name, source);
 		options.rules = readRuleSelection(
 			value.rules,
 			`${source}: ${name}.rules`,

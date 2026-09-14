@@ -191,6 +191,7 @@ async function runProcessEngine(
 function defaultRuleOptions(): RuleEngineOptions {
 	return {
 		ignore: [],
+		options: {},
 		rules: { disable: [], enable: [], error: [] },
 		targets: [],
 	};
@@ -210,6 +211,7 @@ function runFindingEngine(
 		const report = engine({
 			cwd: options.cwd,
 			ignores: [...configured.ignore, ...options.overrides.ignore],
+			options: configured.options,
 			rules: configured.rules,
 			targets: resolveTargets(options.overrides.targets, configured.targets),
 		});

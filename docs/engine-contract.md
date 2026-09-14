@@ -17,6 +17,7 @@
 - 検出engineと `shared` は private な workspace package とし publish しない
 - 公開する `quality-check` が build 時に engine と `@yuu1111/shared` と外部依存を bundle し、runtime dependency を持たない
 - `src/rule-ids.ts` に `RULE_IDS` `OPT_IN_RULE_IDS` `RULE_GROUPS` を置き import を持たせない
+- engine固有の選択肢の語彙も `src/rule-ids.ts` へ置く (`tsdoc-check` の `DOC_SCOPES` と `SCOPED_RULE_IDS`)
 - 全ruleがいずれかのgroupへ重複なく入ることを tests で検査する
 - `./rule-ids` と、検出の `./run`、整形の `./fix`、review ledger の `./audit` を公開する
 - engine の package は振る舞いの関数だけを公開し、個別コマンドのargv解析と出力は `quality-check` が持つ
@@ -24,7 +25,8 @@
 ### in-process 呼び出し
 
 - 検出engineは子プロセスではなく関数として呼ぶ
-- `@yuu1111/shared/engines` の `FindingEngineContext` が `cwd` `ignores` `rules` `targets` を渡す
+- `@yuu1111/shared/engines` の `FindingEngineContext` が `cwd` `ignores` `options` `rules` `targets` を渡す
+- `options` はengine固有のoptionを載せ 統合runnerが検証してから渡す engineは既定値へ倒して読む
 - `FindingEngine` は `@yuu1111/shared/report` の `EngineReport` を返す
 - 検出engineは終了codeを持たない 起動の失敗は例外にし 統合runnerがengineのerrorへ変換する
 - `quality-check` は `src/engines/index.ts` の `FINDING_ENGINES` で全検出engineを登録する
@@ -57,7 +59,7 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 | `code-style-check` | in-process | ignore targets rules |
 | `comment-check` | in-process | ignore targets rules |
 | `document-style-check` | in-process | ignore targets rules |
-| `tsdoc-check` | in-process | ignore targets rules |
+| `tsdoc-check` | in-process | ignore targets rules docScope |
 
 `args` は子プロセスengineだけが受け取り 既定引数の後ろへ足す
 

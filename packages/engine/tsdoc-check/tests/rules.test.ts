@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { KNOWN_RULE_NAMES, RULE_GROUPS } from "../src/rule-ids";
+import { RULE_GROUPS, RULE_IDS, SCOPED_RULE_IDS } from "../src/rule-ids";
 import { promoteFindings, returnsValue } from "../src/rules";
 import { scanSource } from "../src/scan";
 
@@ -55,6 +55,13 @@ describe("return value detection", () => {
 describe("rule groups", () => {
 	test("covers every rule once", () => {
 		const grouped = Object.values(RULE_GROUPS).flatMap((rules) => [...rules]);
-		expect(grouped.slice().sort()).toEqual([...KNOWN_RULE_NAMES].sort());
+		expect(grouped.slice().sort()).toEqual([...RULE_IDS].sort());
+	});
+
+	test("names only rules that the vocabulary defines", () => {
+		for (const rule of SCOPED_RULE_IDS) {
+			expect(RULE_IDS).toContain(rule);
+		}
+		expect(new Set(SCOPED_RULE_IDS).size).toBe(SCOPED_RULE_IDS.length);
 	});
 });

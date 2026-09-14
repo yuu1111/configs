@@ -6,10 +6,17 @@ import {
 	positionAt,
 	type Suppression,
 } from "./parse";
-import { KNOWN_RULE_NAMES, type OptInRuleId, type TsdocRule } from "./rule-ids";
+import {
+	DEFAULT_DOC_SCOPE,
+	type DocScope,
+	type OptInRuleId,
+	RULE_IDS,
+	type RuleId,
+	SCOPED_RULE_IDS,
+} from "./rule-ids";
 import { parseTsdoc, type TsdocResult } from "./tsdoc";
 
-const KNOWN_RULES = new Set<string>(KNOWN_RULE_NAMES);
+const KNOWN_RULES = new Set<string>(RULE_IDS);
 
 /**
  * TSDocに定義がないtagは構文errorではなく報告に留める
@@ -21,12 +28,12 @@ const TAG_MESSAGE_IDS = new Set(["tsdoc-undefined-tag"]);
  */
 export interface Finding extends Located {
 	message: string;
-	rule: TsdocRule;
+	rule: RuleId;
 	severity: Severity;
 }
 
 function finding(
-	rule: TsdocRule,
+	rule: RuleId,
 	severity: Severity,
 	file: string,
 	position: Position,
@@ -101,7 +108,7 @@ function untaggedFindings(
 }
 
 /**
- * @param tagの並びが宣言順と違うときだけ報告する
+ * `@param` の並びが宣言順と違うときだけ報告する
  */
 function paramOrderFinding(
 	declaration: Declaration,
@@ -126,7 +133,7 @@ function paramOrderFinding(
 }
 
 /**
- * @deprecatedの代替先が@seeにも{@link}にも無いときだけ報告する
+ * `@deprecated` の代替先が `@see` にも `{@link}` にも無いときだけ報告する
  */
 function deprecatedFinding(
 	declaration: Declaration,
@@ -152,7 +159,7 @@ function deprecatedFinding(
 }
 
 /**
- * 値を返す関数に@returnsが無いときだけ報告する
+ * 値を返す関数に `@returns` が無いときだけ報告する
  */
 function missingReturnsFinding(
 	declaration: Declaration,
@@ -261,7 +268,7 @@ function crampedTagOffset(text: string): number | null {
 /**
  * 説明とblock tagの間に空行が無いTSDocを検出する
  *
- * @param declaration - 検査するexported宣言
+ * @param declaration - 検査する宣言
  * @param file - 指摘に載せるfileのpath
  * @param comment - 検査するTSDoc comment
  * @param source - 宣言を切り出したsource文字列
@@ -287,7 +294,7 @@ function tagSeparationFinding(
 }
 
 /**
- * exported宣言1つ分のTSDocを検査する
+ * 宣言1つ分のTSDocを検査する
  */
 function checkDeclaration(
 	declaration: Declaration,
@@ -303,7 +310,7 @@ function checkDeclaration(
 				"warning",
 				file,
 				declaration,
-				`exported ${declaration.kind} ${declaration.name} has no TSDoc comment`,
+				`${declaration.kind} ${declaration.name} has no TSDoc comment`,
 			),
 		];
 	}
@@ -466,27 +473,41 @@ export function promoteFindings(
 }
 
 /**
- * 宣言の指摘へ抑制commentを適用する
+ * 宣言の指摘へ抑制commentとdocScopeを適用する
  *
- * @param declaration - 検査するexported宣言
+ * docScopeがexportedのときは公開surfaceの宣言だけが抑制の対象になる
+ * それ以外のscopeではdocがある宣言すべてを対象にする
+ *
+ * @param declaration - 検査する宣言
  * @param file - 指摘に載せるfileのpath
  * @param source - 宣言を切り出したsource文字列
  * @param enabled - 実行するopt-in ruleの識別子一覧
- * @returns 抑制を適用した後の指摘一覧
+ * @param docScope - 検査する宣言をどこまで広げるか
+ * @returns 抑制とscopeを適用した後の指摘一覧
  */
 export function classifyDeclaration(
 	declaration: Declaration,
 	file: string,
 	source: string,
 	enabled: readonly OptInRuleId[] = [],
+	docScope: DocScope = DEFAULT_DOC_SCOPE,
 ): Finding[] {
+	const requiresDoc =
+		docScope === "all" ? !declaration.local : declaration.exported;
+	if (declaration.comment === null && !requiresDoc) {
+		return [];
+	}
+	const inScope = (finding: Finding) =>
+		docScope !== "exported" ||
+		declaration.exported ||
+		!SCOPED_RULE_IDS.includes(finding.rule);
 	const findings = checkDeclaration(declaration, file, source, enabled);
 	if (declaration.suppressions.length === 0) {
-		return findings;
+		return findings.filter(inScope);
 	}
 	const { kept, used } = partitionFindings(findings, declaration.suppressions);
 	return [
 		...kept,
 		...suppressionFindings(declaration.suppressions, used, file),
-	];
+	].filter(inScope);
 }

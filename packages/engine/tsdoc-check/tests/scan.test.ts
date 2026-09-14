@@ -165,7 +165,7 @@ describe("tsdoc checks", () => {
 		expect(findings[0]?.severity).toBe("warning");
 	});
 
-	test("ignores declarations that are not exported", () => {
+	test("checks the TSDoc of a declaration that is not exported", () => {
 		const source = [
 			"/** Runs the task",
 			" *",
@@ -173,7 +173,151 @@ describe("tsdoc checks", () => {
 			" */",
 			"function run(): void {}",
 		].join("\n");
-		expect(rulesOf(source)).toEqual([]);
+		expect(rulesOf(source)).toEqual(["tsdoc-tag"]);
+	});
+
+	test("keeps the contract rules off a declaration that is not exported", () => {
+		const source = [
+			"/** Runs the task",
+			" *",
+			" * @param other - another value",
+			" */",
+			"function run(value: number): void {}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["param-mismatch"]);
+	});
+
+	test("checks the contract of a declaration exported by name", () => {
+		const source = [
+			"/** Runs the task",
+			" *",
+			" * @param other - another value",
+			" */",
+			"function run(value: number): void {}",
+			"export { run }",
+		].join("\n");
+		expect(rulesOf(source).sort()).toEqual([
+			"param-mismatch",
+			"param-untagged",
+		]);
+	});
+
+	test("checks the contract of the declaration behind export default", () => {
+		const source = [
+			"/** Reads the value",
+			" */",
+			"function read(): number {",
+			"\treturn 1",
+			"}",
+			"export default read",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", ["missing-returns"]).map(
+				(finding) => finding.rule,
+			),
+		).toEqual(["missing-returns"]);
+	});
+
+	test("checks the TSDoc of a class member", () => {
+		const source = [
+			"/** Runs the task",
+			" * and waits",
+			" */",
+			"export class Runner {",
+			"\t/** Runs the member",
+			"\t *",
+			"\t * @bogus",
+			"\t */",
+			"\trun(): void {}",
+			"}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["tsdoc-tag"]);
+	});
+
+	test("checks the contract of a class member under documented", () => {
+		const source = [
+			"/** Runs the task",
+			" * and waits",
+			" */",
+			"export class Runner {",
+			"\t/** Runs the member",
+			"\t *",
+			"\t * @param other - another value",
+			"\t */",
+			"\trun(value: number): void {}",
+			"}",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", [], [], "documented")
+				.map((finding) => finding.rule)
+				.sort(),
+		).toEqual(["param-mismatch", "param-untagged"]);
+	});
+
+	test("keeps the contract rules off a class member by default", () => {
+		const source = [
+			"/** Runs the task",
+			" * and waits",
+			" */",
+			"export class Runner {",
+			"\t/** Runs the member",
+			"\t *",
+			"\t * @param other - another value",
+			"\t */",
+			"\trun(value: number): void {}",
+			"}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["param-mismatch"]);
+	});
+
+	test("checks the contract of a documented declaration under documented", () => {
+		const source = [
+			"/** Runs the task",
+			" *",
+			" * @param other - another value",
+			" */",
+			"function run(value: number): void {}",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", [], [], "documented")
+				.map((finding) => finding.rule)
+				.sort(),
+		).toEqual(["param-mismatch", "param-untagged"]);
+	});
+
+	test("keeps missing-doc on the public surface under documented", () => {
+		expect(
+			scanSource(
+				"function run(): void {}\n",
+				"src/sample.ts",
+				[],
+				[],
+				"documented",
+			),
+		).toEqual([]);
+	});
+
+	test("requires a comment on every declaration outside a function body under all", () => {
+		expect(
+			scanSource(
+				"function run(): void {}\n",
+				"src/sample.ts",
+				[],
+				[],
+				"all",
+			).map((finding) => finding.rule),
+		).toEqual(["missing-doc"]);
+	});
+
+	test("does not require a comment on a declaration inside a function body", () => {
+		const source = [
+			"/** Reads the value",
+			" */",
+			"export function read(): void {",
+			"\tconst load = (): void => {}",
+			"}",
+		].join("\n");
+		expect(scanSource(source, "src/sample.ts", [], [], "all")).toEqual([]);
 	});
 
 	test("skips a file that does not parse", () => {

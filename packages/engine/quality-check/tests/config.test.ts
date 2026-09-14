@@ -45,8 +45,24 @@ describe("quality config", () => {
 		);
 		expect(engineConfig(config, "tsdoc-check")).toEqual({
 			ignore: ["dist"],
+			options: { docScope: "exported" },
 			rules: { disable: [], enable: [], error: [] },
 			targets: [],
+		});
+	});
+
+	test("reads docScope from the TSDoc section", () => {
+		const config = parseConfig(
+			{
+				"tsdoc-check": {
+					docScope: "documented",
+					enabled: true,
+				},
+			},
+			"test",
+		);
+		expect(engineConfig(config, "tsdoc-check")?.options).toEqual({
+			docScope: "documented",
 		});
 	});
 
@@ -291,6 +307,26 @@ describe("quality config errors", () => {
 		).toThrow(
 			"test: comment-check.rules.shape cannot treat a rule as an error",
 		);
+	});
+
+	test("rejects an unknown docScope", () => {
+		expect(() =>
+			parseConfig(
+				{ "tsdoc-check": { docScope: "public", enabled: true } },
+				"test",
+			),
+		).toThrow(
+			"test: tsdoc-check.docScope must be one of exported, documented, all",
+		);
+	});
+
+	test("rejects docScope in an engine that does not take it", () => {
+		expect(() =>
+			parseConfig(
+				{ "comment-check": { docScope: "all", enabled: true } },
+				"test",
+			),
+		).toThrow("test: comment-check has an unknown option: docScope");
 	});
 
 	test("rejects a preset that is not a known preset", () => {

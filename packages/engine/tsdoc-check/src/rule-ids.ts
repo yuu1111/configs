@@ -1,7 +1,7 @@
 /**
- * 抑制commentと--errorで指定できるrule名の一覧
+ * tsdoc-checkが報告するruleの識別子一覧
  */
-export const KNOWN_RULE_NAMES = [
+export const RULE_IDS = [
 	"blank-line-before-tags",
 	"deprecated-without-guidance",
 	"missing-doc",
@@ -19,9 +19,9 @@ export const KNOWN_RULE_NAMES = [
 ] as const;
 
 /**
- * KNOWN_RULE_NAMESが定義するrule識別子のunion型
+ * RULE_IDSが定義するrule識別子のunion型
  */
-export type TsdocRule = (typeof KNOWN_RULE_NAMES)[number];
+export type RuleId = (typeof RULE_IDS)[number];
 
 /**
  * 既定では実行せず--enableで明示的に有効にするruleの識別子一覧
@@ -36,6 +36,41 @@ export const OPT_IN_RULE_IDS = [
  * OPT_IN_RULE_IDSが定義するrule識別子のunion型
  */
 export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
+
+/**
+ * 検査する宣言をどこまで広げるか
+ */
+export const DOC_SCOPES = ["exported", "documented", "all"] as const;
+
+/**
+ * DOC_SCOPESが定義するdocScopeのunion型
+ */
+export type DocScope = (typeof DOC_SCOPES)[number];
+
+/**
+ * docScopeの既定値 公開契約だけを対象にする
+ */
+export const DEFAULT_DOC_SCOPE: DocScope = "exported";
+
+/**
+ * docScopeに従って対象を選ぶrule 文書の不足と書き方を決めるruleがここに入る
+ *
+ * この一覧に無いruleは書かれたTSDocが正しいかだけを見て docがある宣言すべてを対象にする
+ *
+ * - exported — 公開surfaceの宣言だけを対象にする
+ * - documented — 上に加えて doc がある宣言すべてを対象にする
+ * - all — 上に加えて 関数本体の外にある宣言すべてへdocを要求する
+ */
+export const SCOPED_RULE_IDS: readonly RuleId[] = [
+	"blank-line-before-tags",
+	"deprecated-without-guidance",
+	"missing-doc",
+	"missing-returns",
+	"param-order",
+	"param-untagged",
+	"single-line-doc",
+	"type-param-untagged",
+];
 
 /**
  * ruleをgroupへまとめた対応表 `rules` のgroup単位の指定が使う
@@ -60,4 +95,4 @@ export const RULE_GROUPS = {
 		"type-param-untagged",
 	],
 	suppression: ["suppression", "suppression-unused"],
-} as const satisfies Record<string, readonly TsdocRule[]>;
+} as const satisfies Record<string, readonly RuleId[]>;

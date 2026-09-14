@@ -10,6 +10,7 @@
     "enabled": true,
     "targets": ["src"],
     "ignore": ["generated"],
+    "docScope": "exported",
     "rules": {
       "preset": "recommended",
       "syntax": {
@@ -30,24 +31,42 @@
 `enabled`、`targets`、`ignore`、`rules` と `preset`、group、rule の指定は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
 このengineはin-processで起動し `args` を取らない
 
+## docScope
+
+`docScope` は doc を要求し書き足りない分を咎める範囲を選ぶ 省略時は `exported` になる
+
+| `docScope` | docを要求する宣言 | 書き方と不足を検査する宣言 |
+|------------|-------------------|---------------------------|
+| `exported` | 公開surfaceの宣言 | docがある公開surfaceの宣言 |
+| `documented` | 公開surfaceの宣言 | docがある宣言すべて |
+| `all` | 関数本体の外にある宣言すべて | docがある宣言すべて |
+
+公開surfaceはトップレベルの宣言のうち、`export` を付けたもの、`export { name }` が名前を挙げたもの、`export default name` と `export = name` が指すものにする
+`export { name } from "..."` と `export * from "..."` は指す先の宣言がこのfileに無いため対象外にする
+`all` も関数本体の中の宣言へ doc は要求しない
+
+書かれたTSDocが正しいかだけを見るruleは `docScope` に関係なく doc がある宣言すべてを対象にする
+その宣言にはトップレベルの宣言だけでなく、class、interface、type literal、namespace、enum のメンバーと、doc を付けた関数本体の中の宣言も含む
+どのruleが `docScope` に従うかは rule 一覧の `対象範囲` 列にある
+
 ## rule 一覧
 
-| Rule | Group | 重大度 | Default | 検出対象 |
-|------|-------|--------|---------|----------|
-| `tsdoc-syntax` | `syntax` | error | true | TSDoc parserが返す構文メッセージ |
-| `param-mismatch` | `contract` | error | true | signatureが宣言していないparameterを指す `@param` |
-| `type-param-mismatch` | `contract` | error | true | 宣言に無いtype parameterを指す `@typeParam` |
-| `suppression` | `suppression` | error | true | 理由の無い抑制、未知のrule、ruleを書いていない抑制 |
-| `tsdoc-tag` | `syntax` | warning | true | TSDoc設定が定義していないtag |
-| `missing-doc` | `documentation` | warning | true | TSDoc commentの無いexported宣言 |
-| `single-line-doc` | `syntax` | warning | true | 1行で書いたTSDoc comment |
-| `blank-line-before-tags` | `syntax` | warning | true | summaryの直下に書いたblock tag |
-| `param-untagged` | `contract` | warning | true | `@param` の無い宣言済みparameter |
-| `type-param-untagged` | `contract` | warning | true | `@typeParam` の無い宣言済みtype parameter |
-| `suppression-unused` | `suppression` | warning | true | 何も抑制しない抑制 |
-| `param-order` | `contract` | warning | false | 宣言順と違う `@param` の並び |
-| `missing-returns` | `documentation` | warning | false | `@returns` の無い値を返す関数 |
-| `deprecated-without-guidance` | `documentation` | warning | false | 代替先を示さない `@deprecated` |
+| Rule | Group | 重大度 | Default | 対象範囲 | 検出対象 |
+|------|-------|--------|---------|----------|----------|
+| `tsdoc-syntax` | `syntax` | error | true | 全文書 | TSDoc parserが返す構文メッセージ |
+| `param-mismatch` | `contract` | error | true | 全文書 | signatureが宣言していないparameterを指す `@param` |
+| `type-param-mismatch` | `contract` | error | true | 全文書 | 宣言に無いtype parameterを指す `@typeParam` |
+| `suppression` | `suppression` | error | true | 全文書 | 理由の無い抑制、未知のrule、ruleを書いていない抑制 |
+| `tsdoc-tag` | `syntax` | warning | true | 全文書 | TSDoc設定が定義していないtag |
+| `suppression-unused` | `suppression` | warning | true | 全文書 | 何も抑制しない抑制 |
+| `missing-doc` | `documentation` | warning | true | docScope | TSDoc commentの無い宣言 |
+| `single-line-doc` | `syntax` | warning | true | docScope | 1行で書いたTSDoc comment |
+| `blank-line-before-tags` | `syntax` | warning | true | docScope | summaryの直下に書いたblock tag |
+| `param-untagged` | `contract` | warning | true | docScope | `@param` の無い宣言済みparameter |
+| `type-param-untagged` | `contract` | warning | true | docScope | `@typeParam` の無い宣言済みtype parameter |
+| `param-order` | `contract` | warning | false | docScope | 宣言順と違う `@param` の並び |
+| `missing-returns` | `documentation` | warning | false | docScope | `@returns` の無い値を返す関数 |
+| `deprecated-without-guidance` | `documentation` | warning | false | docScope | 代替先を示さない `@deprecated` |
 
 `param-order`、`missing-returns`、`deprecated-without-guidance` はopt-inで、`rules` が `on` にするまで実行しない
 
@@ -68,7 +87,6 @@ TSDocが定義していないtagは `tsdoc-tag` のwarningになる
 
 `deprecated-without-guidance` は `@see` か `@deprecated` の文中の `{@link}` を代替先として受け入れる
 
-検査対象はトップレベルのexported宣言だけである
 parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は検査しない
 
 ## 抑制

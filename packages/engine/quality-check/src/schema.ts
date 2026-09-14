@@ -1,4 +1,5 @@
 import {
+	docScopesOf,
 	ENGINE_CAPABILITIES,
 	ENGINE_NAMES,
 	type EngineName,
@@ -85,6 +86,10 @@ function engineSchema(name: EngineName): JsonSchema {
 	}
 	if (isRuleEngine(name)) {
 		properties.rules = rulesSchema(name);
+		const docScopes = docScopesOf(name);
+		if (docScopes !== undefined) {
+			properties.docScope = { enum: [...docScopes], type: "string" };
+		}
 	}
 	return {
 		additionalProperties: false,

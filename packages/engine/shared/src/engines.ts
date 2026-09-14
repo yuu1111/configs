@@ -20,6 +20,8 @@ export interface FindingEngineContext {
 	cwd: string;
 	/** 検査から外すpath */
 	ignores: string[];
+	/** engineごとの追加option 検証は統合runnerが持ち engineは既定値へ倒して読む */
+	options?: Readonly<Record<string, unknown>>;
 	/** 渡すrule選択 */
 	rules: RuleSelection;
 	/** 検査する対象path */

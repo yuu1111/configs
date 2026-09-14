@@ -26,11 +26,15 @@ export interface Suppression extends Position {
 }
 
 /**
- * 検査対象のexported宣言1件の種別、名前、引数と付随comment
+ * 検査対象の宣言1件の種別、名前、引数と付随comment
  */
 export interface Declaration extends Position {
 	comment: DocComment | null;
+	/** 公開surfaceに属する宣言か トップレベルのexportと別名exportがtrueになる */
+	exported: boolean;
 	kind: string;
+	/** 関数本体の中にある宣言か */
+	local: boolean;
 	name: string;
 	parameters: string[];
 	returnType: string | null;
@@ -44,6 +48,47 @@ interface DeclaredSymbol {
 	parameters: string[];
 	returnType: string | null;
 	typeParameters: string[];
+}
+
+/**
+ * 宣言を走査するときの位置づけ
+ */
+interface Context {
+	/** トップレベルでexportされているか */
+	exported: boolean;
+	/** 関数本体の中か */
+	local: boolean;
+	/** トップレベルの文か */
+	topLevel: boolean;
+}
+
+/**
+ * 宣言nodeから読み取るpropertyを持つ部分的な形
+ */
+interface NodeShape {
+	body?: Node | Node[] | null;
+	declaration?: Node | null;
+	declarations?: Node[];
+	expression?: Node | null;
+	id?: Node | null;
+	init?: Node | null;
+	key?: Node | null;
+	local?: Node | null;
+	members?: Node[];
+	parameters?: Node[];
+	source?: Node | null;
+	specifiers?: Node[];
+	typeAnnotation?: Node | null;
+}
+
+/**
+ * nodeを読み取るための部分的な形として扱う
+ *
+ * @param node - 読み取るnode
+ * @returns 読み取るpropertyを持つ部分的な形
+ */
+function shape(node: Node | null | undefined): NodeShape {
+	return (node ?? {}) as NodeShape;
 }
 
 /**
@@ -197,6 +242,30 @@ function returnTypeText(node: Node, source: string): string | null {
 	return source.slice(inner.start, inner.end);
 }
 
+/**
+ * メンバーのkeyから表示する名前を取り出す 計算keyは対象外にする
+ *
+ * @param node - 名前を取り出すメンバー
+ * @returns メンバーの名前 取り出せなければnull
+ */
+function memberName(node: Node): string | null {
+	const key = shape(node).key;
+	if (key === null || key === undefined) {
+		return null;
+	}
+	switch (key.type) {
+		case "Identifier":
+			return key.name;
+		case "NumericLiteral":
+		case "StringLiteral":
+			return String(key.value);
+		case "PrivateName":
+			return `#${key.id.name}`;
+		default:
+			return null;
+	}
+}
+
 function callableSymbol(
 	kind: string,
 	name: string,
@@ -212,6 +281,105 @@ function callableSymbol(
 		returnType: returnTypeText(node, source),
 		typeParameters: typeParameterNames(node),
 	};
+}
+
+/**
+ * 宣言nodeのidから表示する名前を取り出す
+ *
+ * @param node - 名前を取り出す宣言
+ * @returns 宣言の名前 取り出せなければnull
+ */
+function declaredName(node: Node): string | null {
+	const id = shape(node).id;
+	if (id?.type === "Identifier") {
+		return id.name;
+	}
+	if (id?.type === "StringLiteral") {
+		return String(id.value);
+	}
+	return null;
+}
+
+/**
+ * class と interface とtype literalのメンバー1つ分のsymbolを返す
+ *
+ * @param node - symbolを取り出すメンバー
+ * @param source - 宣言を切り出したsource文字列
+ * @returns メンバーが宣言するsymbol
+ */
+function memberSymbolsOf(node: Node, source: string): DeclaredSymbol[] {
+	switch (node.type) {
+		case "ClassMethod":
+		case "ClassPrivateMethod":
+		case "ObjectMethod":
+		case "TSDeclareMethod":
+		case "TSMethodSignature": {
+			const name = memberName(node);
+			return name === null
+				? []
+				: [callableSymbol("method", name, node, source)];
+		}
+		case "ClassProperty":
+		case "ClassPrivateProperty":
+		case "TSPropertySignature": {
+			const name = memberName(node);
+			if (name === null) {
+				return [];
+			}
+			return [
+				{
+					kind: "property",
+					name,
+					parameters: [],
+					returnType: null,
+					typeParameters: typeParameterNames(node),
+				},
+			];
+		}
+		case "TSCallSignatureDeclaration":
+			return [callableSymbol("call", "call", node, source)];
+		case "TSConstructSignatureDeclaration":
+			return [callableSymbol("constructor", "new", node, source)];
+		case "TSIndexSignature":
+			return [
+				{
+					kind: "index",
+					name: "index",
+					parameters: parameterNames(shape(node).parameters),
+					returnType: returnTypeText(node, source),
+					typeParameters: [],
+				},
+			];
+		case "TSEnumMember": {
+			const name = declaredName(node);
+			if (name === null) {
+				return [];
+			}
+			return [
+				{
+					kind: "enum-member",
+					name,
+					parameters: [],
+					returnType: null,
+					typeParameters: [],
+				},
+			];
+		}
+		case "TSModuleDeclaration": {
+			const name = declaredName(node) ?? "module";
+			return [
+				{
+					kind: "namespace",
+					name,
+					parameters: [],
+					returnType: null,
+					typeParameters: [],
+				},
+			];
+		}
+		default:
+			return [];
+	}
 }
 
 function symbolsOf(node: Node, source: string): DeclaredSymbol[] {
@@ -292,16 +460,376 @@ function symbolsOf(node: Node, source: string): DeclaredSymbol[] {
 			return symbols;
 		}
 		default:
-			return [];
+			return memberSymbolsOf(node, source);
 	}
 }
 
 /**
- * top-levelのexported宣言だけを集める
+ * class と interface とtype literalのメンバーを返す メンバーを持たないnodeにはnullを返す
+ *
+ * @param node - メンバーを取り出すnode
+ * @returns メンバーのnode一覧 メンバーを持たなければnull
+ */
+function memberNodes(node: Node): Node[] | null {
+	if (
+		node.type === "ClassDeclaration" ||
+		node.type === "ClassExpression" ||
+		node.type === "TSInterfaceDeclaration"
+	) {
+		return bodyMembers(node);
+	}
+	if (node.type === "TSTypeLiteral") {
+		return shape(node).members ?? [];
+	}
+	return null;
+}
+
+/**
+ * class と interface のbodyが持つメンバーを返す
+ *
+ * @param node - メンバーを取り出すnode
+ * @returns メンバーのnode一覧
+ */
+function bodyMembers(node: Node): Node[] {
+	const body = shape(node).body;
+	if (body === null || body === undefined || Array.isArray(body)) {
+		return [];
+	}
+	const members = shape(body).body;
+	return Array.isArray(members) ? members : [];
+}
+
+/**
+ * メンバーのnodeを非公開の宣言として集める
+ */
+function collectMemberNodes(
+	members: readonly Node[],
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const nested: Context = { ...context, exported: false, topLevel: false };
+	for (const member of members) {
+		collectDeclaration(member, nested, member, source, exportedNames, out);
+	}
+}
+
+/**
+ * type literalのメンバーを集める
+ */
+function collectTypeLiteralMembers(
+	node: Node,
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const annotation = shape(node).typeAnnotation;
+	if (annotation?.type !== "TSTypeLiteral") {
+		return;
+	}
+	collectMemberNodes(
+		shape(annotation).members ?? [],
+		context,
+		source,
+		exportedNames,
+		out,
+	);
+}
+
+/**
+ * namespaceの本体を非公開の宣言として集める
+ */
+function collectModuleBody(
+	node: Node,
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const body = shape(node).body;
+	if (body === null || body === undefined || Array.isArray(body)) {
+		return;
+	}
+	const nested: Context = { ...context, exported: false, topLevel: false };
+	if (body.type === "TSModuleBlock") {
+		collectStatements(body, nested, source, exportedNames, out);
+		return;
+	}
+	if (body.type === "TSModuleDeclaration") {
+		collectDeclaration(body, nested, body, source, exportedNames, out);
+	}
+}
+
+/**
+ * 変数の初期化式にある関数本体を関数の中の宣言として集める
+ */
+function collectDeclaratorExpressions(
+	node: Node,
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const nested: Context = { ...context, local: true, topLevel: false };
+	for (const declarator of shape(node).declarations ?? []) {
+		collectExpression(
+			shape(declarator).init,
+			nested,
+			source,
+			exportedNames,
+			out,
+		);
+	}
+}
+
+/**
+ * 関数本体の宣言を集める 関数でなければ何もしない
+ */
+function collectFunctionBody(
+	node: Node,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const body = shape(node).body;
+	if (
+		body === null ||
+		body === undefined ||
+		Array.isArray(body) ||
+		body.type !== "BlockStatement"
+	) {
+		return;
+	}
+	collectStatements(
+		body,
+		{ exported: false, local: true, topLevel: false },
+		source,
+		exportedNames,
+		out,
+	);
+}
+
+/**
+ * 式が持つ関数本体とclassのメンバーへ降りる
+ */
+function collectExpression(
+	node: Node | null | undefined,
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	if (node === null || node === undefined) {
+		return;
+	}
+	if (
+		node.type === "ArrowFunctionExpression" ||
+		node.type === "FunctionExpression"
+	) {
+		collectFunctionBody(node, source, exportedNames, out);
+		return;
+	}
+	if (node.type === "ClassExpression") {
+		collectMembers(node, context, source, exportedNames, out);
+	}
+}
+
+/**
+ * 宣言nodeが持つメンバーと本体へ降りる
+ */
+function collectMembers(
+	node: Node,
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const members = memberNodes(node);
+	if (members !== null) {
+		collectMemberNodes(members, context, source, exportedNames, out);
+		return;
+	}
+	if (node.type === "TSTypeAliasDeclaration") {
+		collectTypeLiteralMembers(node, context, source, exportedNames, out);
+		return;
+	}
+	if (node.type === "TSModuleDeclaration") {
+		collectModuleBody(node, context, source, exportedNames, out);
+		return;
+	}
+	if (node.type === "VariableDeclaration") {
+		collectDeclaratorExpressions(node, context, source, exportedNames, out);
+		return;
+	}
+	collectFunctionBody(node, source, exportedNames, out);
+}
+
+/**
+ * 宣言1件をsymbolごとに書き出し その宣言が持つメンバーへ降りる
+ */
+function collectDeclaration(
+	node: Node,
+	context: Context,
+	carrier: Node,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const comment = docCommentOf(carrier, source);
+	const position = positionAt(source, carrier.start ?? 0);
+	const suppressions = suppressionsOf(carrier, source);
+	for (const symbol of symbolsOf(node, source)) {
+		out.push({
+			...position,
+			...symbol,
+			comment,
+			exported:
+				context.exported ||
+				(context.topLevel && exportedNames.has(symbol.name)),
+			local: context.local,
+			suppressions,
+		});
+	}
+	collectMembers(node, context, source, exportedNames, out);
+}
+
+/**
+ * 文1件を宣言として扱い exportの形に応じて公開surfaceかどうかを決める
+ */
+function collectStatement(
+	statement: Node,
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	if (statement.type === "ExportAllDeclaration") {
+		return;
+	}
+	if (statement.type === "ExportNamedDeclaration") {
+		const declaration = shape(statement).declaration;
+		if (declaration !== null && declaration !== undefined) {
+			collectDeclaration(
+				declaration,
+				{ ...context, exported: true },
+				statement,
+				source,
+				exportedNames,
+				out,
+			);
+		}
+		return;
+	}
+	if (statement.type === "ExportDefaultDeclaration") {
+		const declaration = shape(statement).declaration;
+		if (
+			declaration !== null &&
+			declaration !== undefined &&
+			declaration.type !== "Identifier"
+		) {
+			collectDeclaration(
+				declaration,
+				{ ...context, exported: true },
+				statement,
+				source,
+				exportedNames,
+				out,
+			);
+		}
+		return;
+	}
+	collectDeclaration(statement, context, statement, source, exportedNames, out);
+}
+
+/**
+ * 文の並びを集める
+ */
+function collectStatements(
+	node: Node,
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const statements = shape(node).body;
+	if (!Array.isArray(statements)) {
+		return;
+	}
+	for (const statement of statements) {
+		collectStatement(statement, context, source, exportedNames, out);
+	}
+}
+
+/**
+ * 別名exportが指す宣言名を集める 再exportは対象外にする
+ */
+function addNamedExportNames(statement: Node, names: Set<string>): void {
+	if (
+		shape(statement).source !== null &&
+		shape(statement).source !== undefined
+	) {
+		return;
+	}
+	for (const specifier of shape(statement).specifiers ?? []) {
+		const local = shape(specifier).local;
+		if (local?.type === "Identifier") {
+			names.add(local.name);
+		}
+	}
+}
+
+/**
+ * export defaultが指す宣言名を集める 式を直接exportするときは何もしない
+ */
+function addDefaultExportName(statement: Node, names: Set<string>): void {
+	const declaration = shape(statement).declaration;
+	if (declaration?.type === "Identifier") {
+		names.add(declaration.name);
+	}
+}
+
+/**
+ * export =が指す宣言名を集める
+ */
+function addAssignedExportName(statement: Node, names: Set<string>): void {
+	const expression = shape(statement).expression;
+	if (expression?.type === "Identifier") {
+		names.add(expression.name);
+	}
+}
+
+/**
+ * 別名exportとexport defaultとexport =が指す宣言の名前を集める
+ *
+ * @param program - 走査するprogramのnode
+ * @returns 公開surfaceとして扱う宣言名
+ */
+function exportedNamesOf(program: Node): ReadonlySet<string> {
+	const names = new Set<string>();
+	for (const statement of (shape(program).body as Node[] | undefined) ?? []) {
+		if (statement.type === "ExportNamedDeclaration") {
+			addNamedExportNames(statement, names);
+			continue;
+		}
+		if (statement.type === "ExportDefaultDeclaration") {
+			addDefaultExportName(statement, names);
+			continue;
+		}
+		if (statement.type === "TSExportAssignment") {
+			addAssignedExportName(statement, names);
+		}
+	}
+	return names;
+}
+
+/**
+ * fileの宣言をすべて集める 公開surfaceと関数本体の中かどうかを各宣言へ付ける
  *
  * @param source - 宣言を解析するsource文字列
  * @param fileName - tsxかどうかの判定に使うfile名
- * @returns 収集したexported宣言
+ * @returns 収集した宣言
  */
 export function collectDeclarations(
 	source: string,
@@ -310,28 +838,11 @@ export function collectDeclarations(
 	const ast = fileName.endsWith(".tsx")
 		? parse(source, { plugins: ["typescript", "jsx"], sourceType: "module" })
 		: parse(source, { plugins: ["typescript"], sourceType: "module" });
+	const exportedNames = exportedNamesOf(ast.program);
 	const declarations: Declaration[] = [];
+	const context: Context = { exported: false, local: false, topLevel: true };
 	for (const statement of ast.program.body) {
-		if (
-			statement.type === "ExportAllDeclaration" ||
-			!statement.type.startsWith("Export")
-		) {
-			continue;
-		}
-		const target =
-			statement.type === "ExportNamedDeclaration" ||
-			statement.type === "ExportDefaultDeclaration"
-				? (statement.declaration as Node | null | undefined)
-				: statement;
-		if (target === null || target === undefined) {
-			continue;
-		}
-		const comment = docCommentOf(statement, source);
-		const position = positionAt(source, statement.start ?? 0);
-		const suppressions = suppressionsOf(statement, source);
-		for (const symbol of symbolsOf(target, source)) {
-			declarations.push({ ...position, ...symbol, comment, suppressions });
-		}
+		collectStatement(statement, context, source, exportedNames, declarations);
 	}
 	return declarations;
 }
