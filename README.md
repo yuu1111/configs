@@ -13,11 +13,16 @@ Shared configuration and check packages published to npm.
 | [`@yuu1111/quality-check`](packages/engine/quality-check) | Integrated CLI with the check engines built into it |
 | [`@yuu1111/tsconfig`](packages/config/tsconfig) | Shared TypeScript configurations |
 
-The individual check engines live under `packages/engine/` as private workspace packages and are bundled into `@yuu1111/quality-check`.
+The individual check engines `code-style-check`, `comment-check`, `document-style-check`, and `tsdoc-check` live under `packages/engine/` as private workspace packages and are bundled into `@yuu1111/quality-check`, together with `@yuu1111/shared`.
 
 ## Documents
 
-- [Engine contract](docs/engine-contract.md) - the contract that the check engines and the integrated runner share
+| Document | Purpose |
+|----------|---------|
+| [Architecture](docs/architecture.md) | Why the packages are layered and bundled the way they are |
+| [Adoption](docs/adoption.md) | Installing the packages into a project, from config to CI |
+| [Engine contract](docs/engine-contract.md) | The contract the built-in engines and the integrated runner share |
+| [Engine reference](docs/engines/) | The options and rules of each built-in engine |
 
 ## Development
 

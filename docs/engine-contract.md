@@ -1,7 +1,7 @@
 # engine の共通規約
 
 `packages/engine/` の検査engineと統合runnerの間で守る契約をまとめる
-個別のoptionとruleは各engineのREADMEが持ち、この文書はengineをまたぐ約束だけを扱う
+個別のoptionとruleは `docs/engines/<engine>.md` が持ち、この文書はengineをまたぐ約束だけを扱う
 
 ## 用語
 
@@ -45,7 +45,9 @@
 
 ### engine の能力
 
-engineの能力は `packages/engine/quality-check/src/config.ts` の `ENGINE_CAPABILITIES` が唯一の出所になる `findings` は検出engineかどうかを `args` は追加の引数を受け取るかを `skipped` は受け取らない起動条件とその理由を持つ rule語彙の有無は `RULE_VOCABULARY` が持つ
+engineの能力は `packages/engine/quality-check/src/config.ts` の `ENGINE_CAPABILITIES` が唯一の出所になる
+`findings` は検出engineかどうか、`args` は追加の引数を受け取るか、`skipped` は受け取らない起動条件とその理由を持つ
+rule語彙の有無は `RULE_VOCABULARY` が持つ
 
 | engine | 起動 | 設定で受け取る起動条件 |
 |--------|------|------------------------|

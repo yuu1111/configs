@@ -23,6 +23,8 @@
 
 - 列見出しは技術名を英語、説明列を日本語版で日本語にする 列の並びは両言語で同じにする 例: `| Option | 説明 |`、`| Preset | 用途 |`
 - 規則の表は `| Rule | Severity | Default | Detects |`（日本語版は `| Rule | 重大度 | Default | 検出対象 |`）にし、4列をどのpackageでも省略しない
+- 他packageへ同梱する private な engine は README を持たず、設定とruleの正本を `docs/engines/<engine>.md` に置く
+- `docs/engines/` の表は `| Rule | Group | 重大度 | Default | 検出対象 |` にし、列をどのengineでも省略しない
 - `Severity` は `error` と `warning`、`Default` は `true` と `false` で示す opt-in ruleだけ `Default` を `false` にする
 - 表と箇条書きの末尾に句点を付けない
 

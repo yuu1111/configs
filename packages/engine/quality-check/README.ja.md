@@ -87,7 +87,9 @@ quality-check: 1 of 3 engines failed (1250ms)
 
 engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
 
-engineごとのsectionが `enabled` とそのengineが受け取る条件を持つ engineが受け取らない条件は設定errorにし、打ち間違いが黙って無視されないようにする `biome`、`typecheck`、`knip` は子プロセスで起動し、4つの検出engineはin-processで起動する
+engineごとのsectionが `enabled` とそのengineが受け取る条件を持つ
+engineが受け取らない条件は設定errorにし、打ち間違いが黙って無視されないようにする
+`biome`、`typecheck`、`knip` は子プロセスで起動し、4つの検出engineはin-processで起動する
 
 | Engine | Command | 条件 |
 |--------|---------|--------------|
@@ -123,6 +125,17 @@ engineが知らないgroup名やrule名は設定errorになり、配布する `s
 
 `typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する
 省略時はカレントの `tsconfig.json` を1回だけ読む
+
+## Rules
+
+同梱するengineはそれぞれrule語彙を公開し、設定とruleをengineごとに1つの文書へまとめる
+
+| Engine | Group | 設定とrule |
+|--------|-------|-----------|
+| `code-style-check` | `spacing` | [`docs/engines/code-style-check.md`](../../../docs/engines/code-style-check.md) |
+| `comment-check` | `suppression`、`shape`、`content` | [`docs/engines/comment-check.md`](../../../docs/engines/comment-check.md) |
+| `document-style-check` | `whitespace`、`typography`、`structure`、`content` | [`docs/engines/document-style-check.md`](../../../docs/engines/document-style-check.md) |
+| `tsdoc-check` | `syntax`、`documentation`、`contract`、`suppression` | [`docs/engines/tsdoc-check.md`](../../../docs/engines/tsdoc-check.md) |
 
 ## Baseline
 

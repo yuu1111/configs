@@ -13,11 +13,16 @@ npmへ公開する共有設定と検査package
 | [`@yuu1111/quality-check`](packages/engine/quality-check) | 検査engineを同梱する統合CLI |
 | [`@yuu1111/tsconfig`](packages/config/tsconfig) | 共有のTypeScript設定 |
 
-個別の検査engineは `packages/engine/` 配下のprivateなworkspace packageとして置き、`@yuu1111/quality-check` へ同梱する
+個別の検査engine `code-style-check`、`comment-check`、`document-style-check`、`tsdoc-check` は `packages/engine/` 配下のprivateなworkspace packageとして置き、`@yuu1111/shared` とともに `@yuu1111/quality-check` へ同梱する
 
 ## Documents
 
-- [engine の共通規約](docs/engine-contract.md) - 検査engineと統合runnerの間で守る契約
+| 文書 | 用途 |
+|------|------|
+| [構成と設計判断](docs/architecture.md) | packageの層と同梱の理由 |
+| [プロジェクトへの導入](docs/adoption.md) | 設定からCIまでの導入手順 |
+| [engine の共通規約](docs/engine-contract.md) | 検査engineと統合runnerの間で守る契約 |
+| [engine 一覧](docs/engines/) | 検査engineの設定とruleの正本 |
 
 ## Development
 

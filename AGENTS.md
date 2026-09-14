@@ -76,6 +76,9 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 - package の README は `templates/package-readme.style.md` の記法に従い、`templates/package-readme.template.md` をひな形にする
 - `README.md` を正本、`README.ja.md` を同じ見出し構成の日本語版として並べる
 - 見出し構成の一致は、テストで検査できるならテストへ寄せる
+- リポジトリ全体の文書は `docs/` に日本語で置き、入口は root の `README.md` と `README.ja.md` の `## Documents` にする
+- 設計判断は `docs/architecture.md`、engine をまたぐ契約は `docs/engine-contract.md`、導入は `docs/adoption.md` に分ける
+- 同梱する private engine は README を持たず、設定とruleの正本を `docs/engines/<engine>.md` にする
 
 ## 変更時の同時更新
 
@@ -89,4 +92,6 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
   - `quality-check` の `ENGINE_NAMES`
   - `quality-check` の `ENGINE_CAPABILITIES`
   - `quality-check` の `FINDING_ENGINES`
+  - `docs/engines/<engine>.md` と root README の `## Documents`
   - README と設定表
+- rule を追加または廃止したら、`docs/engines/<engine>.md` の表と group 要約を同じ変更で更新する

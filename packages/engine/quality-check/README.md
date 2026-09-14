@@ -124,6 +124,17 @@ No check engine keeps a baseline of its own, so the new-and-resolved diff is don
 
 `typecheck` starts `tsc --noEmit -p <path>` once per path in `projects`, and falls back to the current `tsconfig.json`.
 
+## Rules
+
+Each built-in engine publishes its own rule vocabulary, and one document holds the options and rules of each engine:
+
+| Engine | Groups | Reference |
+|--------|--------|-----------|
+| `code-style-check` | `spacing` | [`docs/engines/code-style-check.md`](../../../docs/engines/code-style-check.md) |
+| `comment-check` | `suppression`, `shape`, `content` | [`docs/engines/comment-check.md`](../../../docs/engines/comment-check.md) |
+| `document-style-check` | `whitespace`, `typography`, `structure`, `content` | [`docs/engines/document-style-check.md`](../../../docs/engines/document-style-check.md) |
+| `tsdoc-check` | `syntax`, `documentation`, `contract`, `suppression` | [`docs/engines/tsdoc-check.md`](../../../docs/engines/tsdoc-check.md) |
+
 ## Baseline
 
 A project that adopts the checks on an existing tree records the findings it has today in `quality-baseline.json`, so only the findings it adds later fail.
