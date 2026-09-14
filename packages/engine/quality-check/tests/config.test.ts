@@ -151,7 +151,7 @@ describe("quality config", () => {
 		);
 		const options = engineConfig(config, "tsdoc-check");
 		expect(options?.rules.enable).toEqual([]);
-		expect(options?.rules.disable).toHaveLength(10);
+		expect(options?.rules.disable).toHaveLength(11);
 		expect(options?.rules.error).toEqual([]);
 	});
 

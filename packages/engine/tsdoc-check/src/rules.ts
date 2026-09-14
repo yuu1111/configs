@@ -216,6 +216,77 @@ function contractFindings(
 }
 
 /**
+ * block tagの行かどうかを判定する正規表現
+ */
+const TAG_LINE = /^@[A-Za-z]/;
+
+/**
+ * comment1行分から本文だけを取り出す 先頭のcomment記号は1つ外す
+ *
+ * @param line - 本文を取り出すcommentの行
+ * @returns comment記号を外した本文
+ */
+function lineContent(line: string): string {
+	const trimmed = line.trim();
+	if (trimmed.startsWith("/**")) {
+		return trimmed.slice(3).trim();
+	}
+	if (trimmed.startsWith("*")) {
+		return trimmed.slice(1).trim();
+	}
+	return trimmed;
+}
+
+/**
+ * 説明の直後に最初のblock tagを書いた位置を探す
+ *
+ * @param text - 検査するTSDoc commentの本文
+ * @returns 直前が本文であるblock tagの開始offset 見つからなければnull
+ */
+function crampedTagOffset(text: string): number | null {
+	const lines = text.split("\n");
+	let offset = 0;
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? "";
+		if (!TAG_LINE.test(lineContent(line))) {
+			offset += line.length + 1;
+			continue;
+		}
+		const previous = lineContent(lines[index - 1] ?? "");
+		return previous.length === 0 ? null : offset + line.indexOf("@");
+	}
+	return null;
+}
+
+/**
+ * 説明とblock tagの間に空行が無いTSDocを検出する
+ *
+ * @param declaration - 検査するexported宣言
+ * @param file - 指摘に載せるfileのpath
+ * @param comment - 検査するTSDoc comment
+ * @param source - 宣言を切り出したsource文字列
+ * @returns 空行が無ければ指摘 あればnull
+ */
+function tagSeparationFinding(
+	declaration: Declaration,
+	file: string,
+	comment: DocComment,
+	source: string,
+): Finding | null {
+	const offset = crampedTagOffset(comment.text);
+	if (offset === null) {
+		return null;
+	}
+	return finding(
+		"blank-line-before-tags",
+		"warning",
+		file,
+		positionAt(source, comment.start + offset),
+		`${declaration.name} needs a blank line before its TSDoc tags`,
+	);
+}
+
+/**
  * exported宣言1つ分のTSDocを検査する
  */
 function checkDeclaration(
@@ -248,6 +319,10 @@ function checkDeclaration(
 				`${declaration.name} has a single-line TSDoc comment`,
 			),
 		);
+	}
+	const separation = tagSeparationFinding(declaration, file, comment, source);
+	if (separation !== null) {
+		findings.push(separation);
 	}
 	for (const issue of parsed.issues) {
 		const position = positionAt(source, comment.start + issue.position);

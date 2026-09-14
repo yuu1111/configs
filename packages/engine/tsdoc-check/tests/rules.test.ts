@@ -21,6 +21,7 @@ describe("rule promotion", () => {
 	test("raises the undefined tag rule to an error", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @description the value read from the header",
 			" */",
 			"export function run(): void {}",

@@ -513,6 +513,14 @@
 								{
 									"additionalProperties": false,
 									"properties": {
+										"blank-line-before-tags": {
+											"enum": [
+												"off",
+												"on",
+												"error"
+											],
+											"type": "string"
+										},
 										"single-line-doc": {
 											"enum": [
 												"off",

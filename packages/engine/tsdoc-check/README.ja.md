@@ -58,11 +58,14 @@ group名のkeyはengineが公開するgroupで、そのgroup全体へ `off`、`o
 | `tsdoc-tag` | warning | true | TSDoc設定が定義していないtag |
 | `missing-doc` | warning | true | TSDoc commentの無いexported宣言 |
 | `single-line-doc` | warning | true | 1行で書いたTSDoc comment |
+| `blank-line-before-tags` | warning | true | summaryの直下に書いたblock tag |
 | `param-untagged` | warning | true | `@param` の無い宣言済みparameter |
 | `type-param-untagged` | warning | true | `@typeParam` の無い宣言済みtype parameter |
 | `param-order` | warning | false | 宣言順と違う `@param` の並び |
 | `missing-returns` | warning | false | `@returns` の無い値を返す関数 |
 | `deprecated-without-guidance` | warning | false | 代替先を示さない `@deprecated` |
+
+`blank-line-before-tags` はsummaryと最初のblock tagの間に空の `*` 行を要求し、tagの並びを説明の1行下から始めさせる 空行より下のtagは続けて並べ、summaryを持たずtagで始まるcommentは対象外にする
 
 TSDocが定義していないtagは `tsdoc-tag` のwarningになる `@description` などの独自tagもそこで報告し、`syntax` groupの `tsdoc-tag` を `error` にするとすべてerrorへ上がる
 

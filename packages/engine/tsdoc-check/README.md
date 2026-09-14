@@ -58,11 +58,14 @@ The engine runs in-process, so it takes no `args` condition.
 | `tsdoc-tag` | warning | true | A tag that the TSDoc configuration does not define |
 | `missing-doc` | warning | true | An exported declaration without a TSDoc comment |
 | `single-line-doc` | warning | true | A TSDoc comment written on a single line |
+| `blank-line-before-tags` | warning | true | A block tag written directly under the summary |
 | `param-untagged` | warning | true | A declared parameter without a `@param` tag |
 | `type-param-untagged` | warning | true | A declared type parameter without a `@typeParam` tag |
 | `param-order` | warning | false | `@param` tags out of the declaration order |
 | `missing-returns` | warning | false | A function that returns a value without a `@returns` tag |
 | `deprecated-without-guidance` | warning | false | A `@deprecated` tag that points to no replacement |
+
+`blank-line-before-tags` requires a blank `*` line between the summary and the first block tag, so the tag block starts one line below the description. Tags stay together below that blank line, and a comment that opens with a tag and no summary is left alone.
 
 A tag that TSDoc does not define is a warning under `tsdoc-tag`, so `@description` and any other non-standard tag are reported there.
 Setting `tsdoc-tag` to `error` under the `syntax` group raises every one of them to an error.

@@ -2,6 +2,7 @@
  * 抑制commentと--errorで指定できるrule名の一覧
  */
 export const KNOWN_RULE_NAMES = [
+	"blank-line-before-tags",
 	"deprecated-without-guidance",
 	"missing-doc",
 	"missing-returns",
@@ -40,7 +41,12 @@ export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
  * ruleをgroupへまとめた対応表 `rules` のgroup単位の指定が使う
  */
 export const RULE_GROUPS = {
-	syntax: ["single-line-doc", "tsdoc-syntax", "tsdoc-tag"],
+	syntax: [
+		"blank-line-before-tags",
+		"single-line-doc",
+		"tsdoc-syntax",
+		"tsdoc-tag",
+	],
 	documentation: [
 		"deprecated-without-guidance",
 		"missing-doc",

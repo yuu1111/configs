@@ -9,6 +9,7 @@ describe("tsdoc checks", () => {
 	test("accepts a documented export", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @param value - the value to use",
 			" */",
 			"export function run(value: number): void {}",
@@ -23,9 +24,53 @@ describe("tsdoc checks", () => {
 		expect(findings[0]?.severity).toBe("warning");
 	});
 
+	test("reports a tag written directly under the summary", () => {
+		const source = [
+			"/** Reads the value",
+			" * @param value - the value to read",
+			" * @returns the value",
+			" */",
+			"export function read(value: number): number {",
+			"\treturn value",
+			"}",
+		].join("\n");
+		const findings = scanSource(source, "src/sample.ts");
+		expect(findings.map((finding) => finding.rule)).toEqual([
+			"blank-line-before-tags",
+		]);
+		expect(findings[0]?.severity).toBe("warning");
+		expect(findings[0]?.line).toBe(2);
+		expect(findings[0]?.column).toBe(4);
+	});
+
+	test("accepts a blank line before the tags", () => {
+		const source = [
+			"/** Reads the value",
+			" *",
+			" * @param value - the value to read",
+			" * @returns the value",
+			" */",
+			"export function read(value: number): number {",
+			"\treturn value",
+			"}",
+		].join("\n");
+		expect(scanSource(source, "src/sample.ts")).toEqual([]);
+	});
+
+	test("accepts tags without a summary", () => {
+		const source = [
+			"/**",
+			" * @param value - the value to read",
+			" */",
+			"export function read(value: number): void {}",
+		].join("\n");
+		expect(scanSource(source, "src/sample.ts")).toEqual([]);
+	});
+
 	test("reports a parameter that the signature does not declare", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @param missing - the value to use",
 			" */",
 			"export function run(value: number): void {}",
@@ -43,6 +88,7 @@ describe("tsdoc checks", () => {
 	test("reports a type parameter that the declaration does not declare", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @typeParam U - the value type",
 			" */",
 			"export function run<T>(value: T): T {",
@@ -64,6 +110,7 @@ describe("tsdoc checks", () => {
 	test("reports a malformed tag as a syntax error", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @param value the value",
 			" */",
 			"export function run(value: number): void {}",
@@ -76,6 +123,7 @@ describe("tsdoc checks", () => {
 	test("reports the @description tag that TSDoc does not define", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @description the value read from the header",
 			" */",
 			"export function run(): void {}",
@@ -100,6 +148,7 @@ describe("tsdoc checks", () => {
 	test("reports a tag that TSDoc does not define as a warning", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @bogus",
 			" */",
 			"export function run(): void {}",
@@ -119,6 +168,7 @@ describe("tsdoc checks", () => {
 	test("ignores declarations that are not exported", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @bogus",
 			" */",
 			"function run(): void {}",
@@ -158,6 +208,7 @@ describe("tsdoc checks", () => {
 		const source = [
 			"// tsdoc-check-ignore tsdoc-tag: kept for the parser",
 			"/** Runs the task",
+			" *",
 			" * @param value - the value",
 			" */",
 			"export function run(value: number): void {}",
@@ -178,6 +229,7 @@ describe("tsdoc checks", () => {
 	test("reports a parameter without a @param tag", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @param other - another value",
 			" */",
 			"export function run(value: number): void {}",
@@ -197,6 +249,7 @@ describe("tsdoc checks", () => {
 	test("reports a type parameter without a @typeParam tag", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @param value - the value",
 			" * @typeParam U - the value type",
 			" */",
@@ -208,6 +261,7 @@ describe("tsdoc checks", () => {
 	test("keeps the parameter order rule off by default", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @param second - the second value",
 			" * @param first - the first value",
 			" */",
@@ -219,6 +273,7 @@ describe("tsdoc checks", () => {
 	test("reports @param tags out of the declaration order when enabled", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @param second - the second value",
 			" * @param first - the first value",
 			" */",
@@ -258,6 +313,7 @@ describe("tsdoc checks", () => {
 	test("accepts @returns when the function returns a value", () => {
 		const source = [
 			"/** Reads the value",
+			" *",
 			" * @returns the value",
 			" */",
 			"export function read(): number {",
@@ -300,6 +356,7 @@ describe("tsdoc checks", () => {
 		const source = [
 			"// tsdoc-check-ignore param-untagged: the loader passes the value",
 			"/** Runs the task",
+			" *",
 			" * @param other - another value",
 			" */",
 			"export function run(value: number): void {}",
@@ -310,6 +367,7 @@ describe("tsdoc checks", () => {
 	test("reports an empty @deprecated as a syntax error", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @deprecated",
 			" */",
 			"export function run(): void {}",
@@ -320,6 +378,7 @@ describe("tsdoc checks", () => {
 	test("keeps the deprecation rule off by default", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @deprecated Use runAsync instead",
 			" */",
 			"export function run(): void {}",
@@ -330,6 +389,7 @@ describe("tsdoc checks", () => {
 	test("reports a @deprecated without a replacement when enabled", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @deprecated Use runAsync instead",
 			" */",
 			"export function run(): void {}",
@@ -346,6 +406,7 @@ describe("tsdoc checks", () => {
 	test("accepts a @deprecated that links to the replacement", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @deprecated Use {@link runAsync} instead",
 			" */",
 			"export function run(): void {}",
@@ -358,6 +419,7 @@ describe("tsdoc checks", () => {
 	test("accepts a @deprecated next to a @see tag", () => {
 		const source = [
 			"/** Runs the task",
+			" *",
 			" * @deprecated Use the async variant",
 			" * @see runAsync for the replacement",
 			" */",
