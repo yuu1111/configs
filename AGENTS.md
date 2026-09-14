@@ -83,7 +83,8 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 ## ドキュメントサイト
 
 - VitePress で `docs/` と公開 package の README を1つの木から組み、`bun run docs:build` が `.vitepress/dist` を作る 配信は `.github/workflows/docs.yml` が GitHub Pages へ行う
-- locale は日本語を既定にし英語を `/en/` に置く 翻訳がある文書だけを `en` へ置き、翻訳が無い文書の `en` は作らない
+- locale は日本語を既定にし英語を `/en/` に置く 翻訳は `docs/en/` へ同じ名前で置き、翻訳が無い文書の `en` は作らない
+- 同じlocaleの文書へは兄弟の相対パスでリンクし、別localeの文書へは `../` で原稿の配置どおりにリンクする
 - `README.md` は npm と GitHub が要求する位置を動かせないため、`.vitepress/config.mts` の `rewrites` で `/en/` と `/` へ割り当てる
 - 相対リンクは rewrite 後の配置を基準に解決されるため、同じ config が原稿の配置を基準に route へ直す
 
