@@ -1,7 +1,10 @@
 {
 	"$schema": "./node_modules/@yuu1111/quality-check/schema.json",
 	"biome": {
-		"enabled": true
+		"enabled": true,
+		"args": [
+			"--error-on-warnings"
+		]
 	},
 	"typecheck": {
 		"enabled": true
