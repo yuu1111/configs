@@ -2,6 +2,7 @@
 	"name": "@yuu1111/biome-config",
 	"version": "2.2.0",
 	"description": "Shared Biome configuration",
+	"homepage": "https://yuu1111.github.io/configs/packages/config/biome-config/",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",

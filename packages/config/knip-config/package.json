@@ -2,6 +2,7 @@
 	"name": "@yuu1111/knip-config",
 	"version": "2.0.0",
 	"description": "Shared Knip configuration",
+	"homepage": "https://yuu1111.github.io/configs/packages/config/knip-config/",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",

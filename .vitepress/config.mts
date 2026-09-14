@@ -8,6 +8,7 @@ export default defineConfig({
 	title: "@yuu1111/configs",
 	description: "プロジェクト横断で使う共有設定と検査engine",
 	cleanUrls: true,
+	sitemap: { hostname: "https://yuu1111.github.io/configs/" },
 	srcExclude: ["AGENTS.md", "CLAUDE.md", "templates/**"],
 	rewrites: {
 		"README.ja.md": "index.md",
@@ -45,6 +46,7 @@ export default defineConfig({
 			{
 				text: "engine",
 				items: [
+					{ text: "engine 一覧", link: "/docs/engines/" },
 					{ text: "code-style-check", link: "/docs/engines/code-style-check" },
 					{ text: "comment-check", link: "/docs/engines/comment-check" },
 					{

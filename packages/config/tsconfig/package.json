@@ -2,6 +2,7 @@
 	"name": "@yuu1111/tsconfig",
 	"version": "1.0.7",
 	"description": "Shared TypeScript configurations",
+	"homepage": "https://yuu1111.github.io/configs/packages/config/tsconfig/",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",

@@ -2,6 +2,7 @@
 	"name": "@yuu1111/quality-check",
 	"version": "4.1.0",
 	"description": "Integrated quality check runner with the check engines built in",
+	"homepage": "https://yuu1111.github.io/configs/packages/engine/quality-check/",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/yuu1111/configs.git",
