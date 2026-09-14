@@ -80,6 +80,13 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 - 設計判断は `docs/architecture.md`、engine をまたぐ契約は `docs/engine-contract.md`、導入は `docs/adoption.md` に分ける
 - 同梱する private engine は README を持たず、設定とruleの正本を `docs/engines/<engine>.md` にする
 
+## ドキュメントサイト
+
+- VitePress で `docs/` と公開 package の README を1つの木から組み、`bun run docs:build` が `.vitepress/dist` を作る 配信は `.github/workflows/docs.yml` が GitHub Pages へ行う
+- locale は日本語を既定にし英語を `/en/` に置く 翻訳がある文書だけを `en` へ置き、翻訳が無い文書の `en` は作らない
+- `README.md` は npm と GitHub が要求する位置を動かせないため、`.vitepress/config.mts` の `rewrites` で `/en/` と `/` へ割り当てる
+- 相対リンクは rewrite 後の配置を基準に解決されるため、同じ config が原稿の配置を基準に route へ直す
+
 ## 変更時の同時更新
 
 - package を追加したら、次のすべてを同じ変更で更新する
