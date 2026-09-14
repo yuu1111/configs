@@ -2,9 +2,14 @@
  * 値を取るoptionと取らないoptionの定義
  */
 export interface ArgvSpec {
-	/** 値を取らないoptionの名前 --は含めない */
+	/**
+	 * 値を取らないoptionの名前 --は含めない
+	 */
 	flags?: readonly string[];
-	/** 値を取るoptionの名前 --は含めない */
+
+	/**
+	 * 値を取るoptionの名前 --は含めない
+	 */
 	values?: readonly string[];
 }
 

@@ -30,10 +30,16 @@ export interface Suppression extends Position {
  */
 export interface Declaration extends Position {
 	comment: DocComment | null;
-	/** 公開surfaceに属する宣言か トップレベルのexportと別名exportがtrueになる */
+
+	/**
+	 * 公開surfaceに属する宣言か トップレベルのexportと別名exportがtrueになる
+	 */
 	exported: boolean;
 	kind: string;
-	/** 関数本体の中にある宣言か */
+
+	/**
+	 * 関数本体の中にある宣言か
+	 */
 	local: boolean;
 	name: string;
 	parameters: string[];
@@ -54,11 +60,19 @@ interface DeclaredSymbol {
  * 宣言を走査するときの位置づけ
  */
 interface Context {
-	/** トップレベルでexportされているか */
+	/**
+	 * トップレベルでexportされているか
+	 */
 	exported: boolean;
-	/** 関数本体の中か */
+
+	/**
+	 * 関数本体の中か
+	 */
 	local: boolean;
-	/** トップレベルの文か */
+
+	/**
+	 * トップレベルの文か
+	 */
 	topLevel: boolean;
 }
 

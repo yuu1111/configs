@@ -8,7 +8,9 @@ import { DOCUMENT_EXTENSIONS, lintFiles } from "./scan";
  * 検査したMarkdownと報告
  */
 export interface DocumentInspection {
-	/** 検査したMarkdownの絶対path */
+	/**
+	 * 検査したMarkdownの絶対path
+	 */
 	files: string[];
 	report: EngineReport;
 }

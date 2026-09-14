@@ -38,19 +38,33 @@ export type EngineStatus = "error" | "failed" | "passed";
  * engine1つ分の実行結果
  */
 export interface EngineResult {
-	/** baseline適用前の阻害する検出 */
+	/**
+	 * baseline適用前の阻害する検出
+	 */
 	detected: NormalizedFinding[];
-	/** engineの起動から結果の解釈までの所要ms 起動しなかった場合はnull */
+
+	/**
+	 * engineの起動から結果の解釈までの所要ms 起動しなかった場合はnull
+	 */
 	durationMs: number | null;
-	/** 子プロセスengineの終了code in-processのengineはnull */
+
+	/**
+	 * 子プロセスengineの終了code in-processのengineはnull
+	 */
 	exitCode: number | null;
 	message?: string;
 	name: EngineName;
 	output: string;
-	/** baseline適用後に残った阻害する検出 */
+
+	/**
+	 * baseline適用後に残った阻害する検出
+	 */
 	reported: NormalizedFinding[];
 	resolved: number;
-	/** engineが受け取らなかった起動条件 */
+
+	/**
+	 * engineが受け取らなかった起動条件
+	 */
 	skipped: string[];
 	status: EngineStatus;
 	warnings: NormalizedFinding[];
@@ -65,17 +79,31 @@ type EngineOutcome = Omit<EngineResult, "durationMs">;
  * engineをまとめて起動するための実行条件
  */
 export interface RunOptions {
-	/** 適用するbaseline nullなら差分判定を行わない */
+	/**
+	 * 適用するbaseline nullなら差分判定を行わない
+	 */
 	baseline: BaselineFile | null;
-	/** engine自身の出力へ色を付けるか */
+
+	/**
+	 * engine自身の出力へ色を付けるか
+	 */
 	color: boolean;
 	config: QualityConfig;
 	cwd: string;
-	/** in-processのengine実装 テストでは差し替える */
+
+	/**
+	 * in-processのengine実装 テストでは差し替える
+	 */
 	findingEngines?: FindingEngineRegistry;
-	/** コマンドラインから渡された起動条件の上書き */
+
+	/**
+	 * コマンドラインから渡された起動条件の上書き
+	 */
 	overrides: RunOverrides;
-	/** engineの実行fileを解決する関数 テストでは差し替える */
+
+	/**
+	 * engineの実行fileを解決する関数 テストでは差し替える
+	 */
 	resolve?: (name: ProcessEngineName, cwd: string) => string | null;
 	runner?: EngineRunner;
 }

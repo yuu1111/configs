@@ -270,6 +270,45 @@ describe("tsdoc checks", () => {
 		expect(rulesOf(source)).toEqual(["param-mismatch"]);
 	});
 
+	test("keeps a single-line doc on a member by default", () => {
+		const source = [
+			"/** Runs the task",
+			" * and waits",
+			" */",
+			"export class Runner {",
+			"\t/** Runs the member */",
+			"\trun(): void {}",
+			"}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual([]);
+	});
+
+	test("checks a single-line doc on a member under styleScope documented", () => {
+		const source = [
+			"/** Runs the task",
+			" * and waits",
+			" */",
+			"export class Runner {",
+			"\t/** Runs the member */",
+			"\trun(): void {}",
+			"}",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
+				(finding) => finding.rule,
+			),
+		).toEqual(["single-line-doc"]);
+	});
+
+	test("keeps a single-line doc off an unexported declaration under styleScope documented", () => {
+		const source = "/** Runs the task */\nfunction run(): void {}\n";
+		expect(
+			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
+				(finding) => finding.rule,
+			),
+		).toEqual(["single-line-doc"]);
+	});
+
 	test("checks the contract of a documented declaration under documented", () => {
 		const source = [
 			"/** Runs the task",

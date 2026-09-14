@@ -24,11 +24,19 @@ export function normalizePath(path: string): string {
  * file収集の対象と除外の条件
  */
 export interface CollectFilesOptions {
-	/** 収集する拡張子 */
+	/**
+	 * 収集する拡張子
+	 */
 	extensions: ReadonlySet<string>;
-	/** 相対pathを解決する基準 */
+
+	/**
+	 * 相対pathを解決する基準
+	 */
 	cwd?: string;
-	/** 検査から外すpath */
+
+	/**
+	 * 検査から外すpath
+	 */
 	ignores?: string[];
 }
 

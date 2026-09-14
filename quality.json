@@ -37,7 +37,8 @@
 		"enabled": true,
 		"rules": {
 			"preset": "all"
-		}
+		},
+		"styleScope": "documented"
 	},
 	"failOnWarnings": true
 }

@@ -8,11 +8,14 @@ import {
 } from "./parse";
 import {
 	DEFAULT_DOC_SCOPE,
+	DEFAULT_STYLE_SCOPE,
 	type DocScope,
 	type OptInRuleId,
 	RULE_IDS,
 	type RuleId,
 	SCOPED_RULE_IDS,
+	STYLE_RULE_IDS,
+	type StyleScope,
 } from "./rule-ids";
 import { parseTsdoc, type TsdocResult } from "./tsdoc";
 
@@ -473,16 +476,17 @@ export function promoteFindings(
 }
 
 /**
- * 宣言の指摘へ抑制commentとdocScopeを適用する
+ * 宣言の指摘へ抑制commentとscopeを適用する
  *
- * docScopeがexportedのときは公開surfaceの宣言だけが抑制の対象になる
- * それ以外のscopeではdocがある宣言すべてを対象にする
+ * docScopeは文書の不足を、styleScopeは書いたTSDocの体裁を検査する宣言を選ぶ
+ * どちらもexportedのときは公開surfaceの宣言だけが対象になる
  *
  * @param declaration - 検査する宣言
  * @param file - 指摘に載せるfileのpath
  * @param source - 宣言を切り出したsource文字列
  * @param enabled - 実行するopt-in ruleの識別子一覧
- * @param docScope - 検査する宣言をどこまで広げるか
+ * @param docScope - 文書の不足を検査する宣言をどこまで広げるか
+ * @param styleScope - 書いたTSDocの体裁を検査する宣言をどこまで広げるか
  * @returns 抑制とscopeを適用した後の指摘一覧
  */
 export function classifyDeclaration(
@@ -491,16 +495,23 @@ export function classifyDeclaration(
 	source: string,
 	enabled: readonly OptInRuleId[] = [],
 	docScope: DocScope = DEFAULT_DOC_SCOPE,
+	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
 ): Finding[] {
 	const requiresDoc =
 		docScope === "all" ? !declaration.local : declaration.exported;
 	if (declaration.comment === null && !requiresDoc) {
 		return [];
 	}
-	const inScope = (finding: Finding) =>
-		docScope !== "exported" ||
-		declaration.exported ||
-		!SCOPED_RULE_IDS.includes(finding.rule);
+	const inScope = (finding: Finding) => {
+		if (STYLE_RULE_IDS.includes(finding.rule)) {
+			return styleScope !== "exported" || declaration.exported;
+		}
+		return (
+			docScope !== "exported" ||
+			declaration.exported ||
+			!SCOPED_RULE_IDS.includes(finding.rule)
+		);
+	};
 	const findings = checkDeclaration(declaration, file, source, enabled);
 	if (declaration.suppressions.length === 0) {
 		return findings.filter(inScope);

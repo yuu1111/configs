@@ -51,9 +51,15 @@ export interface RunOverrides {
  */
 export interface EngineCommandContext {
 	config: QualityConfig;
-	/** engine自身の出力へ色を付けるか */
+
+	/**
+	 * engine自身の出力へ色を付けるか
+	 */
 	color: boolean;
-	/** 対応するengineへだけ足す上書き */
+
+	/**
+	 * 対応するengineへだけ足す上書き
+	 */
 	overrides: RunOverrides;
 }
 

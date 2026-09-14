@@ -6,6 +6,7 @@ import {
 	isRuleEngine,
 	RULE_VOCABULARY,
 	type RuleEngineName,
+	styleScopesOf,
 } from "./config";
 
 type JsonSchema = Record<string, unknown>;
@@ -89,6 +90,10 @@ function engineSchema(name: EngineName): JsonSchema {
 		const docScopes = docScopesOf(name);
 		if (docScopes !== undefined) {
 			properties.docScope = { enum: [...docScopes], type: "string" };
+		}
+		const styleScopes = styleScopesOf(name);
+		if (styleScopes !== undefined) {
+			properties.styleScope = { enum: [...styleScopes], type: "string" };
 		}
 	}
 	return {

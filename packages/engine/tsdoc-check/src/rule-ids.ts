@@ -53,7 +53,7 @@ export type DocScope = (typeof DOC_SCOPES)[number];
 export const DEFAULT_DOC_SCOPE: DocScope = "exported";
 
 /**
- * docScopeに従って対象を選ぶrule 文書の不足と書き方を決めるruleがここに入る
+ * docScopeに従って対象を選ぶrule 文書の不足を決めるruleがここに入る
  *
  * この一覧に無いruleは書かれたTSDocが正しいかだけを見て docがある宣言すべてを対象にする
  *
@@ -62,14 +62,38 @@ export const DEFAULT_DOC_SCOPE: DocScope = "exported";
  * - all — 上に加えて 関数本体の外にある宣言すべてへdocを要求する
  */
 export const SCOPED_RULE_IDS: readonly RuleId[] = [
-	"blank-line-before-tags",
 	"deprecated-without-guidance",
 	"missing-doc",
 	"missing-returns",
 	"param-order",
 	"param-untagged",
-	"single-line-doc",
 	"type-param-untagged",
+];
+
+/**
+ * 書いたTSDocの体裁をどこまで検査するか
+ */
+export const STYLE_SCOPES = ["exported", "documented"] as const;
+
+/**
+ * STYLE_SCOPESが定義するstyleScopeのunion型
+ */
+export type StyleScope = (typeof STYLE_SCOPES)[number];
+
+/**
+ * styleScopeの既定値 公開surfaceだけを対象にする
+ */
+export const DEFAULT_STYLE_SCOPE: StyleScope = "exported";
+
+/**
+ * styleScopeに従って対象を選ぶrule 書いたTSDocの書き方を決めるruleがここに入る
+ *
+ * - exported — 公開surfaceの宣言だけを対象にする
+ * - documented — docがある宣言すべてを対象にする
+ */
+export const STYLE_RULE_IDS: readonly RuleId[] = [
+	"blank-line-before-tags",
+	"single-line-doc",
 ];
 
 /**

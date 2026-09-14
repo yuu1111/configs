@@ -694,6 +694,13 @@
 						"all"
 					],
 					"type": "string"
+				},
+				"styleScope": {
+					"enum": [
+						"exported",
+						"documented"
+					],
+					"type": "string"
 				}
 			},
 			"type": "object"

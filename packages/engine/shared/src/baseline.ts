@@ -6,7 +6,10 @@ import { isJsonObject } from "./json";
  */
 export interface BaselineEntry {
 	count: number;
-	/** 検出元のengine 単一engineのbaselineでは省略する */
+
+	/**
+	 * 検出元のengine 単一engineのbaselineでは省略する
+	 */
 	engine?: string;
 	file: string;
 	rule: string;

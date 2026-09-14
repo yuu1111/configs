@@ -5,9 +5,11 @@ import { compareFindings } from "@yuu1111/shared/findings";
 import { collectDeclarations } from "./parse";
 import {
 	DEFAULT_DOC_SCOPE,
+	DEFAULT_STYLE_SCOPE,
 	type DocScope,
 	type OptInRuleId,
 	type RuleId,
+	type StyleScope,
 } from "./rule-ids";
 import { classifyDeclaration, type Finding } from "./rules";
 
@@ -28,7 +30,8 @@ export const TYPESCRIPT_EXTENSIONS: ReadonlySet<string> = new Set([
  * @param file - 指摘に載せるfileのpath
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
- * @param docScope - 検査する宣言をどこまで広げるか
+ * @param docScope - 文書の不足を検査する宣言をどこまで広げるか
+ * @param styleScope - 書いたTSDocの体裁を検査する宣言をどこまで広げるか
  * @returns 検出したTSDoc違反
  */
 export function scanSource(
@@ -37,11 +40,19 @@ export function scanSource(
 	enabled: readonly OptInRuleId[] = [],
 	disabled: readonly RuleId[] = [],
 	docScope: DocScope = DEFAULT_DOC_SCOPE,
+	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
 ): Finding[] {
 	try {
 		return collectDeclarations(source, file)
 			.flatMap((declaration) =>
-				classifyDeclaration(declaration, file, source, enabled, docScope),
+				classifyDeclaration(
+					declaration,
+					file,
+					source,
+					enabled,
+					docScope,
+					styleScope,
+				),
 			)
 			.filter((finding) => !disabled.includes(finding.rule));
 	} catch {
@@ -57,7 +68,8 @@ export function scanSource(
  * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
- * @param docScope - 検査する宣言をどこまで広げるか
+ * @param docScope - 文書の不足を検査する宣言をどこまで広げるか
+ * @param styleScope - 書いたTSDocの体裁を検査する宣言をどこまで広げるか
  * @returns 検出したTSDoc違反
  */
 export function scanFile(
@@ -66,6 +78,7 @@ export function scanFile(
 	enabled: readonly OptInRuleId[] = [],
 	disabled: readonly RuleId[] = [],
 	docScope: DocScope = DEFAULT_DOC_SCOPE,
+	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
 ): Finding[] {
 	return scanSource(
 		readFileSync(file, "utf8"),
@@ -73,6 +86,7 @@ export function scanFile(
 		enabled,
 		disabled,
 		docScope,
+		styleScope,
 	);
 }
 
@@ -83,7 +97,8 @@ export function scanFile(
  * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
- * @param docScope - 検査する宣言をどこまで広げるか
+ * @param docScope - 文書の不足を検査する宣言をどこまで広げるか
+ * @param styleScope - 書いたTSDocの体裁を検査する宣言をどこまで広げるか
  * @returns 位置順に並べたTSDoc違反
  */
 export function scanFiles(
@@ -92,10 +107,13 @@ export function scanFiles(
 	enabled: readonly OptInRuleId[] = [],
 	disabled: readonly RuleId[] = [],
 	docScope: DocScope = DEFAULT_DOC_SCOPE,
+	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
 ): Finding[] {
 	const findings: Finding[] = [];
 	for (const file of files) {
-		findings.push(...scanFile(file, cwd, enabled, disabled, docScope));
+		findings.push(
+			...scanFile(file, cwd, enabled, disabled, docScope, styleScope),
+		);
 	}
 	return findings.sort(compareFindings);
 }

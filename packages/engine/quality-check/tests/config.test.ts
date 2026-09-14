@@ -45,7 +45,7 @@ describe("quality config", () => {
 		);
 		expect(engineConfig(config, "tsdoc-check")).toEqual({
 			ignore: ["dist"],
-			options: { docScope: "exported" },
+			options: { docScope: "exported", styleScope: "exported" },
 			rules: { disable: [], enable: [], error: [] },
 			targets: [],
 		});
@@ -63,6 +63,23 @@ describe("quality config", () => {
 		);
 		expect(engineConfig(config, "tsdoc-check")?.options).toEqual({
 			docScope: "documented",
+			styleScope: "exported",
+		});
+	});
+
+	test("reads styleScope from the TSDoc section", () => {
+		const config = parseConfig(
+			{
+				"tsdoc-check": {
+					enabled: true,
+					styleScope: "documented",
+				},
+			},
+			"test",
+		);
+		expect(engineConfig(config, "tsdoc-check")?.options).toEqual({
+			docScope: "exported",
+			styleScope: "documented",
 		});
 	});
 
@@ -327,6 +344,26 @@ describe("quality config errors", () => {
 				"test",
 			),
 		).toThrow("test: comment-check has an unknown option: docScope");
+	});
+
+	test("rejects an unknown styleScope", () => {
+		expect(() =>
+			parseConfig(
+				{ "tsdoc-check": { enabled: true, styleScope: "all" } },
+				"test",
+			),
+		).toThrow(
+			"test: tsdoc-check.styleScope must be one of exported, documented",
+		);
+	});
+
+	test("rejects styleScope in an engine that does not take it", () => {
+		expect(() =>
+			parseConfig(
+				{ "comment-check": { enabled: true, styleScope: "documented" } },
+				"test",
+			),
+		).toThrow("test: comment-check has an unknown option: styleScope");
 	});
 
 	test("rejects a preset that is not a known preset", () => {

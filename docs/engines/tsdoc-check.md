@@ -11,6 +11,7 @@
     "targets": ["src"],
     "ignore": ["generated"],
     "docScope": "exported",
+    "styleScope": "documented",
     "rules": {
       "preset": "recommended",
       "syntax": {
@@ -31,23 +32,33 @@
 `enabled`、`targets`、`ignore`、`rules` と `preset`、group、rule の指定は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
 このengineはin-processで起動し `args` を取らない
 
-## docScope
+## 検査する範囲
 
-`docScope` は doc を要求し書き足りない分を咎める範囲を選ぶ 省略時は `exported` になる
+書き足りないdocを咎める範囲を `docScope` が、書いたTSDocの体裁を検査する範囲を `styleScope` が選ぶ
+どちらも省略すると `exported` になる
 
-| `docScope` | docを要求する宣言 | 書き方と不足を検査する宣言 |
-|------------|-------------------|---------------------------|
+### docScope
+
+| `docScope` | docを要求する宣言 | 書き足りない分を検査する宣言 |
+|------------|-------------------|------------------------------|
 | `exported` | 公開surfaceの宣言 | docがある公開surfaceの宣言 |
 | `documented` | 公開surfaceの宣言 | docがある宣言すべて |
 | `all` | 関数本体の外にある宣言すべて | docがある宣言すべて |
+
+### styleScope
+
+| `styleScope` | 体裁を検査する宣言 |
+|--------------|-------------------|
+| `exported` | docがある公開surfaceの宣言 |
+| `documented` | docがある宣言すべて |
 
 公開surfaceはトップレベルの宣言のうち、`export` を付けたもの、`export { name }` が名前を挙げたもの、`export default name` と `export = name` が指すものにする
 `export { name } from "..."` と `export * from "..."` は指す先の宣言がこのfileに無いため対象外にする
 `all` も関数本体の中の宣言へ doc は要求しない
 
-書かれたTSDocが正しいかだけを見るruleは `docScope` に関係なく doc がある宣言すべてを対象にする
+書かれたTSDocが正しいかだけを見るruleはどちらのscopeにも従わず、docがある宣言すべてを対象にする
 その宣言にはトップレベルの宣言だけでなく、class、interface、type literal、namespace、enum のメンバーと、doc を付けた関数本体の中の宣言も含む
-どのruleが `docScope` に従うかは rule 一覧の `対象範囲` 列にある
+どのruleがどのscopeに従うかは rule 一覧の `対象範囲` 列にある
 
 ## rule 一覧
 
@@ -60,8 +71,8 @@
 | `tsdoc-tag` | `syntax` | warning | true | 全文書 | TSDoc設定が定義していないtag |
 | `suppression-unused` | `suppression` | warning | true | 全文書 | 何も抑制しない抑制 |
 | `missing-doc` | `documentation` | warning | true | docScope | TSDoc commentの無い宣言 |
-| `single-line-doc` | `syntax` | warning | true | docScope | 1行で書いたTSDoc comment |
-| `blank-line-before-tags` | `syntax` | warning | true | docScope | summaryの直下に書いたblock tag |
+| `single-line-doc` | `syntax` | warning | true | styleScope | 1行で書いたTSDoc comment |
+| `blank-line-before-tags` | `syntax` | warning | true | styleScope | summaryの直下に書いたblock tag |
 | `param-untagged` | `contract` | warning | true | docScope | `@param` の無い宣言済みparameter |
 | `type-param-untagged` | `contract` | warning | true | docScope | `@typeParam` の無い宣言済みtype parameter |
 | `param-order` | `contract` | warning | false | docScope | 宣言順と違う `@param` の並び |

@@ -18,10 +18,12 @@ import {
 import type { RuleSelection } from "@yuu1111/shared/engines";
 import {
 	DEFAULT_DOC_SCOPE as TSDOC_CHECK_DEFAULT_DOC_SCOPE,
+	DEFAULT_STYLE_SCOPE as TSDOC_CHECK_DEFAULT_STYLE_SCOPE,
 	DOC_SCOPES as TSDOC_CHECK_DOC_SCOPES,
 	OPT_IN_RULE_IDS as TSDOC_CHECK_OPT_IN_RULE_IDS,
 	RULE_GROUPS as TSDOC_CHECK_RULE_GROUPS,
 	RULE_IDS as TSDOC_CHECK_RULE_IDS,
+	STYLE_SCOPES as TSDOC_CHECK_STYLE_SCOPES,
 } from "@yuu1111/tsdoc-check/rule-ids";
 
 /**
@@ -71,11 +73,19 @@ export type RuleState = "off" | "on" | "error";
  * engineへ渡す起動条件
  */
 export interface EngineOptions {
-	/** engineの既定引数の後ろへ足す引数 */
+	/**
+	 * engineの既定引数の後ろへ足す引数
+	 */
 	args: string[];
-	/** 検査から外すpath */
+
+	/**
+	 * 検査から外すpath
+	 */
 	ignore: string[];
-	/** 検査する対象path */
+
+	/**
+	 * 検査する対象path
+	 */
 	targets: string[];
 }
 
@@ -83,7 +93,9 @@ export interface EngineOptions {
  * 型検査へ渡す起動条件
  */
 export interface TypecheckOptions extends EngineOptions {
-	/** 型検査するtsconfigのpath */
+	/**
+	 * 型検査するtsconfigのpath
+	 */
 	projects: string[];
 }
 
@@ -91,13 +103,24 @@ export interface TypecheckOptions extends EngineOptions {
  * 検出engineへ渡す起動条件 検出engineはin-processで走るため追加の引数は持たない
  */
 export interface RuleEngineOptions {
-	/** 検査から外すpath */
+	/**
+	 * 検査から外すpath
+	 */
 	ignore: string[];
-	/** engineごとの追加option 統合runnerが検証して渡す */
+
+	/**
+	 * engineごとの追加option 統合runnerが検証して渡す
+	 */
 	options: Record<string, unknown>;
-	/** 展開済みのrule選択 */
+
+	/**
+	 * 展開済みのrule選択
+	 */
 	rules: RuleSelection;
-	/** 検査する対象path */
+
+	/**
+	 * 検査する対象path
+	 */
 	targets: string[];
 }
 
@@ -118,13 +141,24 @@ export interface EngineConfigMap {
  * quality.jsonが表す統合検査の設定
  */
 export interface QualityConfig {
-	/** 起動するengine 値がfalseのengineは起動しない */
+	/**
+	 * 起動するengine 値がfalseのengineは起動しない
+	 */
 	engines: Partial<Record<EngineName, boolean>>;
-	/** engineごとの起動条件 */
+
+	/**
+	 * engineごとの起動条件
+	 */
 	config: Partial<EngineConfigMap>;
-	/** warningを阻害する検出として扱うか */
+
+	/**
+	 * warningを阻害する検出として扱うか
+	 */
 	failOnWarnings: boolean;
-	/** baseline fileのpath falseなら差分判定を行わない */
+
+	/**
+	 * baseline fileのpath falseなら差分判定を行わない
+	 */
 	baseline: string | false;
 }
 
@@ -132,15 +166,34 @@ export interface QualityConfig {
  * engineが公開するrule語彙
  */
 interface EngineVocabulary {
-	/** engineが知る全rule */
+	/**
+	 * engineが知る全rule
+	 */
 	all: readonly string[];
-	/** ruleをまとめたgroup */
+
+	/**
+	 * ruleをまとめたgroup
+	 */
 	groups: Record<string, readonly string[]>;
-	/** 既定で実行しないrule */
+
+	/**
+	 * 既定で実行しないrule
+	 */
 	optIn: readonly string[];
-	/** 検査する宣言を文書の広さで選ぶengineが受け取るdocScopeの一覧 受け取らなければundefined */
+
+	/**
+	 * 検査する宣言を文書の広さで選ぶengineが受け取るdocScopeの一覧 受け取らなければundefined
+	 */
 	docScopes?: readonly string[];
-	/** ruleを違反へ上げられるか */
+
+	/**
+	 * 書いたTSDocの体裁を検査する宣言を選ぶengineが受け取るstyleScopeの一覧 受け取らなければundefined
+	 */
+	styleScopes?: readonly string[];
+
+	/**
+	 * ruleを違反へ上げられるか
+	 */
 	promotes: boolean;
 }
 
@@ -172,6 +225,7 @@ export const RULE_VOCABULARY = {
 		groups: TSDOC_CHECK_RULE_GROUPS,
 		optIn: TSDOC_CHECK_OPT_IN_RULE_IDS,
 		promotes: true,
+		styleScopes: TSDOC_CHECK_STYLE_SCOPES,
 	},
 } satisfies Record<string, EngineVocabulary>;
 
@@ -203,6 +257,18 @@ export function docScopesOf(
 }
 
 /**
+ * engineが受け取るstyleScopeの一覧を返す
+ *
+ * @param name - 語彙を引くengine名
+ * @returns 受け取るstyleScopeの一覧 受け取らなければundefined
+ */
+export function styleScopesOf(
+	name: RuleEngineName,
+): readonly string[] | undefined {
+	return (RULE_VOCABULARY[name] as EngineVocabulary).styleScopes;
+}
+
+/**
  * config fileを探索する既定のfile名
  */
 export const DEFAULT_CONFIG_FILE = "quality.json";
@@ -218,11 +284,19 @@ type JsonObject = Record<string, unknown>;
  * engineが受け取る検出と起動条件
  */
 export interface EngineCapabilities {
-	/** 追加の引数を受け取るか 受け取るengineは子プロセスで起動する */
+	/**
+	 * 追加の引数を受け取るか 受け取るengineは子プロセスで起動する
+	 */
 	args: boolean;
-	/** 検出を返し baseline の対象になるか 検出engineはin-processで起動する */
+
+	/**
+	 * 検出を返し baseline の対象になるか 検出engineはin-processで起動する
+	 */
 	findings: boolean;
-	/** 受け取らない起動条件とその理由 受け取るときは undefined */
+
+	/**
+	 * 受け取らない起動条件とその理由 受け取るときは undefined
+	 */
 	skipped: Partial<Record<"ignore" | "targets", string>>;
 }
 
@@ -282,6 +356,9 @@ function engineOptionKeys(name: EngineName): readonly string[] {
 		if (docScopesOf(name) !== undefined) {
 			keys.push("docScope");
 		}
+		if (styleScopesOf(name) !== undefined) {
+			keys.push("styleScope");
+		}
 	}
 	return keys;
 }
@@ -308,14 +385,14 @@ function readStringArray(value: unknown, field: string): string[] | undefined {
 }
 
 /**
- * docScopeの指定を読み取る
+ * scopeの指定を読み取る
  *
- * @param value - sectionが持つdocScopeの値
+ * @param value - sectionが持つscopeの値
  * @param field - errorメッセージへ載せる位置
- * @param scopes - engineが受け取るdocScopeの一覧
- * @returns 読み取ったdocScope 指定が無ければundefined
+ * @param scopes - engineが受け取るscopeの一覧
+ * @returns 読み取ったscope 指定が無ければundefined
  */
-function readDocScope(
+function readScope(
 	value: unknown,
 	field: string,
 	scopes: readonly string[],
@@ -346,8 +423,17 @@ function readEngineOptions(
 	const docScopes = docScopesOf(name);
 	if (docScopes !== undefined) {
 		options.docScope =
-			readDocScope(value.docScope, `${source}: ${name}.docScope`, docScopes) ??
+			readScope(value.docScope, `${source}: ${name}.docScope`, docScopes) ??
 			TSDOC_CHECK_DEFAULT_DOC_SCOPE;
+	}
+	const styleScopes = styleScopesOf(name);
+	if (styleScopes !== undefined) {
+		options.styleScope =
+			readScope(
+				value.styleScope,
+				`${source}: ${name}.styleScope`,
+				styleScopes,
+			) ?? TSDOC_CHECK_DEFAULT_STYLE_SCOPE;
 	}
 	return options;
 }

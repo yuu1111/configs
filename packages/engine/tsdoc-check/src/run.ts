@@ -3,10 +3,13 @@ import { collectFiles } from "@yuu1111/shared/files";
 import { toReport } from "@yuu1111/shared/report";
 import {
 	DEFAULT_DOC_SCOPE,
+	DEFAULT_STYLE_SCOPE,
 	DOC_SCOPES,
 	type DocScope,
 	type OptInRuleId,
 	type RuleId,
+	STYLE_SCOPES,
+	type StyleScope,
 } from "./rule-ids";
 import { promoteFindings } from "./rules";
 import { scanFiles, TYPESCRIPT_EXTENSIONS } from "./scan";
@@ -22,6 +25,19 @@ function readDocScope(value: unknown): DocScope {
 		(DOC_SCOPES as readonly string[]).includes(value)
 		? (value as DocScope)
 		: DEFAULT_DOC_SCOPE;
+}
+
+/**
+ * 統合runnerが渡した値をstyleScopeとして読む 不正な値は既定値へ倒す
+ *
+ * @param value - engineのoptionとして渡された値
+ * @returns 読み取ったstyleScope
+ */
+function readStyleScope(value: unknown): StyleScope {
+	return typeof value === "string" &&
+		(STYLE_SCOPES as readonly string[]).includes(value)
+		? (value as StyleScope)
+		: DEFAULT_STYLE_SCOPE;
 }
 
 /**
@@ -43,6 +59,7 @@ export function run(context: FindingEngineContext) {
 			context.rules.enable as OptInRuleId[],
 			context.rules.disable as RuleId[],
 			readDocScope(context.options?.docScope),
+			readStyleScope(context.options?.styleScope),
 		),
 		context.rules.error,
 	);
