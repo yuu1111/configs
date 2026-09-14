@@ -5,7 +5,10 @@
 		"test": "bun test packages",
 		"format": "biome check --write --unsafe .",
 		"build": "bun run --filter '@yuu1111/quality-check' build",
-		"check:quality": "bun run build && quality-check"
+		"check:quality": "bun run build && quality-check",
+		"docs:dev": "vitepress dev",
+		"docs:build": "vitepress build",
+		"docs:preview": "vitepress preview"
 	},
 	"workspaces": [
 		"packages/config/*",
@@ -19,6 +22,7 @@
 		"@yuu1111/quality-check": "workspace:*",
 		"@yuu1111/tsconfig": "workspace:*",
 		"knip": "^6.35.1",
-		"typescript": "^7.0.2"
+		"typescript": "^7.0.2",
+		"vitepress": "^1.6.4"
 	}
 }

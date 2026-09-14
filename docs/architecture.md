@@ -6,9 +6,9 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 ## package の層
 
 - `packages/config/` は他プロジェクトへ配布する共有設定を置く
-- `packages/engine/` は検査engineを置き、publish するのは [`@yuu1111/quality-check`](../packages/engine/quality-check/README.md) だけにする
+- `packages/engine/` は検査engineを置き、publish するのは [`@yuu1111/quality-check`](../packages/engine/quality-check/README.ja.md) だけにする
 - engine は engine 契約だけへ依存し、engine 同士は依存しない
-- [`@yuu1111/shared`](../packages/engine/shared) は engine 契約の型と共通処理を持ち、publish しない
+- `@yuu1111/shared` は `packages/engine/shared` に置き、engine 契約の型と共通処理を持ち publish しない
 
 ## engineを同梱する理由
 
@@ -45,4 +45,4 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 
 - engine は private で publish せず、配布物に含まれるのは同梱先の `quality-check` だけである
 - engine ごとに README を持つと、設定とruleの説明が4つの同型な文書へ重複する
-- [`docs/engines/`](engines) を engine ごとの正本にし、共通の設定modelは `quality-check` の README が持つ
+- [`docs/engines/`](engines/index.md) を engine ごとの正本にし、共通の設定modelは `quality-check` の README が持つ

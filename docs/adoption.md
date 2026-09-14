@@ -7,10 +7,10 @@
 
 | Package | 用途 |
 |---------|------|
-| [`@yuu1111/tsconfig`](../packages/config/tsconfig/README.md) | TypeScriptの共有設定 |
-| [`@yuu1111/biome-config`](../packages/config/biome-config/README.md) | Biomeの共有設定 |
-| [`@yuu1111/knip-config`](../packages/config/knip-config/README.md) | Knipの共有設定 |
-| [`@yuu1111/quality-check`](../packages/engine/quality-check/README.md) | 検査engineをまとめて起動するCLI |
+| [`@yuu1111/tsconfig`](../packages/config/tsconfig/README.ja.md) | TypeScriptの共有設定 |
+| [`@yuu1111/biome-config`](../packages/config/biome-config/README.ja.md) | Biomeの共有設定 |
+| [`@yuu1111/knip-config`](../packages/config/knip-config/README.ja.md) | Knipの共有設定 |
+| [`@yuu1111/quality-check`](../packages/engine/quality-check/README.ja.md) | 検査engineをまとめて起動するCLI |
 
 `quality-check` は Biome、`tsc`、Knip を子プロセスとして起動するため、その本体も入れる
 
@@ -74,7 +74,7 @@ export default {
 }
 ```
 
-engine ごとの設定とruleは [`docs/engines/`](engines) を正本にする
+engine ごとの設定とruleは [`docs/engines/`](engines/index.md) を正本にする
 導入時は `preset` の `recommended` で始め、opt-inのruleを `on` で1つずつ足す
 
 ```json
