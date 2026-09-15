@@ -614,6 +614,93 @@ describe("tsdoc checks", () => {
 	});
 });
 
+describe("object literal members", () => {
+	test("checks a single-line doc on a property under styleScope documented", () => {
+		const source = [
+			"/** Builds the schema",
+			" */",
+			"export const schema = z.object({",
+			"\t/** the value */",
+			"\tvalue: z.string(),",
+			"})",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
+				(finding) => finding.rule,
+			),
+		).toEqual(["single-line-doc"]);
+	});
+
+	test("keeps a single-line doc on a property by default", () => {
+		const source = [
+			"/** Builds the schema",
+			" */",
+			"export const schema = z.object({",
+			"\t/** the value */",
+			"\tvalue: z.string(),",
+			"})",
+		].join("\n");
+		expect(scanSource(source, "src/sample.ts")).toEqual([]);
+	});
+
+	test("checks a doc on a property nested in another property value", () => {
+		const source = [
+			"/** Builds the config",
+			" */",
+			"export const config = {",
+			"\t/** the section",
+			"\t */",
+			"\tsection: {",
+			"\t\t/** the value */",
+			"\t\tvalue: 1,",
+			"\t},",
+			"}",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
+				(finding) => finding.rule,
+			),
+		).toEqual(["single-line-doc"]);
+	});
+
+	test("checks a doc on a property inside an array element and a wrapper", () => {
+		const source = [
+			"/** Builds the list",
+			" */",
+			"export const list = [{",
+			"\t/** the value */",
+			"\tvalue: 1,",
+			"}] as const",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
+				(finding) => finding.rule,
+			),
+		).toEqual(["single-line-doc"]);
+	});
+
+	test("checks the contract of an object method under documented", () => {
+		const source = [
+			"/** Builds the api",
+			" */",
+			"export const api = {",
+			"\t/** Reads the value",
+			"\t *",
+			"\t * @param other - another value",
+			"\t */",
+			"\tread(value: number): number {",
+			"\t\treturn value",
+			"\t},",
+			"}",
+		].join("\n");
+		expect(
+			scanSource(source, "src/sample.ts", [], [], "documented")
+				.map((finding) => finding.rule)
+				.sort(),
+		).toEqual(["param-mismatch", "param-untagged"]);
+	});
+});
+
 describe("disabled rules", () => {
 	test("turns off a rule that is on by default", () => {
 		const source = "/** Runs the task */\nexport function run(): void {}\n";

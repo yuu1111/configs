@@ -57,7 +57,8 @@
 `all` も関数本体の中の宣言へ doc は要求しない
 
 書かれたTSDocが正しいかだけを見るruleはどちらのscopeにも従わず、docがある宣言すべてを対象にする
-その宣言にはトップレベルの宣言だけでなく、class、interface、type literal、namespace、enum のメンバーと、doc を付けた関数本体の中の宣言も含む
+その宣言にはトップレベルの宣言だけでなく、class、interface、type literal、namespace、enum、object literal のメンバーと、doc を付けた関数本体の中の宣言も含む
+object literal のメンバーは変数の初期化式から辿り、引数、配列、as const のような式を包む構文の内側にあるものも対象にする
 どのruleがどのscopeに従うかは rule 一覧の `対象範囲` 列にある
 
 ## rule 一覧

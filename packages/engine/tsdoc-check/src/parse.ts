@@ -80,9 +80,11 @@ interface Context {
  * 宣言nodeから読み取るpropertyを持つ部分的な形
  */
 interface NodeShape {
+	arguments?: (Node | null)[];
 	body?: Node | Node[] | null;
 	declaration?: Node | null;
 	declarations?: Node[];
+	elements?: (Node | null)[];
 	expression?: Node | null;
 	id?: Node | null;
 	init?: Node | null;
@@ -90,9 +92,11 @@ interface NodeShape {
 	local?: Node | null;
 	members?: Node[];
 	parameters?: Node[];
+	properties?: Node[];
 	source?: Node | null;
 	specifiers?: Node[];
 	typeAnnotation?: Node | null;
+	value?: Node | null;
 }
 
 /**
@@ -315,7 +319,7 @@ function declaredName(node: Node): string | null {
 }
 
 /**
- * class と interface とtype literalのメンバー1つ分のsymbolを返す
+ * class と interface と type literal と object literal のメンバー1つ分の symbol を返す
  *
  * @param node - symbolを取り出すメンバー
  * @param source - 宣言を切り出したsource文字列
@@ -347,6 +351,30 @@ function memberSymbolsOf(node: Node, source: string): DeclaredSymbol[] {
 					parameters: [],
 					returnType: null,
 					typeParameters: typeParameterNames(node),
+				},
+			];
+		}
+		case "ObjectProperty": {
+			const name = memberName(node);
+			if (name === null) {
+				return [];
+			}
+			const value = shape(node).value;
+			if (
+				value !== null &&
+				value !== undefined &&
+				(value.type === "ArrowFunctionExpression" ||
+					value.type === "FunctionExpression")
+			) {
+				return [callableSymbol("function", name, value, source)];
+			}
+			return [
+				{
+					kind: "property",
+					name,
+					parameters: [],
+					returnType: null,
+					typeParameters: [],
 				},
 			];
 		}
@@ -479,7 +507,7 @@ function symbolsOf(node: Node, source: string): DeclaredSymbol[] {
 }
 
 /**
- * class と interface とtype literalのメンバーを返す メンバーを持たないnodeにはnullを返す
+ * class と interface と type literal と object literal のメンバーを返す メンバーを持たない node には null を返す
  *
  * @param node - メンバーを取り出すnode
  * @returns メンバーのnode一覧 メンバーを持たなければnull
@@ -494,6 +522,9 @@ function memberNodes(node: Node): Node[] | null {
 	}
 	if (node.type === "TSTypeLiteral") {
 		return shape(node).members ?? [];
+	}
+	if (node.type === "ObjectExpression") {
+		return shape(node).properties ?? [];
 	}
 	return null;
 }
@@ -626,7 +657,9 @@ function collectFunctionBody(
 }
 
 /**
- * 式が持つ関数本体とclassのメンバーへ降りる
+ * 式が持つ関数本体と class と object literal のメンバーへ降りる
+ *
+ * object literal は引数や配列や wrapper の内側にも書けるため、値を包む式も辿る
  */
 function collectExpression(
 	node: Node | null | undefined,
@@ -638,15 +671,43 @@ function collectExpression(
 	if (node === null || node === undefined) {
 		return;
 	}
-	if (
-		node.type === "ArrowFunctionExpression" ||
-		node.type === "FunctionExpression"
-	) {
-		collectFunctionBody(node, source, exportedNames, out);
-		return;
-	}
-	if (node.type === "ClassExpression") {
-		collectMembers(node, context, source, exportedNames, out);
+	switch (node.type) {
+		case "ArrowFunctionExpression":
+		case "FunctionExpression":
+			collectFunctionBody(node, source, exportedNames, out);
+			return;
+		case "ClassExpression":
+		case "ObjectExpression":
+			collectMembers(node, context, source, exportedNames, out);
+			return;
+		case "ArrayExpression":
+			for (const element of shape(node).elements ?? []) {
+				collectExpression(element, context, source, exportedNames, out);
+			}
+			return;
+		case "CallExpression":
+		case "NewExpression":
+		case "OptionalCallExpression":
+			for (const argument of shape(node).arguments ?? []) {
+				collectExpression(argument, context, source, exportedNames, out);
+			}
+			return;
+		case "ParenthesizedExpression":
+		case "TSAsExpression":
+		case "TSInstantiationExpression":
+		case "TSNonNullExpression":
+		case "TSSatisfiesExpression":
+		case "TSTypeAssertion":
+			collectExpression(
+				shape(node).expression,
+				context,
+				source,
+				exportedNames,
+				out,
+			);
+			return;
+		default:
+			return;
 	}
 }
 
@@ -675,6 +736,10 @@ function collectMembers(
 	}
 	if (node.type === "VariableDeclaration") {
 		collectDeclaratorExpressions(node, context, source, exportedNames, out);
+		return;
+	}
+	if (node.type === "ObjectProperty") {
+		collectExpression(shape(node).value, context, source, exportedNames, out);
 		return;
 	}
 	collectFunctionBody(node, source, exportedNames, out);
