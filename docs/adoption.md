@@ -65,7 +65,7 @@ export default {
   },
   "document-style-check": {
     "enabled": true,
-    "targets": ["docs"],
+    "includes": ["docs/**"],
     "rules": {
       "preset": "recommended"
     }
@@ -80,6 +80,7 @@ engine ごとの設定とruleは [`docs/engines/`](engines/index.md) を正本�
 ```json
 {
   "document-style-check": {
+    "enabled": true,
     "rules": {
       "preset": "recommended",
       "typography": {

@@ -34,7 +34,7 @@ Biome、`tsc`、Knipは子プロセスのままで、利用Projectの `node_modu
   },
   "comment-check": {
     "enabled": true,
-    "ignore": ["another-project"],
+    "includes": ["**", "!another-project/**"],
     "rules": {
       "preset": "recommended",
       "content": {
@@ -81,6 +81,7 @@ quality-check: 1 of 3 engines failed (1250ms)
 | Field | 説明 |
 |-------|-------------|
 | `<engine>` | engineごとのsectionで `enabled` が起動を決める |
+| `<engine>.includes` | 同梱する4つの検出engineが検査するfileのglob |
 | `<engine>.rules` | 同梱する4つの検出engineのrule選択 |
 | `failOnWarnings` | warningを阻害する検出として扱う |
 | `baseline` | baseline fileのpath `false` なら差分判定を行わない |
@@ -93,16 +94,20 @@ engineが受け取らない条件は設定errorにし、打ち間違いが黙っ
 
 | Engine | Command | 条件 |
 |--------|---------|--------------|
-| `biome` | `biome check` | `targets`、`args` 除外pathは `biome.json` が持つ |
+| `biome` | `biome check` | `args` 対象fileは `biome.json` が持つ |
 | `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
 | `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
-| `code-style-check` | in-process | `ignore`、`targets`、`rules` |
-| `comment-check` | in-process | `ignore`、`targets`、`rules` |
-| `document-style-check` | in-process | `ignore`、`targets`、`rules` |
-| `tsdoc-check` | in-process | `ignore`、`targets`、`rules` |
+| `code-style-check` | in-process | `includes`、`rules` |
+| `comment-check` | in-process | `includes`、`rules` |
+| `document-style-check` | in-process | `includes`、`rules` |
+| `tsdoc-check` | in-process | `includes`、`rules` |
 
 `args` は子プロセスengineだけが受け取り、engineの既定引数の後ろへ足す
 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
+
+`includes` はProject rootからの相対pathをglobで選ぶ
+指定を省略すると `**` になり、空の配列は何も検査しない
+否定globは先に選んだfileを除外し、後の肯定globで再び含められるため、配列の順序が結果へ影響する
 
 engineが受け取らない条件は渡さず、その旨をそのengineのsectionへ出す
 
@@ -113,11 +118,11 @@ biome: ignore skipped (biome.json holds its settings)
 
 `rules` は同梱するengineのどのruleを実行してどう報告するかを選ぶ
 `rules.preset` は一括で選び `recommended` はengineの既定 `all` は全て有効 `none` は全て無効にする
-group名のkeyはengineが公開するruleのまとまりで、そのgroupの全ruleへ `off`、`on`、`error` を渡す
+group名のkeyはengineが公開するruleのまとまりで、そのgroupの全ruleへ `off`、`on`、`warn`、`error` を渡す
 group名の下のobjectはruleを1つずつ選ぶ
 具体的な指定が勝つため preset、group、rule の順に書ける
 `off` は既定で有効なruleにも渡せ、`on` はengineの既定severityのままにする
-`error` を取れるのは `tsdoc-check` だけで、そのruleを違反へ上げ opt-inのruleは先に有効にする
+`warn` と `error` は全ての検出engineでruleの重大度を変更し、opt-inのruleは先に有効にする
 engineが知らないgroup名やrule名は設定errorになり、配布する `schema.json` がeditorへ同じ語彙を教える
 選んだruleは同梱するengineへ直接渡すため、CLIは `--enable`、`--disable`、`--error` へは変換しない
 

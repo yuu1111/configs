@@ -48,6 +48,18 @@ export interface Declaration extends Position {
 	typeParameters: string[];
 }
 
+/**
+ * fileから集めた宣言と、どの宣言にも取り込まれなかったTSDoc comment
+ */
+export interface CollectedSource {
+	declarations: Declaration[];
+
+	/**
+	 * どの宣言の文書にもならなかったTSDoc comment
+	 */
+	orphans: DocComment[];
+}
+
 interface DeclaredSymbol {
 	kind: string;
 	name: string;
@@ -151,6 +163,37 @@ function docCommentOf(node: Node, source: string): DocComment | null {
 		start: last.start,
 		text: source.slice(last.start, last.end),
 	};
+}
+
+/**
+ * sourceにあるTSDoc commentをすべて集める
+ *
+ * @param comments - 解析したcommentの一覧
+ * @param source - commentを切り出したsource文字列
+ * @returns 位置順のTSDoc comment一覧
+ */
+function docCommentsOf(
+	comments: readonly Comment[] | null | undefined,
+	source: string,
+): DocComment[] {
+	const docs: DocComment[] = [];
+	for (const comment of comments ?? []) {
+		if (
+			!isDocComment(comment) ||
+			comment.start === null ||
+			comment.start === undefined ||
+			comment.end === null ||
+			comment.end === undefined
+		) {
+			continue;
+		}
+		docs.push({
+			...positionAt(source, comment.start),
+			start: comment.start,
+			text: source.slice(comment.start, comment.end),
+		});
+	}
+	return docs;
 }
 
 const DIRECTIVE = "tsdoc-check-ignore";
@@ -904,16 +947,16 @@ function exportedNamesOf(program: Node): ReadonlySet<string> {
 }
 
 /**
- * fileの宣言をすべて集める 公開surfaceと関数本体の中かどうかを各宣言へ付ける
+ * fileの宣言と、どの宣言にも付かなかったTSDocを集める 公開surfaceと関数本体の中かどうかを各宣言へ付ける
  *
  * @param source - 宣言を解析するsource文字列
  * @param fileName - tsxかどうかの判定に使うfile名
- * @returns 収集した宣言
+ * @returns 収集した宣言と孤児TSDoc
  */
-export function collectDeclarations(
+export function collectSource(
 	source: string,
 	fileName: string,
-): Declaration[] {
+): CollectedSource {
 	const ast = fileName.endsWith(".tsx")
 		? parse(source, { plugins: ["typescript", "jsx"], sourceType: "module" })
 		: parse(source, { plugins: ["typescript"], sourceType: "module" });
@@ -923,5 +966,16 @@ export function collectDeclarations(
 	for (const statement of ast.program.body) {
 		collectStatement(statement, context, source, exportedNames, declarations);
 	}
-	return declarations;
+	const used = new Set<number>();
+	for (const declaration of declarations) {
+		if (declaration.comment !== null) {
+			used.add(declaration.comment.start);
+		}
+	}
+	return {
+		declarations,
+		orphans: docCommentsOf(ast.comments, source).filter(
+			(comment) => !used.has(comment.start),
+		),
+	};
 }

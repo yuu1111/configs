@@ -207,8 +207,16 @@ function runCheck(options: DocumentOptions): number {
 function runLint(options: DocumentOptions): number {
 	const context = {
 		cwd: process.cwd(),
-		ignores: options.ignores,
-		rules: { disable: options.disabled, enable: options.enabled, error: [] },
+		includes: [
+			"**",
+			...options.ignores.flatMap((path) => [`!${path}`, `!${path}/**`]),
+		],
+		rules: {
+			disable: options.disabled,
+			enable: options.enabled,
+			error: [],
+			warn: [],
+		},
 		targets: options.targets.length > 0 ? options.targets : ["."],
 	};
 	if (options.write) {

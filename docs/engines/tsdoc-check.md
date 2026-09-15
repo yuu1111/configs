@@ -8,8 +8,7 @@
 {
   "tsdoc-check": {
     "enabled": true,
-    "targets": ["src"],
-    "ignore": ["generated"],
+    "includes": ["src/**", "!src/generated/**"],
     "docScope": "exported",
     "styleScope": "documented",
     "rules": {
@@ -29,7 +28,7 @@
 }
 ```
 
-`enabled`、`targets`、`ignore`、`rules` と `preset`、group、rule の指定は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
+`enabled`、`includes`、`rules` と `preset`、group、rule の指定は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
 このengineはin-processで起動し `args` を取らない
 
 ## 検査する範囲
@@ -60,6 +59,7 @@
 その宣言にはトップレベルの宣言だけでなく、class、interface、type literal、namespace、enum、object literal のメンバーと、doc を付けた関数本体の中の宣言も含む
 object literal のメンバーは変数の初期化式から辿り、引数、配列、as const のような式を包む構文の内側にあるものも対象にする
 どのruleがどのscopeに従うかは rule 一覧の `対象範囲` 列にある
+`orphan-doc` は宣言に付かなかったTSDoc commentを報告するため、宣言を選ぶscopeに従わない
 
 ## rule 一覧
 
@@ -74,6 +74,7 @@ object literal のメンバーは変数の初期化式から辿り、引数、�
 | `missing-doc` | `documentation` | warning | true | docScope | TSDoc commentの無い宣言 |
 | `single-line-doc` | `syntax` | warning | true | styleScope | 1行で書いたTSDoc comment |
 | `blank-line-before-tags` | `syntax` | warning | true | styleScope | summaryの直下に書いたblock tag |
+| `orphan-doc` | `syntax` | warning | true | 全文書 | どの宣言にも付いていないTSDoc comment |
 | `param-untagged` | `contract` | warning | true | docScope | `@param` の無い宣言済みparameter |
 | `type-param-untagged` | `contract` | warning | true | docScope | `@typeParam` の無い宣言済みtype parameter |
 | `param-order` | `contract` | warning | false | docScope | 宣言順と違う `@param` の並び |
@@ -82,7 +83,7 @@ object literal のメンバーは変数の初期化式から辿り、引数、�
 
 `param-order`、`missing-returns`、`deprecated-without-guidance` はopt-inで、`rules` が `on` にするまで実行しない
 
-`error` を取れるのは `tsdoc-check` だけで、そのruleを違反へ上げ opt-inのruleは先に有効にする
+`warn` と `error` はruleの重大度を変更し、opt-inのruleは先に有効にする
 
 ## tagと構文
 
@@ -99,6 +100,9 @@ TSDocが定義していないtagは `tsdoc-tag` のwarningになる
 
 `deprecated-without-guidance` は `@see` か `@deprecated` の文中の `{@link}` を代替先として受け入れる
 
+`orphan-doc` はTSDocとして書いたblock commentのうち、どの宣言の文書にもならなかったものを報告する
+TSDocを積み上げたときの最後以外、宣言の無い場所へ書いたTSDoc、file末尾に残ったTSDocがここに入る
+
 parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は検査しない
 
 ## 抑制
@@ -112,3 +116,4 @@ export const value = 1
 
 理由の無い抑制、未知のrule、ruleを書いていない抑制は `suppression` のerrorになる
 何も抑制しない抑制は `suppression-unused` のwarningになる
+`orphan-doc` は付ける先の宣言が無いTSDocへの指摘なので、宣言の隣に抑制を書いても効かない

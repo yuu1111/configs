@@ -32,13 +32,6 @@
 						"type": "string"
 					},
 					"type": "array"
-				},
-				"targets": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
 				}
 			},
 			"type": "object"
@@ -88,14 +81,7 @@
 				"enabled": {
 					"type": "boolean"
 				},
-				"targets": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
-				},
-				"ignore": {
+				"includes": {
 					"items": {
 						"minLength": 1,
 						"type": "string"
@@ -118,7 +104,9 @@
 								{
 									"enum": [
 										"off",
-										"on"
+										"on",
+										"warn",
+										"error"
 									],
 									"type": "string"
 								},
@@ -128,14 +116,18 @@
 										"blank-line-between-class-members": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"blank-line-between-definitions": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										}
@@ -156,14 +148,7 @@
 				"enabled": {
 					"type": "boolean"
 				},
-				"targets": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
-				},
-				"ignore": {
+				"includes": {
 					"items": {
 						"minLength": 1,
 						"type": "string"
@@ -186,7 +171,9 @@
 								{
 									"enum": [
 										"off",
-										"on"
+										"on",
+										"warn",
+										"error"
 									],
 									"type": "string"
 								},
@@ -196,14 +183,18 @@
 										"broad-suppression": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"undocumented-directive": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										}
@@ -217,7 +208,9 @@
 								{
 									"enum": [
 										"off",
-										"on"
+										"on",
+										"warn",
+										"error"
 									],
 									"type": "string"
 								},
@@ -227,14 +220,18 @@
 										"cramped-comment": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"separator-comment": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										}
@@ -248,7 +245,9 @@
 								{
 									"enum": [
 										"off",
-										"on"
+										"on",
+										"warn",
+										"error"
 									],
 									"type": "string"
 								},
@@ -258,14 +257,18 @@
 										"placeholder-comment": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"japanese-period": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										}
@@ -286,14 +289,7 @@
 				"enabled": {
 					"type": "boolean"
 				},
-				"targets": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
-				},
-				"ignore": {
+				"includes": {
 					"items": {
 						"minLength": 1,
 						"type": "string"
@@ -316,7 +312,9 @@
 								{
 									"enum": [
 										"off",
-										"on"
+										"on",
+										"warn",
+										"error"
 									],
 									"type": "string"
 								},
@@ -326,28 +324,36 @@
 										"consecutive-blank-lines": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"hard-break-html": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"trailing-backslash": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"trailing-whitespace": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										}
@@ -361,7 +367,9 @@
 								{
 									"enum": [
 										"off",
-										"on"
+										"on",
+										"warn",
+										"error"
 									],
 									"type": "string"
 								},
@@ -371,21 +379,27 @@
 										"full-width-alphanumeric": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"japanese-comma": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"japanese-period": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										}
@@ -399,7 +413,9 @@
 								{
 									"enum": [
 										"off",
-										"on"
+										"on",
+										"warn",
+										"error"
 									],
 									"type": "string"
 								},
@@ -409,21 +425,27 @@
 										"code-fence-language": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"heading-level-jump": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"list-marker-consistency": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										}
@@ -437,7 +459,9 @@
 								{
 									"enum": [
 										"off",
-										"on"
+										"on",
+										"warn",
+										"error"
 									],
 									"type": "string"
 								},
@@ -447,14 +471,18 @@
 										"date-anchored-statement": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										},
 										"empty-link": {
 											"enum": [
 												"off",
-												"on"
+												"on",
+												"warn",
+												"error"
 											],
 											"type": "string"
 										}
@@ -475,14 +503,7 @@
 				"enabled": {
 					"type": "boolean"
 				},
-				"targets": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
-				},
-				"ignore": {
+				"includes": {
 					"items": {
 						"minLength": 1,
 						"type": "string"
@@ -506,6 +527,7 @@
 									"enum": [
 										"off",
 										"on",
+										"warn",
 										"error"
 									],
 									"type": "string"
@@ -517,6 +539,16 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										"orphan-doc": {
+											"enum": [
+												"off",
+												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -525,6 +557,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -533,6 +566,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -541,6 +575,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -556,6 +591,7 @@
 									"enum": [
 										"off",
 										"on",
+										"warn",
 										"error"
 									],
 									"type": "string"
@@ -567,6 +603,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -575,6 +612,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -583,6 +621,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -598,6 +637,7 @@
 									"enum": [
 										"off",
 										"on",
+										"warn",
 										"error"
 									],
 									"type": "string"
@@ -609,6 +649,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -617,6 +658,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -625,6 +667,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -633,6 +676,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -641,6 +685,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -656,6 +701,7 @@
 									"enum": [
 										"off",
 										"on",
+										"warn",
 										"error"
 									],
 									"type": "string"
@@ -667,6 +713,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"
@@ -675,6 +722,7 @@
 											"enum": [
 												"off",
 												"on",
+												"warn",
 												"error"
 											],
 											"type": "string"

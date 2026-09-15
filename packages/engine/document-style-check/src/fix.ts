@@ -13,7 +13,7 @@ export function fix(context: FindingEngineContext): string[] {
 	const files = collectFiles(context.targets, {
 		cwd: context.cwd,
 		extensions: DOCUMENT_EXTENSIONS,
-		ignores: context.ignores,
+		includes: context.includes,
 	});
 	return fixFiles(
 		files,

@@ -35,15 +35,21 @@ export interface CollectFilesOptions {
 	cwd?: string;
 
 	/**
-	 * 検査から外すpath
+	 * 収集する相対pathのglob 否定globは先に選んだ対象を除外する
 	 */
-	ignores?: string[];
+	includes?: string[];
 }
 
-function isIgnored(path: string, ignores: string[]): boolean {
-	return ignores.some(
-		(ignore) => path === ignore || path.startsWith(`${ignore}/`),
-	);
+function isIncluded(path: string, includes: string[]): boolean {
+	let included = false;
+	for (const entry of includes) {
+		const excluded = entry.startsWith("!");
+		const pattern = excluded ? entry.slice(1) : entry;
+		if (new Bun.Glob(pattern).match(path)) {
+			included = !excluded;
+		}
+	}
+	return included;
 }
 
 function walk(
@@ -80,7 +86,7 @@ export function collectFiles(
 	options: CollectFilesOptions,
 ): string[] {
 	const cwd = options.cwd ?? process.cwd();
-	const ignores = options.ignores ?? [];
+	const includes = options.includes ?? ["**"];
 	const files = new Set<string>();
 	for (const target of targets) {
 		const absolute = resolve(cwd, target);
@@ -91,10 +97,7 @@ export function collectFiles(
 			continue;
 		}
 		if (stats.isFile()) {
-			if (
-				options.extensions.has(extname(absolute)) &&
-				!isIgnored(normalizePath(target), ignores)
-			) {
+			if (options.extensions.has(extname(absolute))) {
 				files.add(absolute);
 			}
 			continue;
@@ -102,6 +105,6 @@ export function collectFiles(
 		walk(absolute, options.extensions, files);
 	}
 	return [...files]
-		.filter((file) => !isIgnored(normalizePath(relative(cwd, file)), ignores))
+		.filter((file) => isIncluded(normalizePath(relative(cwd, file)), includes))
 		.sort();
 }

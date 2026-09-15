@@ -7,6 +7,7 @@ import {
 	engineConfig,
 	loadConfig,
 	parseConfig,
+	RULE_VOCABULARY,
 } from "../src/config";
 
 describe("quality config", () => {
@@ -37,17 +38,16 @@ describe("quality config", () => {
 			{
 				"tsdoc-check": {
 					enabled: true,
-					ignore: ["dist"],
+					includes: ["src/**", "!src/generated/**"],
 					rules: { documentation: { "missing-doc": "on" } },
 				},
 			},
 			"test",
 		);
 		expect(engineConfig(config, "tsdoc-check")).toEqual({
-			ignore: ["dist"],
+			includes: ["src/**", "!src/generated/**"],
 			options: { docScope: "exported", styleScope: "exported" },
-			rules: { disable: [], enable: [], error: [] },
-			targets: [],
+			rules: { disable: [], enable: [], error: [], warn: [] },
 		});
 	});
 
@@ -95,9 +95,7 @@ describe("quality config", () => {
 		);
 		expect(engineConfig(config, "typecheck")).toEqual({
 			args: [],
-			ignore: [],
 			projects: [".", "examples/client"],
-			targets: [],
 		});
 	});
 
@@ -184,8 +182,26 @@ describe("quality config", () => {
 		);
 		const options = engineConfig(config, "tsdoc-check");
 		expect(options?.rules.enable).toEqual([]);
-		expect(options?.rules.disable).toHaveLength(11);
+		expect(options?.rules.disable).toHaveLength(
+			RULE_VOCABULARY["tsdoc-check"].all.length,
+		);
 		expect(options?.rules.error).toEqual([]);
+		expect(options?.rules.warn).toEqual([]);
+	});
+
+	test("changes a rule to a warning in every finding engine", () => {
+		const config = parseConfig(
+			{
+				"comment-check": {
+					enabled: true,
+					rules: { shape: { "separator-comment": "warn" } },
+				},
+			},
+			"test",
+		);
+		expect(engineConfig(config, "comment-check")?.rules.warn).toEqual([
+			"separator-comment",
+		]);
 	});
 
 	test("promotes a single rule to an error", () => {
@@ -204,6 +220,7 @@ describe("quality config", () => {
 			disable: [],
 			enable: ["missing-returns"],
 			error: ["missing-returns"],
+			warn: [],
 		});
 	});
 
@@ -309,21 +326,23 @@ describe("quality config errors", () => {
 	test("rejects an unknown rule state", () => {
 		expect(() =>
 			parseConfig(
-				{ "comment-check": { enabled: true, rules: { shape: "warn" } } },
-				"test",
-			),
-		).toThrow('test: comment-check.rules.shape must be "off", "on" or "error"');
-	});
-
-	test("rejects an error state outside the TSDoc engine", () => {
-		expect(() =>
-			parseConfig(
-				{ "comment-check": { enabled: true, rules: { shape: "error" } } },
+				{ "comment-check": { enabled: true, rules: { shape: "fatal" } } },
 				"test",
 			),
 		).toThrow(
-			"test: comment-check.rules.shape cannot treat a rule as an error",
+			'test: comment-check.rules.shape must be "off", "on", "warn" or "error"',
 		);
+	});
+
+	test("accepts an error state in every finding engine", () => {
+		const config = parseConfig(
+			{ "comment-check": { enabled: true, rules: { shape: "error" } } },
+			"test",
+		);
+		expect(engineConfig(config, "comment-check")?.rules.error).toEqual([
+			"cramped-comment",
+			"separator-comment",
+		]);
 	});
 
 	test("rejects an unknown docScope", () => {

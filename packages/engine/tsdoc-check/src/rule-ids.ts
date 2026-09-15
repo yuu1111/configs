@@ -6,6 +6,7 @@ export const RULE_IDS = [
 	"deprecated-without-guidance",
 	"missing-doc",
 	"missing-returns",
+	"orphan-doc",
 	"param-mismatch",
 	"param-order",
 	"param-untagged",
@@ -102,6 +103,7 @@ export const STYLE_RULE_IDS: readonly RuleId[] = [
 export const RULE_GROUPS = {
 	syntax: [
 		"blank-line-before-tags",
+		"orphan-doc",
 		"single-line-doc",
 		"tsdoc-syntax",
 		"tsdoc-tag",

@@ -1,4 +1,4 @@
-import type { EngineReport } from "./report";
+import type { EngineReport, ReportFinding } from "./report";
 
 /**
  * 統合runnerがengineへ渡すrule選択
@@ -18,6 +18,33 @@ export interface RuleSelection {
 	 * 違反へ上げるrule名
 	 */
 	error: string[];
+
+	/**
+	 * warningへ変更するrule名
+	 */
+	warn: string[];
+}
+
+/**
+ * rule選択で指定した重大度を検出へ反映する
+ *
+ * @param findings - 重大度を変更する検出
+ * @param rules - ruleごとの選択
+ * @returns 指定した重大度を反映した検出
+ */
+export function applyRuleSeverities(
+	findings: readonly ReportFinding[],
+	rules: RuleSelection,
+): ReportFinding[] {
+	return findings.map((finding) => {
+		if (rules.error.includes(finding.rule)) {
+			return { ...finding, severity: "error" };
+		}
+		if (rules.warn.includes(finding.rule)) {
+			return { ...finding, severity: "warning" };
+		}
+		return finding;
+	});
 }
 
 /**
@@ -30,9 +57,9 @@ export interface FindingEngineContext {
 	cwd: string;
 
 	/**
-	 * 検査から外すpath
+	 * 検査対象を選ぶglob 否定globは先に選んだ対象を除外する
 	 */
-	ignores: string[];
+	includes: string[];
 
 	/**
 	 * engineごとの追加option 検証は統合runnerが持ち engineは既定値へ倒して読む

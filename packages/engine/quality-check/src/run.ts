@@ -2,6 +2,7 @@ import {
 	type BaselineFile,
 	compareWithBaseline,
 } from "@yuu1111/shared/baseline";
+import { normalizePath } from "@yuu1111/shared/files";
 import {
 	type EngineName,
 	enabledEngines,
@@ -218,11 +219,17 @@ async function runProcessEngine(
  */
 function defaultRuleOptions(): RuleEngineOptions {
 	return {
-		ignore: [],
+		includes: ["**"],
 		options: {},
-		rules: { disable: [], enable: [], error: [] },
-		targets: [],
+		rules: { disable: [], enable: [], error: [], warn: [] },
 	};
+}
+
+function exclusionPatterns(paths: readonly string[]): string[] {
+	return paths.flatMap((path) => {
+		const normalized = normalizePath(path);
+		return [`!${normalized}`, `!${normalized}/**`];
+	});
 }
 
 /**
@@ -238,10 +245,13 @@ function runFindingEngine(
 	try {
 		const report = engine({
 			cwd: options.cwd,
-			ignores: [...configured.ignore, ...options.overrides.ignore],
+			includes: [
+				...configured.includes,
+				...exclusionPatterns(options.overrides.ignore),
+			],
 			options: configured.options,
 			rules: configured.rules,
-			targets: resolveTargets(options.overrides.targets, configured.targets),
+			targets: resolveTargets(options.overrides.targets, []),
 		});
 		const parsed = normalizeReport(name, report);
 		const promoted = options.config.failOnWarnings

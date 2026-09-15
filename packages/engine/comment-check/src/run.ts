@@ -1,4 +1,7 @@
-import type { FindingEngineContext } from "@yuu1111/shared/engines";
+import {
+	applyRuleSeverities,
+	type FindingEngineContext,
+} from "@yuu1111/shared/engines";
 import { collectFiles } from "@yuu1111/shared/files";
 import { toReport } from "@yuu1111/shared/report";
 import type { OptInRuleId, RuleId } from "./rule-ids";
@@ -21,16 +24,19 @@ const RULE_MESSAGES: Record<string, string> = {
  * @param findings - 報告へ載せる検出
  * @returns severityとmessageを補った報告
  */
-function reportOf(findings: readonly Finding[]) {
+function reportOf(findings: readonly Finding[], context: FindingEngineContext) {
 	return toReport(
-		findings.map((finding) => ({
-			column: finding.column,
-			file: finding.file,
-			line: finding.line,
-			message: RULE_MESSAGES[finding.rule] ?? "",
-			rule: finding.rule,
-			severity: "error" as const,
-		})),
+		applyRuleSeverities(
+			findings.map((finding) => ({
+				column: finding.column,
+				file: finding.file,
+				line: finding.line,
+				message: RULE_MESSAGES[finding.rule] ?? "",
+				rule: finding.rule,
+				severity: "error" as const,
+			})),
+			context.rules,
+		),
 	);
 }
 
@@ -44,7 +50,7 @@ export function run(context: FindingEngineContext) {
 	const files = collectFiles(context.targets, {
 		cwd: context.cwd,
 		extensions: SUPPORTED_EXTENSIONS,
-		ignores: context.ignores,
+		includes: context.includes,
 	});
 	return reportOf(
 		scanFiles(
@@ -53,5 +59,6 @@ export function run(context: FindingEngineContext) {
 			context.rules.enable as OptInRuleId[],
 			context.rules.disable as RuleId[],
 		),
+		context,
 	);
 }

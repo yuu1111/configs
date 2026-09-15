@@ -1,4 +1,7 @@
-import type { FindingEngineContext } from "@yuu1111/shared/engines";
+import {
+	applyRuleSeverities,
+	type FindingEngineContext,
+} from "@yuu1111/shared/engines";
 import { collectFiles } from "@yuu1111/shared/files";
 import { toReport } from "@yuu1111/shared/report";
 import type { RuleId } from "./rule-ids";
@@ -14,9 +17,12 @@ export function run(context: FindingEngineContext) {
 	const files = collectFiles(context.targets, {
 		cwd: context.cwd,
 		extensions: SUPPORTED_EXTENSIONS,
-		ignores: context.ignores,
+		includes: context.includes,
 	});
 	return toReport(
-		scanFiles(files, context.cwd, context.rules.disable as RuleId[]),
+		applyRuleSeverities(
+			scanFiles(files, context.cwd, context.rules.disable as RuleId[]),
+			context.rules,
+		),
 	);
 }

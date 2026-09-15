@@ -19,12 +19,13 @@ const STRING_ARRAY: JsonSchema = {
 /**
  * rule1つ分の状態を許すschemaを返す
  *
- * @param promotes - 違反へ上げられるengineか
  * @returns rule1つ分の状態のschema
  */
-function ruleStateSchema(promotes: boolean): JsonSchema {
+function ruleStateSchema(): JsonSchema {
 	return {
-		enum: promotes ? ["off", "on", "error"] : ["off", "on"],
+		description:
+			"off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+		enum: ["off", "on", "warn", "error"],
 		type: "string",
 	};
 }
@@ -38,17 +39,23 @@ function ruleStateSchema(promotes: boolean): JsonSchema {
 function rulesSchema(name: RuleEngineName): JsonSchema {
 	const vocabulary = RULE_VOCABULARY[name];
 	const properties: Record<string, unknown> = {
-		preset: { enum: ["recommended", "all", "none"], type: "string" },
+		preset: {
+			default: "recommended",
+			description:
+				"Selects the initial rule set before group and rule overrides.",
+			enum: ["recommended", "all", "none"],
+			type: "string",
+		},
 	};
 	for (const [group, rules] of Object.entries(vocabulary.groups)) {
 		const members: readonly string[] = rules;
 		properties[group] = {
 			anyOf: [
-				ruleStateSchema(vocabulary.promotes),
+				ruleStateSchema(),
 				{
 					additionalProperties: false,
 					properties: Object.fromEntries(
-						members.map((rule) => [rule, ruleStateSchema(vocabulary.promotes)]),
+						members.map((rule) => [rule, ruleStateSchema()]),
 					),
 					type: "object",
 				},
@@ -71,21 +78,25 @@ function rulesSchema(name: RuleEngineName): JsonSchema {
 function engineSchema(name: EngineName): JsonSchema {
 	const capabilities = ENGINE_CAPABILITIES[name];
 	const properties: Record<string, unknown> = {
-		enabled: { type: "boolean" },
+		enabled: {
+			default: false,
+			description: "Whether quality-check runs this engine.",
+			type: "boolean",
+		},
 	};
 	if (capabilities.args) {
 		properties.args = STRING_ARRAY;
-	}
-	if (capabilities.skipped.targets === undefined) {
-		properties.targets = STRING_ARRAY;
-	}
-	if (capabilities.skipped.ignore === undefined) {
-		properties.ignore = STRING_ARRAY;
 	}
 	if (name === "typecheck") {
 		properties.projects = STRING_ARRAY;
 	}
 	if (isRuleEngine(name)) {
+		properties.includes = {
+			...STRING_ARRAY,
+			default: ["**"],
+			description:
+				"Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again.",
+		};
 		properties.rules = rulesSchema(name);
 		const docScopes = docScopesOf(name);
 		if (docScopes !== undefined) {

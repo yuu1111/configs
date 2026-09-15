@@ -1,4 +1,7 @@
-import type { FindingEngineContext } from "@yuu1111/shared/engines";
+import {
+	applyRuleSeverities,
+	type FindingEngineContext,
+} from "@yuu1111/shared/engines";
 import { collectFiles } from "@yuu1111/shared/files";
 import { type EngineReport, toReport } from "@yuu1111/shared/report";
 import type { OptInRuleId, RuleId } from "./rule-ids";
@@ -25,16 +28,19 @@ export function inspect(context: FindingEngineContext): DocumentInspection {
 	const files = collectFiles(context.targets, {
 		cwd: context.cwd,
 		extensions: DOCUMENT_EXTENSIONS,
-		ignores: context.ignores,
+		includes: context.includes,
 	});
 	return {
 		files,
 		report: toReport(
-			lintFiles(
-				files,
-				context.cwd,
-				context.rules.enable as OptInRuleId[],
-				context.rules.disable as RuleId[],
+			applyRuleSeverities(
+				lintFiles(
+					files,
+					context.cwd,
+					context.rules.enable as OptInRuleId[],
+					context.rules.disable as RuleId[],
+				),
+				context.rules,
 			),
 		),
 	};

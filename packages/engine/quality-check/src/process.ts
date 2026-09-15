@@ -161,7 +161,7 @@ function buildTypecheckCommand(
  * @returns 子プロセスengineへ渡せる起動条件
  */
 function defaultEngineOptions(): EngineOptions {
-	return { args: [], ignore: [], targets: [] };
+	return { args: [] };
 }
 
 /**
@@ -180,7 +180,7 @@ export function buildEngineCommand(
 	const options: EngineOptions =
 		context.config.config[name] ?? defaultEngineOptions();
 	const limits = ENGINE_CAPABILITIES[name].skipped;
-	const requested = resolveTargets(context.overrides.targets, options.targets);
+	const requested = resolveTargets(context.overrides.targets, []);
 	const targets = limits.targets === undefined ? requested : [];
 	if (name === "biome") {
 		return [

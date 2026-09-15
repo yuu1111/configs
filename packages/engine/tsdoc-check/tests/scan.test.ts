@@ -614,6 +614,98 @@ describe("tsdoc checks", () => {
 	});
 });
 
+describe("orphan TSDoc", () => {
+	test("reports a TSDoc comment that the next comment leaves behind", () => {
+		const source = [
+			"/**",
+			" * The listing input",
+			" */",
+			"export interface Listing {",
+			"\t/** the value read from the header",
+			"\t */",
+			"\tvalue: string;",
+			"",
+			"\t/** the reference to the session",
+			"\t */",
+			"",
+			"\t/** the wait between the requests",
+			"\t */",
+			"\tintervalMs: number;",
+			"}",
+		].join("\n");
+		const findings = scanSource(
+			source,
+			"src/sample.ts",
+			[],
+			[],
+			"documented",
+			"documented",
+		);
+		expect(findings.map((finding) => finding.rule)).toEqual(["orphan-doc"]);
+		expect(findings[0]?.line).toBe(9);
+		expect(findings[0]?.severity).toBe("warning");
+	});
+
+	test("reports the first of two TSDoc comments stacked on one declaration", () => {
+		const source = [
+			"/**",
+			" * The first description",
+			" */",
+			"/**",
+			" * The second description",
+			" */",
+			"export const value = 1",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["orphan-doc"]);
+	});
+
+	test("reports a TSDoc comment left at the end of the file", () => {
+		const source = [
+			"/**",
+			" * The value read by the loader",
+			" */",
+			"export const value = 1",
+			"",
+			"/**",
+			" * The description left at the end",
+			" */",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["orphan-doc"]);
+	});
+
+	test("reports a TSDoc comment that no statement can consume", () => {
+		const source = [
+			"/**",
+			" * Renders the value",
+			" */",
+			"export function render(): void {",
+			"\t/** the value to return",
+			"\t */",
+			"\treturn;",
+			"}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["orphan-doc"]);
+	});
+
+	test("does not report a TSDoc comment attached to a declaration", () => {
+		const source = [
+			"/**",
+			" * The value read by the loader",
+			" */",
+			"export const value = 1",
+		].join("\n");
+		expect(rulesOf(source)).toEqual([]);
+	});
+
+	test("does not report a block comment that is not a TSDoc comment", () => {
+		const source = [
+			"/* the value read by the loader */",
+			"export const value = 1",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["missing-doc"]);
+	});
+});
+
 describe("object literal members", () => {
 	test("checks a single-line doc on a property under styleScope documented", () => {
 		const source = [

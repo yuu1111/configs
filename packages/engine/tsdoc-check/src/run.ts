@@ -1,4 +1,7 @@
-import type { FindingEngineContext } from "@yuu1111/shared/engines";
+import {
+	applyRuleSeverities,
+	type FindingEngineContext,
+} from "@yuu1111/shared/engines";
 import { collectFiles } from "@yuu1111/shared/files";
 import { toReport } from "@yuu1111/shared/report";
 import {
@@ -11,7 +14,6 @@ import {
 	STYLE_SCOPES,
 	type StyleScope,
 } from "./rule-ids";
-import { promoteFindings } from "./rules";
 import { scanFiles, TYPESCRIPT_EXTENSIONS } from "./scan";
 
 /**
@@ -50,9 +52,9 @@ export function run(context: FindingEngineContext) {
 	const files = collectFiles(context.targets, {
 		cwd: context.cwd,
 		extensions: TYPESCRIPT_EXTENSIONS,
-		ignores: context.ignores,
+		includes: context.includes,
 	});
-	const findings = promoteFindings(
+	const findings = applyRuleSeverities(
 		scanFiles(
 			files,
 			context.cwd,
@@ -61,7 +63,7 @@ export function run(context: FindingEngineContext) {
 			readDocScope(context.options?.docScope),
 			readStyleScope(context.options?.styleScope),
 		),
-		context.rules.error,
+		context.rules,
 	);
 	return toReport(findings);
 }

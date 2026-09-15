@@ -34,7 +34,7 @@ Declare the engines to run in `quality.json`, then call the CLI from a script:
   },
   "comment-check": {
     "enabled": true,
-    "ignore": ["another-project"],
+    "includes": ["**", "!another-project/**"],
     "rules": {
       "preset": "recommended",
       "content": {
@@ -81,6 +81,7 @@ Exit code 0 means every engine passed, 1 that at least one failed, and 2 that th
 | Field | Description |
 |-------|-------------|
 | `<engine>` | One section per engine; `enabled` starts it |
+| `<engine>.includes` | Globs inspected by the four built-in finding engines |
 | `<engine>.rules` | Rule selection of the four built-in finding engines |
 | `failOnWarnings` | Treat every warning as a blocking finding |
 | `baseline` | Baseline file path; `false` disables the diff |
@@ -93,15 +94,19 @@ A condition an engine does not take is rejected, so a typo fails at start-up ins
 
 | Engine | Command | Conditions |
 |--------|---------|------------|
-| `biome` | `biome check` | `targets`, `args`; `biome.json` holds the excluded paths |
+| `biome` | `biome check` | `args`; `biome.json` selects the files |
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
-| `code-style-check` | in-process | `ignore`, `targets`, `rules` |
-| `comment-check` | in-process | `ignore`, `targets`, `rules` |
-| `document-style-check` | in-process | `ignore`, `targets`, `rules` |
-| `tsdoc-check` | in-process | `ignore`, `targets`, `rules` |
+| `code-style-check` | in-process | `includes`, `rules` |
+| `comment-check` | in-process | `includes`, `rules` |
+| `document-style-check` | in-process | `includes`, `rules` |
+| `tsdoc-check` | in-process | `includes`, `rules` |
 
 `args` applies only to the child-process engines and is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
+
+`includes` selects paths relative to the project root with globs.
+It defaults to `**`, while an empty array inspects nothing.
+A negative glob excludes files selected earlier, and a later positive glob can include them again, so order matters.
 
 A command line override an engine does not take is not passed on, and the section says so:
 
@@ -112,11 +117,11 @@ biome: ignore skipped (biome.json holds its settings)
 
 `rules` selects which rules of the built-in engines run and how they are reported.
 `rules.preset` selects in bulk: `recommended` is the engine default, `all` turns every rule on, and `none` turns every rule off.
-A group key names one of the rule groups the engine publishes and takes `off`, `on`, or `error` for every rule in that group.
+A group key names one of the rule groups the engine publishes and takes `off`, `on`, `warn`, or `error` for every rule in that group.
 An object under a group key names single rules.
 The most specific setting wins, so a preset, a group, and a rule may be written in that order.
 `off` also works for a rule that is on by default, and `on` keeps the engine default severity.
-Only `tsdoc-check` takes `error`, which raises the rule and turns an opt-in rule on first.
+`warn` and `error` change the severity in every finding engine and turn an opt-in rule on first.
 A group or rule name that the engine does not know is a configuration error, and the published `schema.json` teaches an editor the same names.
 The selection is handed to the built-in engines directly, so the CLI no longer turns it into `--enable`, `--disable`, or `--error` arguments.
 

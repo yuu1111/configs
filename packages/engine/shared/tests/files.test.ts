@@ -43,17 +43,33 @@ describe("file collection", () => {
 		);
 	});
 
-	test("skips ignored paths and the ignored directories", () => {
+	test("selects paths with ordered positive and negative globs", () => {
 		withTemporaryTree(
-			{ "a.md": "x", "sub/d.md": "x", "node_modules/e.md": "x" },
+			{
+				"a.md": "x",
+				"node_modules/e.md": "x",
+				"sub/d.md": "x",
+				"sub/keep.md": "x",
+			},
 			(directory) => {
 				const files = collectFiles([directory], {
 					cwd: directory,
 					extensions: EXTENSIONS,
-					ignores: ["sub"],
+					includes: ["**", "!sub/**", "sub/keep.md"],
 				}).map((file) => relative(directory, file).split("\\").join("/"));
-				expect(files).toEqual(["a.md"]);
+				expect(files).toEqual(["a.md", "sub/keep.md"]);
 			},
 		);
+	});
+
+	test("collects nothing from an empty includes list", () => {
+		withTemporaryTree({ "a.md": "x" }, (directory) => {
+			const files = collectFiles([directory], {
+				cwd: directory,
+				extensions: EXTENSIONS,
+				includes: [],
+			});
+			expect(files).toEqual([]);
+		});
 	});
 });

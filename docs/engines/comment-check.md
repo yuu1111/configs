@@ -8,8 +8,7 @@
 {
   "comment-check": {
     "enabled": true,
-    "targets": ["src"],
-    "ignore": ["generated"],
+    "includes": ["src/**", "!src/generated/**"],
     "rules": {
       "preset": "recommended",
       "shape": {
@@ -23,7 +22,7 @@
 }
 ```
 
-`enabled`、`targets`、`ignore`、`rules` と `preset`、group、rule の指定は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
+`enabled`、`includes`、`rules` と `preset`、group、rule の指定は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
 このengineはin-processで起動し `args` を取らない
 
 ## rule 一覧

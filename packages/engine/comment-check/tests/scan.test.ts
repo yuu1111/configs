@@ -6,7 +6,7 @@ import { collectFiles } from "@yuu1111/shared/files";
 import { SUPPORTED_EXTENSIONS, scanSource } from "../src/scan";
 
 describe("file collection", () => {
-	test("skips an ignored path", () => {
+	test("excludes a path with a negative glob", () => {
 		const root = mkdtempSync(join(tmpdir(), "comment-check-"));
 		try {
 			mkdirSync(join(root, "src", "generated"), { recursive: true });
@@ -18,7 +18,7 @@ describe("file collection", () => {
 			const files = collectFiles(["."], {
 				cwd: root,
 				extensions: SUPPORTED_EXTENSIONS,
-				ignores: ["src/generated"],
+				includes: ["**", "!src/generated/**"],
 			});
 			expect(
 				files.map((file) => file.replace(root, "").split("\\").join("/")),

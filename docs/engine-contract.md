@@ -25,7 +25,7 @@
 ### in-process 呼び出し
 
 - 検出engineは子プロセスではなく関数として呼ぶ
-- `@yuu1111/shared/engines` の `FindingEngineContext` が `cwd` `ignores` `options` `rules` `targets` を渡す
+- `@yuu1111/shared/engines` の `FindingEngineContext` が `cwd` `includes` `options` `rules` `targets` を渡す
 - `options` はengine固有のoptionを載せ 統合runnerが検証してから渡す engineは既定値へ倒して読む
 - `FindingEngine` は `@yuu1111/shared/report` の `EngineReport` を返す
 - 検出engineは終了codeを持たない 起動の失敗は例外にし 統合runnerがengineのerrorへ変換する
@@ -40,7 +40,7 @@
 ### rule語彙
 
 - 統合runnerの `rules` は preset とgroup とruleの3段で解決し `RuleSelection` へ展開する
-- `RuleSelection` は `enable` `disable` `error` を持ち engineの関数へそのまま渡す
+- `RuleSelection` は `enable` `disable` `warn` `error` を持ち engineの関数へそのまま渡す
 - group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所になる
 
 ## 統合runner の契約
@@ -53,13 +53,13 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 
 | engine | 起動 | 設定で受け取る起動条件 |
 |--------|------|------------------------|
-| `biome` | 子プロセス | targets args |
+| `biome` | 子プロセス | args |
 | `typecheck` | 子プロセス | args projects |
 | `knip` | 子プロセス | args |
-| `code-style-check` | in-process | ignore targets rules |
-| `comment-check` | in-process | ignore targets rules |
-| `document-style-check` | in-process | ignore targets rules |
-| `tsdoc-check` | in-process | ignore targets rules docScope styleScope |
+| `code-style-check` | in-process | includes rules |
+| `comment-check` | in-process | includes rules |
+| `document-style-check` | in-process | includes rules |
+| `tsdoc-check` | in-process | includes rules docScope styleScope |
 
 `args` は子プロセスengineだけが受け取り 既定引数の後ろへ足す
 

@@ -52,6 +52,23 @@ function finding(
 	};
 }
 
+/**
+ * どの宣言にも付かなかったTSDocを報告する
+ *
+ * @param comment - 報告するTSDoc comment
+ * @param file - 指摘に載せるfileのpath
+ * @returns 孤児TSDocの指摘
+ */
+export function orphanFinding(comment: DocComment, file: string): Finding {
+	return finding(
+		"orphan-doc",
+		"warning",
+		file,
+		comment,
+		"The TSDoc comment is not attached to a declaration",
+	);
+}
+
 const VOID_RETURN_TYPES = new Set(["never", "undefined", "void"]);
 const PROMISE_ANNOTATION = /^(?:Promise|PromiseLike)<([\s\S]*)>$/;
 

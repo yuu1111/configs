@@ -52,12 +52,12 @@ test("対象ディレクトリからMarkdownだけを集める", () => {
 	);
 });
 
-test("指定したpathを検査から外す", () => {
+test("否定globに一致するpathを検査から外す", () => {
 	withTemporaryTree({ "a.md": "本文\n", "sub/d.md": "本文\n" }, (directory) => {
 		const files = collectFiles([directory], {
 			cwd: directory,
 			extensions: DOCUMENT_EXTENSIONS,
-			ignores: ["sub"],
+			includes: ["**", "!sub/**"],
 		}).map((file) => relative(directory, file).split("\\").join("/"));
 
 		expect(files).toEqual(["a.md"]);

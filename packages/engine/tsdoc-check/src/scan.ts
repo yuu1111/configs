@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
-import { collectDeclarations } from "./parse";
+import { collectSource } from "./parse";
 import {
 	DEFAULT_DOC_SCOPE,
 	DEFAULT_STYLE_SCOPE,
@@ -11,7 +11,7 @@ import {
 	type RuleId,
 	type StyleScope,
 } from "./rule-ids";
-import { classifyDeclaration, type Finding } from "./rules";
+import { classifyDeclaration, type Finding, orphanFinding } from "./rules";
 
 /**
  * 検査するTypeScriptの拡張子
@@ -43,8 +43,9 @@ export function scanSource(
 	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
 ): Finding[] {
 	try {
-		return collectDeclarations(source, file)
-			.flatMap((declaration) =>
+		const { declarations, orphans } = collectSource(source, file);
+		return [
+			...declarations.flatMap((declaration) =>
 				classifyDeclaration(
 					declaration,
 					file,
@@ -53,8 +54,9 @@ export function scanSource(
 					docScope,
 					styleScope,
 				),
-			)
-			.filter((finding) => !disabled.includes(finding.rule));
+			),
+			...orphans.map((comment) => orphanFinding(comment, file)),
+		].filter((finding) => !disabled.includes(finding.rule));
 	} catch {
 		// 構文エラーはtscとBiomeが担当するため、解析できないfileは対象外にする
 		return [];

@@ -65,9 +65,9 @@ export const ENGINE_NAMES = [
 export type EngineName = (typeof ENGINE_NAMES)[number];
 
 /**
- * rule1つ分の状態 offで無効 onでengineの既定 errorで違反として扱う
+ * rule1つ分の状態 offで無効 onでengineの既定 warnとerrorで重大度を変更する
  */
-export type RuleState = "off" | "on" | "error";
+export type RuleState = "off" | "on" | "warn" | "error";
 
 /**
  * engineへ渡す起動条件
@@ -77,16 +77,6 @@ export interface EngineOptions {
 	 * engineの既定引数の後ろへ足す引数
 	 */
 	args: string[];
-
-	/**
-	 * 検査から外すpath
-	 */
-	ignore: string[];
-
-	/**
-	 * 検査する対象path
-	 */
-	targets: string[];
 }
 
 /**
@@ -104,9 +94,9 @@ export interface TypecheckOptions extends EngineOptions {
  */
 export interface RuleEngineOptions {
 	/**
-	 * 検査から外すpath
+	 * 検査対象を選ぶglob 否定globは先に選んだ対象を除外する
 	 */
-	ignore: string[];
+	includes: string[];
 
 	/**
 	 * engineごとの追加option 統合runnerが検証して渡す
@@ -117,11 +107,6 @@ export interface RuleEngineOptions {
 	 * 展開済みのrule選択
 	 */
 	rules: RuleSelection;
-
-	/**
-	 * 検査する対象path
-	 */
-	targets: string[];
 }
 
 /**
@@ -190,11 +175,6 @@ interface EngineVocabulary {
 	 * 書いたTSDocの体裁を検査する宣言を選ぶengineが受け取るstyleScopeの一覧 受け取らなければundefined
 	 */
 	styleScopes?: readonly string[];
-
-	/**
-	 * ruleを違反へ上げられるか
-	 */
-	promotes: boolean;
 }
 
 /**
@@ -205,26 +185,22 @@ export const RULE_VOCABULARY = {
 		all: CODE_STYLE_CHECK_RULE_IDS,
 		groups: CODE_STYLE_CHECK_RULE_GROUPS,
 		optIn: CODE_STYLE_CHECK_OPT_IN_RULE_IDS,
-		promotes: false,
 	},
 	"comment-check": {
 		all: COMMENT_CHECK_RULE_IDS,
 		groups: COMMENT_CHECK_RULE_GROUPS,
 		optIn: COMMENT_CHECK_OPT_IN_RULE_IDS,
-		promotes: false,
 	},
 	"document-style-check": {
 		all: DOCUMENT_STYLE_CHECK_RULE_IDS,
 		groups: DOCUMENT_STYLE_CHECK_RULE_GROUPS,
 		optIn: DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
-		promotes: false,
 	},
 	"tsdoc-check": {
 		all: TSDOC_CHECK_RULE_IDS,
 		docScopes: TSDOC_CHECK_DOC_SCOPES,
 		groups: TSDOC_CHECK_RULE_GROUPS,
 		optIn: TSDOC_CHECK_OPT_IN_RULE_IDS,
-		promotes: true,
 		styleScopes: TSDOC_CHECK_STYLE_SCOPES,
 	},
 } satisfies Record<string, EngineVocabulary>;
@@ -342,16 +318,11 @@ function engineOptionKeys(name: EngineName): readonly string[] {
 	if (ENGINE_CAPABILITIES[name].args) {
 		keys.push("args");
 	}
-	if (ENGINE_CAPABILITIES[name].skipped.targets === undefined) {
-		keys.push("targets");
-	}
-	if (ENGINE_CAPABILITIES[name].skipped.ignore === undefined) {
-		keys.push("ignore");
-	}
 	if (name === "typecheck") {
 		keys.push("projects");
 	}
 	if (isRuleEngine(name)) {
+		keys.push("includes");
 		keys.push("rules");
 		if (docScopesOf(name) !== undefined) {
 			keys.push("docScope");
@@ -462,18 +433,16 @@ function readBaseline(
 }
 
 /**
- * rule1つ分の状態を読み取る engineが昇格できないruleはerrorを拒否する
+ * rule1つ分の状態を読み取る
  */
-function readRuleState(
-	value: unknown,
-	field: string,
-	vocabulary: EngineVocabulary,
-): RuleState {
-	if (value !== "off" && value !== "on" && value !== "error") {
-		throw new Error(`${field} must be "off", "on" or "error"`);
-	}
-	if (value === "error" && !vocabulary.promotes) {
-		throw new Error(`${field} cannot treat a rule as an error`);
+function readRuleState(value: unknown, field: string): RuleState {
+	if (
+		value !== "off" &&
+		value !== "on" &&
+		value !== "warn" &&
+		value !== "error"
+	) {
+		throw new Error(`${field} must be "off", "on", "warn" or "error"`);
 	}
 	return value;
 }
@@ -524,7 +493,7 @@ function applyRuleGroup(
 		throw new Error(`${field} has an unknown rule group: ${group}`);
 	}
 	if (typeof entry === "string") {
-		const state = readRuleState(entry, `${field}.${group}`, vocabulary);
+		const state = readRuleState(entry, `${field}.${group}`);
 		for (const rule of members) {
 			states.set(rule, state);
 		}
@@ -537,10 +506,7 @@ function applyRuleGroup(
 		if (!members.includes(rule)) {
 			throw new Error(`${field}.${group} has an unknown rule: ${rule}`);
 		}
-		states.set(
-			rule,
-			readRuleState(state, `${field}.${group}.${rule}`, vocabulary),
-		);
+		states.set(rule, readRuleState(state, `${field}.${group}.${rule}`));
 	}
 }
 
@@ -555,7 +521,12 @@ function toRuleSelection(
 	states: Map<string, RuleState>,
 	vocabulary: EngineVocabulary,
 ): RuleSelection {
-	const selection: RuleSelection = { disable: [], enable: [], error: [] };
+	const selection: RuleSelection = {
+		disable: [],
+		enable: [],
+		error: [],
+		warn: [],
+	};
 	for (const [rule, state] of states) {
 		if (state === "off") {
 			if (!vocabulary.optIn.includes(rule)) {
@@ -568,6 +539,9 @@ function toRuleSelection(
 		}
 		if (state === "error") {
 			selection.error.push(rule);
+		}
+		if (state === "warn") {
+			selection.warn.push(rule);
 		}
 	}
 	return selection;
@@ -623,26 +597,19 @@ function parseEngineOptions(
 	if (unknown !== undefined) {
 		throw new Error(`${source}: ${name} has an unknown option: ${unknown}`);
 	}
-	const options: Record<string, unknown> = {
-		ignore: [],
-		targets: [],
-	};
+	const options: Record<string, unknown> = {};
 	if (ENGINE_CAPABILITIES[name].args) {
 		options.args = readStringArray(value.args, `${source}: ${name}.args`) ?? [];
-	}
-	if (ENGINE_CAPABILITIES[name].skipped.targets === undefined) {
-		options.targets =
-			readStringArray(value.targets, `${source}: ${name}.targets`) ?? [];
-	}
-	if (ENGINE_CAPABILITIES[name].skipped.ignore === undefined) {
-		options.ignore =
-			readStringArray(value.ignore, `${source}: ${name}.ignore`) ?? [];
 	}
 	if (name === "typecheck") {
 		options.projects =
 			readStringArray(value.projects, `${source}: ${name}.projects`) ?? [];
 	}
 	if (isRuleEngine(name)) {
+		options.includes = readStringArray(
+			value.includes,
+			`${source}: ${name}.includes`,
+		) ?? ["**"];
 		options.options = readEngineOptions(value, name, source);
 		options.rules = readRuleSelection(
 			value.rules,
