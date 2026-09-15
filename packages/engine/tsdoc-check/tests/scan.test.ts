@@ -615,6 +615,89 @@ describe("tsdoc checks", () => {
 });
 
 describe("orphan TSDoc", () => {
+	test("accepts TSDoc for a property in an inline parameter object type", () => {
+		const source = [
+			"/** Runs the example",
+			" *",
+			" * @param options - options for the example",
+			" */",
+			"export function example(options: {",
+			"\t/** Values to exclude",
+			"\t */",
+			"\texclude?: readonly string[];",
+			"}): void {}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual([]);
+	});
+
+	test("accepts TSDoc in an object literal inside the callee of a chained call", () => {
+		const source = [
+			"/** Builds the schema",
+			" */",
+			"export const schema = z",
+			"\t.object({",
+			"\t\t/** Issues returned by the operation",
+			"\t\t */",
+			"\t\tissues: z.array(z.string()),",
+			"\t})",
+			"\t.refine(() => true)",
+		].join("\n");
+		expect(rulesOf(source)).toEqual([]);
+	});
+
+	for (const extension of ["ts", "tsx"]) {
+		test(`accepts a file-level TSDoc at the start of a .${extension} file`, () => {
+			const source = [
+				"/**",
+				" * Shared helpers for reading SQLite rows",
+				" */",
+				"",
+				"/** Reads text from a row",
+				" */",
+				"export function text(): string {",
+				'\treturn ""',
+				"}",
+			].join("\n");
+			expect(scanSource(source, `src/sample.${extension}`)).toEqual([]);
+		});
+	}
+
+	test("accepts a standard file-level TSDoc with @packageDocumentation", () => {
+		const source = [
+			"/**",
+			" * Shared helpers for reading SQLite rows",
+			" *",
+			" * @packageDocumentation",
+			" */",
+			"/** Reads text from a row",
+			" */",
+			"export function text(): string {",
+			'\treturn ""',
+			"}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual([]);
+	});
+
+	test("reports an unattached TSDoc in the middle of a file", () => {
+		const source = [
+			"/** Reads text from a row",
+			" */",
+			"export function text(): string {",
+			'\treturn ""',
+			"}",
+			"",
+			"/** This comment belongs to neither the file nor a declaration",
+			" */",
+			"",
+			"/** Reads a number from a row",
+			" */",
+			"export function number(): number {",
+			"\treturn 0",
+			"}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["orphan-doc"]);
+	});
+
 	test("reports a TSDoc comment that the next comment leaves behind", () => {
 		const source = [
 			"/**",

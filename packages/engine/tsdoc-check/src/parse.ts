@@ -94,6 +94,7 @@ interface Context {
 interface NodeShape {
 	arguments?: (Node | null)[];
 	body?: Node | Node[] | null;
+	callee?: Node | null;
 	declaration?: Node | null;
 	declarations?: Node[];
 	elements?: (Node | null)[];
@@ -103,6 +104,7 @@ interface NodeShape {
 	key?: Node | null;
 	local?: Node | null;
 	members?: Node[];
+	object?: Node | null;
 	parameters?: Node[];
 	properties?: Node[];
 	source?: Node | null;
@@ -627,6 +629,46 @@ function collectTypeLiteralMembers(
 }
 
 /**
+ * 関数parameterのinline object typeが持つメンバーを集める
+ */
+function collectParameterTypeMembers(
+	node: Node,
+	context: Context,
+	source: string,
+	exportedNames: ReadonlySet<string>,
+	out: Declaration[],
+): void {
+	const params =
+		"params" in node && Array.isArray(node.params) ? node.params : [];
+	for (const parameter of params) {
+		let target = parameter as Node;
+		if (target.type === "TSParameterProperty") {
+			target = target.parameter;
+		}
+		if (target.type === "AssignmentPattern") {
+			target = target.left;
+		}
+		if (target.type === "RestElement") {
+			target = target.argument;
+		}
+		const annotation = shape(target).typeAnnotation;
+		if (annotation?.type !== "TSTypeAnnotation") {
+			continue;
+		}
+		const type = shape(annotation).typeAnnotation;
+		if (type?.type === "TSTypeLiteral") {
+			collectMemberNodes(
+				shape(type).members ?? [],
+				context,
+				source,
+				exportedNames,
+				out,
+			);
+		}
+	}
+}
+
+/**
  * namespaceの本体を非公開の宣言として集める
  */
 function collectModuleBody(
@@ -717,6 +759,7 @@ function collectExpression(
 	switch (node.type) {
 		case "ArrowFunctionExpression":
 		case "FunctionExpression":
+			collectParameterTypeMembers(node, context, source, exportedNames, out);
 			collectFunctionBody(node, source, exportedNames, out);
 			return;
 		case "ClassExpression":
@@ -731,9 +774,26 @@ function collectExpression(
 		case "CallExpression":
 		case "NewExpression":
 		case "OptionalCallExpression":
+			collectExpression(
+				shape(node).callee,
+				context,
+				source,
+				exportedNames,
+				out,
+			);
 			for (const argument of shape(node).arguments ?? []) {
 				collectExpression(argument, context, source, exportedNames, out);
 			}
+			return;
+		case "MemberExpression":
+		case "OptionalMemberExpression":
+			collectExpression(
+				shape(node).object,
+				context,
+				source,
+				exportedNames,
+				out,
+			);
 			return;
 		case "ParenthesizedExpression":
 		case "TSAsExpression":
@@ -764,6 +824,7 @@ function collectMembers(
 	exportedNames: ReadonlySet<string>,
 	out: Declaration[],
 ): void {
+	collectParameterTypeMembers(node, context, source, exportedNames, out);
 	const members = memberNodes(node);
 	if (members !== null) {
 		collectMemberNodes(members, context, source, exportedNames, out);
@@ -786,6 +847,23 @@ function collectMembers(
 		return;
 	}
 	collectFunctionBody(node, source, exportedNames, out);
+}
+
+/**
+ * file先頭のTSDocをfile-level documentationとして扱うかを返す
+ *
+ * 通常のfile-level TSDocは後続のcommentや宣言から空行で区切る
+ * `@packageDocumentation` は標準的なfile-level markerなので空行を必須にしない
+ */
+function isFileLevelDoc(comment: DocComment, source: string): boolean {
+	if (source.slice(0, comment.start).trim().length > 0) {
+		return false;
+	}
+	if (/(?:^|\r?\n)[ \t]*\*[ \t]*@packageDocumentation\b/.test(comment.text)) {
+		return true;
+	}
+	const following = source.slice(comment.start + comment.text.length);
+	return /^[ \t]*\r?\n[ \t]*\r?\n/.test(following);
 }
 
 /**
@@ -972,10 +1050,13 @@ export function collectSource(
 			used.add(declaration.comment.start);
 		}
 	}
+	const docComments = docCommentsOf(ast.comments, source);
+	const firstDoc = docComments[0];
+	if (firstDoc !== undefined && isFileLevelDoc(firstDoc, source)) {
+		used.add(firstDoc.start);
+	}
 	return {
 		declarations,
-		orphans: docCommentsOf(ast.comments, source).filter(
-			(comment) => !used.has(comment.start),
-		),
+		orphans: docComments.filter((comment) => !used.has(comment.start)),
 	};
 }
