@@ -125,7 +125,12 @@ export function buildSchema(): JsonSchema {
 		baseline: {
 			anyOf: [{ minLength: 1, type: "string" }, { const: false }],
 		},
-		failOnWarnings: { type: "boolean" },
+		failOnWarnings: {
+			default: false,
+			description:
+				"Treats finding-engine warnings as errors and passes --error-on-warnings to Biome.",
+			type: "boolean",
+		},
 	};
 	for (const name of ENGINE_NAMES) {
 		properties[name] = engineSchema(name);

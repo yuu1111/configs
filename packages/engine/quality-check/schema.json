@@ -18,12 +18,16 @@
 			]
 		},
 		"failOnWarnings": {
+			"default": false,
+			"description": "Treats finding-engine warnings as errors and passes --error-on-warnings to Biome.",
 			"type": "boolean"
 		},
 		"biome": {
 			"additionalProperties": false,
 			"properties": {
 				"enabled": {
+					"default": false,
+					"description": "Whether quality-check runs this engine.",
 					"type": "boolean"
 				},
 				"args": {
@@ -40,6 +44,8 @@
 			"additionalProperties": false,
 			"properties": {
 				"enabled": {
+					"default": false,
+					"description": "Whether quality-check runs this engine.",
 					"type": "boolean"
 				},
 				"args": {
@@ -63,6 +69,8 @@
 			"additionalProperties": false,
 			"properties": {
 				"enabled": {
+					"default": false,
+					"description": "Whether quality-check runs this engine.",
 					"type": "boolean"
 				},
 				"args": {
@@ -79,6 +87,8 @@
 			"additionalProperties": false,
 			"properties": {
 				"enabled": {
+					"default": false,
+					"description": "Whether quality-check runs this engine.",
 					"type": "boolean"
 				},
 				"includes": {
@@ -86,12 +96,18 @@
 						"minLength": 1,
 						"type": "string"
 					},
-					"type": "array"
+					"type": "array",
+					"default": [
+						"**"
+					],
+					"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
 				},
 				"rules": {
 					"additionalProperties": false,
 					"properties": {
 						"preset": {
+							"default": "recommended",
+							"description": "Selects the initial rule set before group and rule overrides.",
 							"enum": [
 								"recommended",
 								"all",
@@ -102,6 +118,7 @@
 						"spacing": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -114,6 +131,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"blank-line-between-class-members": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -123,6 +141,7 @@
 											"type": "string"
 										},
 										"blank-line-between-definitions": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -146,6 +165,8 @@
 			"additionalProperties": false,
 			"properties": {
 				"enabled": {
+					"default": false,
+					"description": "Whether quality-check runs this engine.",
 					"type": "boolean"
 				},
 				"includes": {
@@ -153,12 +174,18 @@
 						"minLength": 1,
 						"type": "string"
 					},
-					"type": "array"
+					"type": "array",
+					"default": [
+						"**"
+					],
+					"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
 				},
 				"rules": {
 					"additionalProperties": false,
 					"properties": {
 						"preset": {
+							"default": "recommended",
+							"description": "Selects the initial rule set before group and rule overrides.",
 							"enum": [
 								"recommended",
 								"all",
@@ -169,6 +196,7 @@
 						"suppression": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -181,6 +209,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"broad-suppression": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -190,6 +219,7 @@
 											"type": "string"
 										},
 										"undocumented-directive": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -206,6 +236,7 @@
 						"shape": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -218,6 +249,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"cramped-comment": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -227,6 +259,7 @@
 											"type": "string"
 										},
 										"separator-comment": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -243,6 +276,7 @@
 						"content": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -255,6 +289,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"placeholder-comment": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -264,6 +299,7 @@
 											"type": "string"
 										},
 										"japanese-period": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -287,6 +323,8 @@
 			"additionalProperties": false,
 			"properties": {
 				"enabled": {
+					"default": false,
+					"description": "Whether quality-check runs this engine.",
 					"type": "boolean"
 				},
 				"includes": {
@@ -294,12 +332,18 @@
 						"minLength": 1,
 						"type": "string"
 					},
-					"type": "array"
+					"type": "array",
+					"default": [
+						"**"
+					],
+					"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
 				},
 				"rules": {
 					"additionalProperties": false,
 					"properties": {
 						"preset": {
+							"default": "recommended",
+							"description": "Selects the initial rule set before group and rule overrides.",
 							"enum": [
 								"recommended",
 								"all",
@@ -310,6 +354,7 @@
 						"whitespace": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -322,6 +367,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"consecutive-blank-lines": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -331,6 +377,7 @@
 											"type": "string"
 										},
 										"hard-break-html": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -340,6 +387,7 @@
 											"type": "string"
 										},
 										"trailing-backslash": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -349,6 +397,7 @@
 											"type": "string"
 										},
 										"trailing-whitespace": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -365,6 +414,7 @@
 						"typography": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -377,6 +427,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"full-width-alphanumeric": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -386,6 +437,7 @@
 											"type": "string"
 										},
 										"japanese-comma": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -395,6 +447,7 @@
 											"type": "string"
 										},
 										"japanese-period": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -411,6 +464,7 @@
 						"structure": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -423,6 +477,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"code-fence-language": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -432,6 +487,7 @@
 											"type": "string"
 										},
 										"heading-level-jump": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -441,6 +497,7 @@
 											"type": "string"
 										},
 										"list-marker-consistency": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -457,6 +514,7 @@
 						"content": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -469,6 +527,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"date-anchored-statement": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -478,6 +537,7 @@
 											"type": "string"
 										},
 										"empty-link": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -501,6 +561,8 @@
 			"additionalProperties": false,
 			"properties": {
 				"enabled": {
+					"default": false,
+					"description": "Whether quality-check runs this engine.",
 					"type": "boolean"
 				},
 				"includes": {
@@ -508,12 +570,18 @@
 						"minLength": 1,
 						"type": "string"
 					},
-					"type": "array"
+					"type": "array",
+					"default": [
+						"**"
+					],
+					"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
 				},
 				"rules": {
 					"additionalProperties": false,
 					"properties": {
 						"preset": {
+							"default": "recommended",
+							"description": "Selects the initial rule set before group and rule overrides.",
 							"enum": [
 								"recommended",
 								"all",
@@ -524,6 +592,7 @@
 						"syntax": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -536,6 +605,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"blank-line-before-tags": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -545,6 +615,7 @@
 											"type": "string"
 										},
 										"orphan-doc": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -554,6 +625,7 @@
 											"type": "string"
 										},
 										"single-line-doc": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -563,6 +635,7 @@
 											"type": "string"
 										},
 										"tsdoc-syntax": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -572,6 +645,7 @@
 											"type": "string"
 										},
 										"tsdoc-tag": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -588,6 +662,7 @@
 						"documentation": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -600,6 +675,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"deprecated-without-guidance": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -609,6 +685,7 @@
 											"type": "string"
 										},
 										"missing-doc": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -618,6 +695,7 @@
 											"type": "string"
 										},
 										"missing-returns": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -634,6 +712,7 @@
 						"contract": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -646,6 +725,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"param-mismatch": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -655,6 +735,7 @@
 											"type": "string"
 										},
 										"param-order": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -664,6 +745,7 @@
 											"type": "string"
 										},
 										"param-untagged": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -673,6 +755,7 @@
 											"type": "string"
 										},
 										"type-param-mismatch": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -682,6 +765,7 @@
 											"type": "string"
 										},
 										"type-param-untagged": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -698,6 +782,7 @@
 						"suppression": {
 							"anyOf": [
 								{
+									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 									"enum": [
 										"off",
 										"on",
@@ -710,6 +795,7 @@
 									"additionalProperties": false,
 									"properties": {
 										"suppression": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",
@@ -719,6 +805,7 @@
 											"type": "string"
 										},
 										"suppression-unused": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
 												"on",

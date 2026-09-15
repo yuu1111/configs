@@ -183,7 +183,8 @@ describe("quality config", () => {
 		const options = engineConfig(config, "tsdoc-check");
 		expect(options?.rules.enable).toEqual([]);
 		expect(options?.rules.disable).toHaveLength(
-			RULE_VOCABULARY["tsdoc-check"].all.length,
+			RULE_VOCABULARY["tsdoc-check"].all.length -
+				RULE_VOCABULARY["tsdoc-check"].optIn.length,
 		);
 		expect(options?.rules.error).toEqual([]);
 		expect(options?.rules.warn).toEqual([]);

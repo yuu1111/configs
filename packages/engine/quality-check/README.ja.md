@@ -29,6 +29,7 @@ Biome、`tsc`、Knipは子プロセスのままで、利用Projectの `node_modu
 ```ts
 {
   "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
+  "failOnWarnings": true,
   "biome": {
     "enabled": true
   },
@@ -53,8 +54,7 @@ Biome、`tsc`、Knipは子プロセスのままで、利用Projectの `node_modu
     "rules": {
       "preset": "all"
     }
-  },
-  "failOnWarnings": true
+  }
 }
 ```
 
@@ -83,7 +83,7 @@ quality-check: 1 of 3 engines failed (1250ms)
 | `<engine>` | engineごとのsectionで `enabled` が起動を決める |
 | `<engine>.includes` | 同梱する4つの検出engineが検査するfileのglob |
 | `<engine>.rules` | 同梱する4つの検出engineのrule選択 |
-| `failOnWarnings` | warningを阻害する検出として扱う |
+| `failOnWarnings` | warningを阻害する検出として扱い、Biomeにも同じ方針を渡す |
 | `baseline` | baseline fileのpath `false` なら差分判定を行わない |
 
 engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
@@ -104,6 +104,7 @@ engineが受け取らない条件は設定errorにし、打ち間違いが黙っ
 
 `args` は子プロセスengineだけが受け取り、engineの既定引数の後ろへ足す
 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
+`failOnWarnings` がtrueならBiomeへ `--error-on-warnings` を自動で渡し、他の子プロセスengineは終了codeをそのまま使う
 
 `includes` はProject rootからの相対pathをglobで選ぶ
 指定を省略すると `**` になり、空の配列は何も検査しない

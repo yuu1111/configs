@@ -1,10 +1,8 @@
 {
 	"$schema": "./node_modules/@yuu1111/quality-check/schema.json",
+	"failOnWarnings": true,
 	"biome": {
-		"enabled": true,
-		"args": [
-			"--error-on-warnings"
-		]
+		"enabled": true
 	},
 	"typecheck": {
 		"enabled": true
@@ -39,6 +37,5 @@
 			"preset": "all"
 		},
 		"styleScope": "documented"
-	},
-	"failOnWarnings": true
+	}
 }

@@ -138,6 +138,29 @@ function colorArguments(name: ProcessEngineName, color: boolean): string[] {
 }
 
 /**
+ * 統合runnerのwarning方針を子プロセスの引数へ変換する
+ *
+ * @param name - 引数を渡すengine名
+ * @param context - 全体設定を持つ実行条件
+ * @param configured - 利用者が明示した追加引数
+ * @returns engineへ追加するwarning用の引数
+ */
+function warningArguments(
+	name: ProcessEngineName,
+	context: EngineCommandContext,
+	configured: readonly string[],
+): string[] {
+	if (
+		name === "biome" &&
+		context.config.failOnWarnings &&
+		!configured.includes("--error-on-warnings")
+	) {
+		return ["--error-on-warnings"];
+	}
+	return [];
+}
+
+/**
  * 型検査のコマンドを組み立てる projectを渡すとそのtsconfigを読む
  */
 function buildTypecheckCommand(
@@ -189,6 +212,7 @@ export function buildEngineCommand(
 			...colorArguments(name, context.color),
 			...targets,
 			...options.args,
+			...warningArguments(name, context, options.args),
 		];
 	}
 	if (name === "typecheck") {

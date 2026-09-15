@@ -126,6 +126,40 @@ describe("process engine commands", () => {
 		]);
 	});
 
+	test("applies failOnWarnings to Biome", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{
+				biome: { enabled: true },
+				failOnWarnings: true,
+			},
+			"test",
+		);
+		expect(buildEngineCommand("biome", "biome", context)).toEqual([
+			"biome",
+			"check",
+			".",
+			"--error-on-warnings",
+		]);
+	});
+
+	test("does not repeat an explicit Biome warning argument", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{
+				biome: { args: ["--error-on-warnings"], enabled: true },
+				failOnWarnings: true,
+			},
+			"test",
+		);
+		expect(buildEngineCommand("biome", "biome", context)).toEqual([
+			"biome",
+			"check",
+			".",
+			"--error-on-warnings",
+		]);
+	});
+
 	test("adds the command line overrides to the engines that accept them", () => {
 		const context = createContext();
 		context.overrides = { ignore: ["dist"], targets: ["src"] };

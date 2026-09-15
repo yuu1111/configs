@@ -73,7 +73,7 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 
 - 起動順は `ENGINE_NAMES` の並び
 - 検出engineの検出は統合runnerが1つのbaseline fileでまとめて差分し 増えた検出だけを阻害する
-- `failOnWarnings` がtrueならwarningも阻害する検出として扱う
+- `failOnWarnings` がtrueなら検出engineのwarningを阻害する検出へ変え、Biomeへ `--error-on-warnings` を渡す
 - 終了codeは 0 が全engine成功 1 が阻害する検出またはengineの失敗 2 が設定または起動の失敗
 
 ### 変更の手順

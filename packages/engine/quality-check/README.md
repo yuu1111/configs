@@ -29,6 +29,7 @@ Declare the engines to run in `quality.json`, then call the CLI from a script:
 ```ts
 {
   "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
+  "failOnWarnings": true,
   "biome": {
     "enabled": true
   },
@@ -53,8 +54,7 @@ Declare the engines to run in `quality.json`, then call the CLI from a script:
     "rules": {
       "preset": "all"
     }
-  },
-  "failOnWarnings": true
+  }
 }
 ```
 
@@ -83,7 +83,7 @@ Exit code 0 means every engine passed, 1 that at least one failed, and 2 that th
 | `<engine>` | One section per engine; `enabled` starts it |
 | `<engine>.includes` | Globs inspected by the four built-in finding engines |
 | `<engine>.rules` | Rule selection of the four built-in finding engines |
-| `failOnWarnings` | Treat every warning as a blocking finding |
+| `failOnWarnings` | Treat warnings as blocking findings and apply the same policy to Biome |
 | `baseline` | Baseline file path; `false` disables the diff |
 
 Engines run in the order `biome`, `typecheck`, `knip`, `code-style-check`, `comment-check`, `document-style-check`, `tsdoc-check`.
@@ -103,6 +103,7 @@ A condition an engine does not take is rejected, so a typo fails at start-up ins
 | `tsdoc-check` | in-process | `includes`, `rules` |
 
 `args` applies only to the child-process engines and is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
+When `failOnWarnings` is true, the runner passes `--error-on-warnings` to Biome automatically and uses the exit codes of the other child-process engines as-is.
 
 `includes` selects paths relative to the project root with globs.
 It defaults to `**`, while an empty array inspects nothing.
