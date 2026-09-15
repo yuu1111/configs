@@ -80,6 +80,8 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 
 - ruleを足したengineは統合runnerのminorを上げる
 - 出力またはoptionの削除はmajorを上げる
+- `quality.json` を破壊的に変えるreleaseは旧書式を通常の読込では受け入れず、変更previewを既定にして `--write` で適用するmigration commandを同時に提供する
+- 自動変換できない設定はmigration commandが書き換えず、必要な手作業を出力する
 - `schema.json` は `bun run build` で再生成してcommitする
 - `README.md` `README.ja.md` `AGENTS.md` の一覧と `bun.lock` のworkspaces entryを同じ変更で更新する
 
