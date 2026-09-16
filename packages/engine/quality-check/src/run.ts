@@ -1,4 +1,5 @@
 import {
+	type BaselineEntry,
 	type BaselineFile,
 	compareWithBaseline,
 } from "@yuu1111/shared/baseline";
@@ -101,6 +102,11 @@ export interface RunOptions {
 	 * コマンドラインから渡された起動条件の上書き
 	 */
 	overrides: RunOverrides;
+
+	/**
+	 * 起動するengineの指定 省略時と空配列は設定で有効なengineすべてになる
+	 */
+	selected?: readonly EngineName[];
 
 	/**
 	 * engineの実行fileを解決する関数 テストでは差し替える
@@ -319,6 +325,50 @@ async function runEngine(
 }
 
 /**
+ * 起動するengineを決める 未指定と空配列は設定で有効なengineすべてになる
+ *
+ * @param config - engineの有効無効を持つ統合検査の設定
+ * @param selected - 起動するengineの指定
+ * @returns ENGINE_NAMESの並びを保った起動するengine名
+ */
+function selectedEngines(
+	config: QualityConfig,
+	selected: readonly EngineName[] | undefined,
+): EngineName[] {
+	const enabled = enabledEngines(config);
+	if (selected === undefined || selected.length === 0) {
+		return [...enabled];
+	}
+	for (const name of selected) {
+		if (!enabled.includes(name)) {
+			throw new Error(`${name} is not enabled`);
+		}
+	}
+	return enabled.filter((name) => selected.includes(name));
+}
+
+/**
+ * baselineを起動するengineだけに絞る engine名の無いentryは残す
+ *
+ * @param baseline - 読み込み済みのbaseline
+ * @param selected - 起動するengineの指定
+ * @returns 起動しないengineのentryを除いたbaseline
+ */
+function scopeBaseline(
+	baseline: BaselineFile | null,
+	selected: readonly EngineName[] | undefined,
+): BaselineFile | null {
+	if (baseline === null || selected === undefined || selected.length === 0) {
+		return baseline;
+	}
+	const names = selected as readonly string[];
+	const entries: BaselineEntry[] = baseline.entries.filter(
+		(entry) => entry.engine === undefined || names.includes(entry.engine),
+	);
+	return { ...baseline, entries };
+}
+
+/**
  * 設定で有効なengineを順に起動する
  *
  * @param options - 設定とrunnerを持つ実行条件
@@ -326,14 +376,18 @@ async function runEngine(
  */
 export async function runEngines(options: RunOptions): Promise<EngineResult[]> {
 	const runner = options.runner ?? runEngineProcess;
+	const names = selectedEngines(options.config, options.selected);
+	const baseline = scopeBaseline(options.baseline, options.selected);
 	const context: EngineCommandContext = {
 		color: options.color,
 		config: options.config,
 		overrides: options.overrides,
 	};
 	const results: EngineResult[] = [];
-	for (const name of enabledEngines(options.config)) {
-		results.push(await runEngine(name, options, context, runner));
+	for (const name of names) {
+		results.push(
+			await runEngine(name, { ...options, baseline }, context, runner),
+		);
 	}
 	return results;
 }

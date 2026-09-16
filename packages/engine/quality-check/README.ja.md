@@ -76,6 +76,17 @@ quality-check: 1 of 3 engines failed (1250ms)
 
 終了codeは0が全engine成功、1が失敗したengineあり、2が設定またはengine起動の失敗
 
+engine名を渡すとそのengineだけを実行する
+
+```bash
+quality-check biome knip
+quality-check comment-check docs
+```
+
+位置引数のうちengine名と一致するものはengine選択になり、残りは対象pathになる
+`--update-baseline` は常に有効な全engineを実行するため、engine選択との併用は拒否する
+engine名と一致するpathは `quality-check ./biome` のように `./` を付ける
+
 ## Config
 
 | Field | 説明 |
@@ -164,7 +175,7 @@ entryの同一性はengineとruleとfileと検出messageで決まるため、mes
 ```bash
 quality-check document-style lint .
 quality-check document-style lint --write .
-quality-check document-style lint --enable japanese-period .
+quality-check document-style lint --preset all .
 quality-check document-style scan doc.md --rules SKILL.md --review review.json
 quality-check document-style check doc.md --rules SKILL.md --review review.json
 ```
@@ -196,6 +207,7 @@ quality-check document-style check doc.md --rules SKILL.md --review review.json
 |--------|-------------|
 | `--rules <path>` | `## 判断基準`を持つ基準fileで、`scan`と`check`では必須 |
 | `--review <path>` | 読み書きする検証記録file |
+| `--preset <preset>` | 起点にするpresetで `recommended`（既定）、`all`、`none` のいずれか |
 | `--enable <rule>` | opt-in ruleを実行する、複数指定できる |
 | `--disable <rule>` | 既定で有効なruleも含めて無効にする、複数指定できる |
 | `--ignore <path>` | 検査から外すpath、複数指定できる |

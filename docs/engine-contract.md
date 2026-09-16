@@ -72,6 +72,8 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 ### 実行
 
 - 起動順は `ENGINE_NAMES` の並び
+- 位置引数のうちengine名と一致するものは起動するengineの選択になり、残りは対象pathになる
+- engine選択時はbaseline差分を起動するengineに絞り、`--update-baseline` との併用は拒否する
 - 検出engineの検出は統合runnerが1つのbaseline fileでまとめて差分し 増えた検出だけを阻害する
 - `failOnWarnings` がtrueなら検出engineのwarningを阻害する検出へ変え、Biomeへ `--error-on-warnings` を渡す
 - 終了codeは 0 が全engine成功 1 が阻害する検出またはengineの失敗 2 が設定または起動の失敗

@@ -10,7 +10,7 @@ import {
 	formatReportSummary,
 	printReport,
 } from "@yuu1111/shared/report";
-import { RULE_VOCABULARY } from "./config";
+import { RULE_VOCABULARY, readRuleSelection } from "./config";
 
 type Action = "check" | "lint" | "scan";
 
@@ -34,7 +34,7 @@ const USAGE = [
 	"",
 	"  scan  <path...> --rules <file> --review <file>   確認候補と検証記録を作る",
 	"  check <path...> --rules <file> --review <file>   埋めた検証記録を確認する",
-	"  lint  [--write] [--enable <rule>] [--disable <rule>] [--ignore <path>] [--json] [path...]",
+	"  lint  [--write] [--preset <preset>] [--enable <rule>] [--disable <rule>] [--ignore <path>] [--json] [path...]",
 	"                                                  機械的な違反を報告または整形する",
 ].join("\n");
 
@@ -67,6 +67,63 @@ function parseEnabledRules(values: readonly string[]): string[] {
 		}
 	}
 	return enabled;
+}
+
+/**
+ * --presetの指定を読み取る 省略時はengineの既定を使う
+ *
+ * @param value - --presetで指定された値
+ * @returns 検証を通ったpresetの指定
+ */
+function parsePreset(value: string | undefined): string {
+	if (value === undefined || value === "recommended") {
+		return "recommended";
+	}
+	if (value === "all" || value === "none") {
+		return value;
+	}
+	throw new Error(`--preset must be "recommended", "all" or "none": ${value}`);
+}
+
+/**
+ * --presetを起点にCLIの--enableと--disableを重ねる quality.jsonと同じ語彙解決を使う
+ *
+ * @param preset - 起点にするpresetの指定
+ * @param cliEnabled - --enableで指定されたopt-in ruleの一覧
+ * @param cliDisabled - --disableで指定されたruleの一覧
+ * @returns engineへ渡す有効と無効のrule名
+ */
+function resolveLintRules(
+	preset: string,
+	cliEnabled: readonly string[],
+	cliDisabled: readonly string[],
+): { disable: string[]; enable: string[] } {
+	const base = readRuleSelection(
+		{ preset },
+		"--preset",
+		"document-style-check",
+	);
+	const enable = [...base.enable];
+	const disable = [...base.disable];
+	for (const rule of cliEnabled) {
+		if (!enable.includes(rule)) {
+			enable.push(rule);
+		}
+		const at = disable.indexOf(rule);
+		if (at >= 0) {
+			disable.splice(at, 1);
+		}
+	}
+	for (const rule of cliDisabled) {
+		const at = enable.indexOf(rule);
+		if (at >= 0) {
+			enable.splice(at, 1);
+		}
+		if (!disable.includes(rule)) {
+			disable.push(rule);
+		}
+	}
+	return { disable, enable };
 }
 
 /**
@@ -105,7 +162,7 @@ function parseDisabledRules(
 export function parseArguments(argv: string[]): DocumentOptions {
 	const parsed = parseArgv(argv, {
 		flags: ["json", "write"],
-		values: ["disable", "enable", "ignore", "review", "rules"],
+		values: ["disable", "enable", "ignore", "preset", "review", "rules"],
 	});
 	const [actionArgument, ...targets] = parsed.targets;
 	if (actionArgument === undefined) {
@@ -115,11 +172,17 @@ export function parseArguments(argv: string[]): DocumentOptions {
 	if (action === undefined) {
 		throw new Error(`unknown action: ${actionArgument}`);
 	}
+	const preset = parsePreset(parsed.values.get("preset")?.at(-1));
 	const enabled = parseEnabledRules(parsed.values.get("enable") ?? []);
+	const disabled = parseDisabledRules(
+		parsed.values.get("disable") ?? [],
+		enabled,
+	);
+	const rules = resolveLintRules(preset, enabled, disabled);
 	return {
 		action,
-		disabled: parseDisabledRules(parsed.values.get("disable") ?? [], enabled),
-		enabled,
+		disabled: rules.disable,
+		enabled: rules.enable,
 		ignores: (parsed.values.get("ignore") ?? []).map(normalizePath),
 		json: parsed.flags.has("json"),
 		review: parsed.values.get("review")?.at(-1) ?? "",

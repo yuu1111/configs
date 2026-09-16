@@ -59,6 +59,70 @@ test("--enableでopt-in ruleの検出を報告する", () => {
 	}
 });
 
+test("lintは既定でopt-in ruleを実行しない", () => {
+	expect(parseArguments(["lint", "."]).enabled).toEqual([]);
+	expect(parseArguments(["lint", "."]).disabled).toEqual([]);
+});
+
+test("lintの--preset allで全opt-in ruleを有効にする", () => {
+	expect(parseArguments(["lint", "--preset", "all", "."]).enabled).toEqual([
+		"full-width-alphanumeric",
+		"japanese-comma",
+		"japanese-period",
+		"list-marker-consistency",
+	]);
+});
+
+test("lintの--preset noneで既定のruleを無効にする", () => {
+	expect(parseArguments(["lint", "--preset", "none", "."]).disabled).toEqual([
+		"code-fence-language",
+		"consecutive-blank-lines",
+		"date-anchored-statement",
+		"empty-link",
+		"hard-break-html",
+		"heading-level-jump",
+		"trailing-backslash",
+		"trailing-whitespace",
+	]);
+});
+
+test("lintの--preset allへ--disableを重ねられる", () => {
+	const options = parseArguments([
+		"lint",
+		"--preset",
+		"all",
+		"--disable",
+		"japanese-period",
+		".",
+	]);
+	expect(options.enabled).toEqual([
+		"full-width-alphanumeric",
+		"japanese-comma",
+		"list-marker-consistency",
+	]);
+	expect(options.disabled).toEqual(["japanese-period"]);
+});
+
+test("lintの--preset allでopt-in ruleの検出を報告する", () => {
+	const root = mkdtempSync(join(tmpdir(), "quality-check-document-"));
+	try {
+		writeFileSync(join(root, "doc.md"), "本文です。\n", "utf8");
+		const report = runMain(["lint", "--preset", "all", root]);
+
+		expect(report.code).toBe(1);
+		expect(report.output).toContain("japanese-period");
+		expect(report.output).toContain("1 errors");
+	} finally {
+		rmSync(root, { force: true, recursive: true });
+	}
+});
+
+test("lintの--presetに未知の値を拒否する", () => {
+	expect(() => parseArguments(["lint", "--preset", "strict", "."])).toThrow(
+		'--preset must be "recommended", "all" or "none": strict',
+	);
+});
+
 test("lintの--enableを複数指定できる", () => {
 	expect(
 		parseArguments([

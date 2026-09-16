@@ -390,3 +390,63 @@ describe("engine orchestration", () => {
 		expect(results[0]?.message).toBe("tsdoc-check could not finish: boom");
 	});
 });
+
+describe("engine selection", () => {
+	test("runs only the selected engines", async () => {
+		const started: FindingEngineName[] = [];
+		const registry = emptyRegistry();
+		for (const name of ["comment-check", "document-style-check"] as const) {
+			registry[name] = () => {
+				started.push(name);
+				return { errors: [], warnings: [] };
+			};
+		}
+		const results = await runEngines(
+			createOptions({
+				config: parseConfig(
+					{
+						"comment-check": { enabled: true },
+						"document-style-check": { enabled: true },
+					},
+					"test",
+				),
+				findingEngines: registry,
+				selected: ["document-style-check"],
+			}),
+		);
+		expect(started).toEqual(["document-style-check"]);
+		expect(results.map((result) => result.name)).toEqual([
+			"document-style-check",
+		]);
+	});
+
+	test("rejects an engine that is not enabled", async () => {
+		await expect(
+			runEngines(createOptions({ selected: ["knip"] })),
+		).rejects.toThrow("knip is not enabled");
+	});
+
+	test("scopes the baseline to the selected engines", async () => {
+		const results = await runEngines(
+			createOptions({
+				baseline: createBaseline([commentFinding, documentFinding]),
+				config: parseConfig(
+					{
+						"comment-check": { enabled: true },
+						"document-style-check": { enabled: true },
+					},
+					"test",
+				),
+				findingEngines: registryFor(
+					"comment-check",
+					reportOf([commentFinding]),
+				),
+				selected: ["comment-check"],
+			}),
+		);
+		expect(results).toHaveLength(1);
+		expect(results[0]?.status).toBe("passed");
+		expect(results[0]?.reported).toEqual([]);
+		expect(results[0]?.resolved).toBe(0);
+	});
+});

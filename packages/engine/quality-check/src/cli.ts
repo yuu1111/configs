@@ -9,16 +9,18 @@ import { parseArgv, runCli, wantsHelp } from "@yuu1111/shared/cli";
 import { ansiPainter, colorEnabled, plainPainter } from "@yuu1111/shared/color";
 import {
 	DEFAULT_BASELINE_FILE,
+	type EngineName,
 	findConfigFile,
 	loadConfig,
 	type QualityConfig,
 } from "./config";
 import { main as documentStyleMain } from "./document";
+import { splitEngineSelection } from "./options";
 import { formatEngineSection, formatSummary, toJsonReport } from "./report";
 import { runEngines } from "./run";
 
 const USAGE = [
-	"Usage: quality-check [--config <path>] [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]",
+	"Usage: quality-check [engine...] [--config <path>] [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]",
 	"       quality-check document-style <scan|check|lint> [options] [path...]",
 ].join("\n");
 
@@ -44,6 +46,24 @@ function parseArguments(argv: string[]): Options {
 		targets: parsed.targets,
 		update: parsed.flags.has("update-baseline"),
 	};
+}
+
+/**
+ * 位置引数をengine選択と対象pathへ分け baseline更新との組み合わせを検証する
+ *
+ * @param targets - コマンドラインの位置引数の一覧
+ * @param update - baselineを置き換えるか
+ * @returns 起動するengineと対象path
+ */
+function resolveRunSelection(
+	targets: string[],
+	update: boolean,
+): { selected: EngineName[]; targets: string[] } {
+	const selection = splitEngineSelection(targets);
+	if (update && selection.engines.length > 0) {
+		throw new Error("--update-baseline runs every enabled engine");
+	}
+	return { selected: selection.engines, targets: selection.targets };
 }
 
 function resolveBaselinePath(
@@ -95,6 +115,7 @@ export async function main(
 		return 2;
 	}
 	const config = loadConfig(configPath);
+	const selection = resolveRunSelection(options.targets, options.update);
 	const baselinePath = resolveBaselinePath(options, config, cwd);
 	const startedAt = performance.now();
 	const results = await runEngines({
@@ -105,7 +126,8 @@ export async function main(
 		color,
 		config,
 		cwd,
-		overrides: { ignore: options.ignores, targets: options.targets },
+		overrides: { ignore: options.ignores, targets: selection.targets },
+		selected: selection.selected,
 	});
 	const elapsedMs = performance.now() - startedAt;
 	if (options.update) {

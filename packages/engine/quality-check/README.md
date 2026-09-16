@@ -76,6 +76,17 @@ quality-check: 1 of 3 engines failed (1250ms)
 
 Exit code 0 means every engine passed, 1 that at least one failed, and 2 that the configuration or an engine could not start.
 
+Pass engine names to run only those engines:
+
+```bash
+quality-check biome knip
+quality-check comment-check docs
+```
+
+Positional arguments that match an engine name select engines and the rest are target paths.
+`--update-baseline` always runs every enabled engine, so combining it with an engine selection is rejected.
+A path that matches an engine name needs a `./` prefix, as in `quality-check ./biome`.
+
 ## Config
 
 | Field | Description |
@@ -162,7 +173,7 @@ Set `baseline` to `false` in `quality.json` to diff nothing and report every fin
 ```bash
 quality-check document-style lint .
 quality-check document-style lint --write .
-quality-check document-style lint --enable japanese-period .
+quality-check document-style lint --preset all .
 quality-check document-style scan doc.md --rules SKILL.md --review review.json
 quality-check document-style check doc.md --rules SKILL.md --review review.json
 ```
@@ -195,6 +206,7 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 |--------|-------------|
 | `--rules <path>` | Rules file that holds the criteria, required by `scan` and `check` |
 | `--review <path>` | Review file to write or read |
+| `--preset <preset>` | Start from the `recommended` (default), `all`, or `none` preset |
 | `--enable <rule>` | Run an opt-in rule, repeatable |
 | `--disable <rule>` | Turn a rule off, repeatable |
 | `--ignore <path>` | Path to leave out, repeatable |

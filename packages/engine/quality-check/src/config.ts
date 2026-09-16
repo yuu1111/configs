@@ -557,7 +557,7 @@ function toRuleSelection(
  * @param name - 語彙を引くengine名
  * @returns engineへ渡すrule名の一覧
  */
-function readRuleSelection(
+export function readRuleSelection(
 	value: unknown,
 	field: string,
 	name: RuleEngineName,
