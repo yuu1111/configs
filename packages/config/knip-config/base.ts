@@ -6,4 +6,6 @@ import type { KnipConfig } from "knip";
 export const base = {
 	entry: ["quality.json"],
 	ignoreExportsUsedInFile: true,
+	treatConfigHintsAsErrors: true,
+	treatTagHintsAsErrors: true,
 } satisfies KnipConfig;

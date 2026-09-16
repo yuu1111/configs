@@ -39,9 +39,13 @@ Every preset extends `base`.
 |---------|-------|
 | `entry` | `["quality.json"]` |
 | `ignoreExportsUsedInFile` | `true` |
+| `treatConfigHintsAsErrors` | `true` |
+| `treatTagHintsAsErrors` | `true` |
 
 `quality-check` loads `quality.json` at run time, so the file counts as an entry point and is not reported as unused.
-`ignoreIssues` keeps its exports out of the report, because the public API of a consuming project is the API of `quality-check` and not the exports of this file.
+`ignoreExportsUsedInFile` keeps its exports out of the report, because the public API of a consuming project is the API of `quality-check` and not the exports of this file.
+`treatConfigHintsAsErrors` fails the run when a configuration no longer matches the project.
+`treatTagHintsAsErrors` fails the run when a suppression tag no longer suppresses anything.
 
 ### application
 
@@ -64,20 +68,23 @@ export default {
 }
 ```
 
-`workspaces` does not inherit the top-level `entry` in the root workspace, so write it there too:
+`workspaces` does not inherit the top-level `entry` in the root workspace, so move `entry` there:
 
 ```ts
+import { application } from "@yuu1111/knip-config/application"
+
+const { entry, ...base } = application
+
 export default {
-	...application,
+	...base,
 	workspaces: {
-		".": { entry: ["quality.json"] },
+		".": { entry },
 		"packages/app": { entry: ["src/cli.ts"] }
 	}
 }
 ```
 
-Knip prints a configuration hint when a repository with `workspaces` also writes `entry` at the top level.
-A hint is not a report, so the exit code does not change.
+Knip prints a configuration hint when a repository with `workspaces` also writes `entry` at the top level, and `base` fails the run on a hint.
 
 A repository that also holds another project keeps it out of the report with `ignore`, so its files are not read as source of the parent:
 

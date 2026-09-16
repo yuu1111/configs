@@ -39,8 +39,12 @@ export default {
 |---------|-----|
 | `entry` | `["quality.json"]` |
 | `ignoreExportsUsedInFile` | `true` |
+| `treatConfigHintsAsErrors` | `true` |
+| `treatTagHintsAsErrors` | `true` |
 `quality-check` は `quality.json` を実行時に読み込むため、このfileはentry pointとして扱われ未使用fileとして報告しない
 利用側の公開APIは `quality-check` のAPIであり、このfileのexportではない
+`treatConfigHintsAsErrors` は設定がProjectの実態と合わなくなったときに実行を失敗させる
+`treatTagHintsAsErrors` は抑制しなくなったtagがあるときに実行を失敗させる
 
 ### application
 
@@ -63,20 +67,22 @@ export default {
 }
 ```
 
-`workspaces` を使う場合、`base` が足すtop levelの `entry` はroot workspaceへ届かないためroot workspace側にも書く
+`workspaces` を使う場合、`base` が足すtop levelの `entry` はroot workspaceへ届かないためroot workspace側へ移す
+top levelの `entry` を残すとKnipがconfiguration hintを出し、`base` はhintをerrorとして扱うため実行が失敗する
 
 ```ts
+import { application } from "@yuu1111/knip-config/application"
+
+const { entry, ...base } = application
+
 export default {
-	...application,
+	...base,
 	workspaces: {
-		".": { entry: ["quality.json"] },
+		".": { entry },
 		"packages/app": { entry: ["src/cli.ts"] }
 	}
 }
 ```
-
-`workspaces` を持つrepositoryがtop levelにも `entry` を書くとKnipがconfiguration hintを出す
-報告ではないため終了codeは変わらない
 
 別Projectを同居させているrepositoryは `ignore` でそのProjectを報告から外し、親のsourceとして読ませない
 

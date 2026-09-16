@@ -41,10 +41,18 @@ describe("published Knip configurations", () => {
 	});
 
 	test("application and library inherit the base defaults", () => {
-		expect(application.ignoreExportsUsedInFile).toBe(
-			base.ignoreExportsUsedInFile,
-		);
-		expect(library.ignoreExportsUsedInFile).toBe(base.ignoreExportsUsedInFile);
+		for (const preset of [application, library]) {
+			expect(preset.ignoreExportsUsedInFile).toBe(base.ignoreExportsUsedInFile);
+			expect(preset.treatConfigHintsAsErrors).toBe(
+				base.treatConfigHintsAsErrors,
+			);
+			expect(preset.treatTagHintsAsErrors).toBe(base.treatTagHintsAsErrors);
+		}
+	});
+
+	test("the shared defaults fail the run on a hint", () => {
+		expect(base.treatConfigHintsAsErrors).toBe(true);
+		expect(base.treatTagHintsAsErrors).toBe(true);
 	});
 
 	test("only the library reports unused exports from entry files", () => {
