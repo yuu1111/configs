@@ -66,11 +66,14 @@ test("lintは既定でopt-in ruleを実行しない", () => {
 
 test("lintの--preset allで全opt-in ruleを有効にする", () => {
 	expect(parseArguments(["lint", "--preset", "all", "."]).enabled).toEqual([
+		"emphasis-marker",
+		"fence-style",
 		"full-width-alphanumeric",
 		"japanese-comma",
 		"japanese-period",
 		"list-marker-consistency",
 		"ordered-list-marker",
+		"thematic-break-style",
 	]);
 });
 
@@ -79,16 +82,22 @@ test("lintの--preset noneで既定のruleを無効にする", () => {
 		"code-fence-language",
 		"consecutive-blank-lines",
 		"date-anchored-statement",
+		"emphasis-as-heading",
 		"empty-link",
 		"fence-blank-lines",
 		"hard-break-html",
 		"hard-tabs",
+		"heading-blank-lines",
+		"heading-indent",
 		"heading-level-jump",
 		"heading-space",
 		"heading-trailing-punctuation",
 		"list-blank-lines",
+		"list-marker-space",
 		"reversed-link",
+		"setext-heading",
 		"single-trailing-newline",
+		"table-blank-lines",
 		"trailing-backslash",
 		"trailing-whitespace",
 	]);
@@ -104,10 +113,13 @@ test("lintの--preset allへ--disableを重ねられる", () => {
 		".",
 	]);
 	expect(options.enabled).toEqual([
+		"emphasis-marker",
+		"fence-style",
 		"full-width-alphanumeric",
 		"japanese-comma",
 		"list-marker-consistency",
 		"ordered-list-marker",
+		"thematic-break-style",
 	]);
 	expect(options.disabled).toEqual(["japanese-period"]);
 });

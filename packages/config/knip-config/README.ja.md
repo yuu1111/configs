@@ -41,6 +41,7 @@ export default {
 | `ignoreExportsUsedInFile` | `true` |
 | `treatConfigHintsAsErrors` | `true` |
 | `treatTagHintsAsErrors` | `true` |
+
 `quality-check` は `quality.json` を実行時に読み込むため、このfileはentry pointとして扱われ未使用fileとして報告しない
 利用側の公開APIは `quality-check` のAPIであり、このfileのexportではない
 `treatConfigHintsAsErrors` は設定がProjectの実態と合わなくなったときに実行を失敗させる

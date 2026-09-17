@@ -429,7 +429,140 @@ test("見出しの#と本文の区切りを検出して整える", () => {
 	expect(rulesOf("# 見出し\n")).toEqual([]);
 	expect(fixSource("#見出し\n")).toBe("# 見出し\n");
 	expect(fixSource("#  見出し\n")).toBe("# 見出し\n");
-	expect(fixSource("   ##  見出し\n")).toBe("   ## 見出し\n");
+	expect(fixSource("   ##  見出し\n")).toBe("## 見出し\n");
+});
+
+test("見出しの字下げを検出して取り除く", () => {
+	expect(rulesOf("  # 見出し\n")).toEqual(["heading-indent"]);
+	expect(rulesOf(" # 見出し\n")).toEqual(["heading-indent"]);
+	expect(rulesOf("# 見出し\n")).toEqual([]);
+	expect(fixSource("  # 見出し\n")).toBe("# 見出し\n");
+	expect(fixSource("   ## 見出し\n")).toBe("## 見出し\n");
+	expect(rulesOf("> # 引用内の見出し\n")).toEqual([]);
+	expect(fixSource("    # コードブロック\n")).toBe("    # コードブロック\n");
+});
+
+test("見出しの前後の空行不足を検出して空行を入れる", () => {
+	const source = "本文です\n# 見出し\n本文です\n";
+	expect(rulesOf(source)).toEqual([
+		"heading-blank-lines",
+		"heading-blank-lines",
+	]);
+	const fixed = "本文です\n\n# 見出し\n\n本文です\n";
+	expect(fixSource(source)).toBe(fixed);
+	expect(fixSource(fixed)).toBe(fixed);
+	expect(rulesOf(fixed)).toEqual([]);
+});
+
+test("先頭と末尾の見出しに空行を求めない", () => {
+	expect(rulesOf("# 見出し\n")).toEqual([]);
+	expect(rulesOf("本文です\n\n# 見出し\n")).toEqual([]);
+	expect(fixSource("# 見出し\n\n本文です\n")).toBe("# 見出し\n\n本文です\n");
+});
+
+test("表の前後の空行不足を検出して空行を入れる", () => {
+	const source = "本文です\n| A | B |\n| --- | --- |\n| 1 | 2 |\n本文です\n";
+	expect(rulesOf(source)).toEqual(["table-blank-lines", "table-blank-lines"]);
+	const fixed = "本文です\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n本文です\n";
+	expect(fixSource(source)).toBe(fixed);
+	expect(fixSource(fixed)).toBe(fixed);
+	expect(rulesOf(fixed)).toEqual([]);
+});
+
+test("リスト記号の後ろの区切りを半角スペース1つへ揃える", () => {
+	expect(rulesOf("-  項目\n")).toEqual(["list-marker-space"]);
+	expect(rulesOf("1.  項目\n")).toEqual(["list-marker-space"]);
+	expect(rulesOf("\t- 項目\n")).toEqual(["hard-tabs"]);
+	expect(rulesOf("- 項目\n")).toEqual([]);
+	expect(fixSource("-  項目\n")).toBe("- 項目\n");
+	expect(fixSource("1.  項目\n")).toBe("1. 項目\n");
+	expect(fixSource("  -  項目\n")).toBe("  - 項目\n");
+	expect(rulesOf("- - -\n")).toEqual([]);
+});
+
+test("setext見出しを警告する", () => {
+	expect(rulesOf("見出し\n===\n")).toEqual(["setext-heading"]);
+	expect(rulesOf("見出し\n---\n")).toEqual(["setext-heading"]);
+	expect(rulesOf("---\n")).toEqual([]);
+	expect(rulesOf("# 見出し\n\n---\n")).toEqual([]);
+	expect(rulesOf("本文\n\n---\n")).toEqual([]);
+	const findings = lintSource("見出し\n===\n", "doc.md");
+	expect(findings.map((finding) => finding.severity)).toEqual(["warning"]);
+});
+
+test("強調だけの行を見出しの代わりに使った行として警告する", () => {
+	expect(rulesOf("**注意**\n")).toEqual(["emphasis-as-heading"]);
+	expect(rulesOf("*補足*\n")).toEqual(["emphasis-as-heading"]);
+	expect(rulesOf("**注意。**\n")).toEqual([]);
+	expect(rulesOf("本文の**一部**です\n")).toEqual([]);
+	expect(rulesOf("`**注意**`\n")).toEqual([]);
+	expect(rulesOf("- **注意**\n")).toEqual([]);
+	const findings = lintSource("**注意**\n", "doc.md");
+	expect(findings.map((finding) => finding.severity)).toEqual(["warning"]);
+});
+
+test("既定では強調記号の混在を検出しない", () => {
+	expect(rulesOf("*強調* と _強調_\n")).toEqual([]);
+});
+
+test("強調記号の混在を検出して揃える", () => {
+	const enabled = ["emphasis-marker"] as const;
+	expect(optedRulesOf("*強調* と _強調_\n", [...enabled])).toEqual([
+		"emphasis-marker",
+	]);
+	expect(optedRulesOf("*強調* と **強調**\n", [...enabled])).toEqual([]);
+	expect(optedRulesOf("_敵対_ と **敵対**\n", [...enabled])).toEqual([
+		"emphasis-marker",
+	]);
+	expect(fixSource("*強調* と _強調_\n", [...enabled])).toBe(
+		"*強調* と *強調*\n",
+	);
+	expect(fixSource("_強調_ と **強調**\n", [...enabled])).toBe(
+		"_強調_ と __強調__\n",
+	);
+	expect(optedRulesOf("foo_bar_baz という名前\n", [...enabled])).toEqual([]);
+});
+
+test("既定では区切り線の流儀の混在を検出しない", () => {
+	expect(rulesOf("本文\n\n---\n\n本文\n\n***\n")).toEqual([]);
+});
+
+test("区切り線の流儀の混在を検出して揃える", () => {
+	const enabled = ["thematic-break-style"] as const;
+	const source = "本文\n\n---\n\n本文\n\n***\n";
+	expect(optedRulesOf(source, [...enabled])).toEqual(["thematic-break-style"]);
+	const fixed = "本文\n\n---\n\n本文\n\n---\n";
+	expect(fixSource(source, [...enabled])).toBe(fixed);
+	expect(optedRulesOf(fixed, [...enabled])).toEqual([]);
+	expect(optedRulesOf("本文\n\n---\n\n本文\n\n- - -\n", [...enabled])).toEqual([
+		"thematic-break-style",
+	]);
+});
+
+test("既定ではフェンス記号の混在を検出しない", () => {
+	expect(rulesOf("```js\ncode\n```\n\n~~~js\ncode\n~~~\n")).toEqual([]);
+});
+
+test("フェンス記号の混在を検出して揃える", () => {
+	const enabled = ["fence-style"] as const;
+	const source = "```js\ncode\n```\n\n~~~js\ncode\n~~~\n";
+	expect(optedRulesOf(source, [...enabled])).toEqual(["fence-style"]);
+	const fixed = "```js\ncode\n```\n\n```js\ncode\n```\n";
+	expect(fixSource(source, [...enabled])).toBe(fixed);
+	expect(optedRulesOf(fixed, [...enabled])).toEqual([]);
+});
+
+test("--disableで新しいruleの検出と整形を取り消す", () => {
+	expect(
+		lintSource("本文です\n# 見出し\n", "doc.md", [], ["heading-blank-lines"]),
+	).toEqual([]);
+	expect(fixSource("  # 見出し\n", [], ["heading-indent"])).toBe(
+		"  # 見出し\n",
+	);
+	expect(fixSource("-  項目\n", [], ["list-marker-space"])).toBe("-  項目\n");
+	expect(lintSource("  # 見出し\n", "doc.md", [], ["heading-indent"])).toEqual(
+		[],
+	);
 });
 
 test("フェンス前後の空行不足を検出して空行を入れる", () => {

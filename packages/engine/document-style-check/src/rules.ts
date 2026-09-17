@@ -17,12 +17,17 @@ const MESSAGES: Record<RuleId, string> = {
 	"consecutive-blank-lines":
 		"consecutive blank lines add spacing without meaning",
 	"date-anchored-statement": "a check date is not the identity of the subject",
+	"emphasis-as-heading": "emphasis is not a heading",
+	"emphasis-marker": "emphasis markers do not mix styles",
 	"empty-link": "a link has no text or no destination",
 	"fence-blank-lines": "a fenced code block is not surrounded by blank lines",
+	"fence-style": "code fences do not use one style",
 	"full-width-alphanumeric":
 		"a full-width alphanumeric is not the ASCII character",
 	"hard-break-html": "an HTML hard break adds spacing without meaning",
 	"hard-tabs": "a hard tab is not spaces for indentation",
+	"heading-blank-lines": "a heading is not surrounded by blank lines",
+	"heading-indent": "a heading starts with indentation",
 	"heading-level-jump": "a heading level skips a step",
 	"heading-space":
 		"a heading does not separate hashes and text with a single space",
@@ -32,9 +37,14 @@ const MESSAGES: Record<RuleId, string> = {
 	"japanese-period": "a Japanese sentence does not end with a period",
 	"list-blank-lines": "a list is not surrounded by blank lines",
 	"list-marker-consistency": "unordered list markers do not mix styles",
+	"list-marker-space":
+		"a list marker does not separate its content with a single space",
 	"ordered-list-marker": "ordered list markers do not mix numbering styles",
 	"reversed-link": "a link does not reverse brackets and parentheses",
+	"setext-heading": "a setext heading does not show its level",
 	"single-trailing-newline": "a file does not end with a single newline",
+	"table-blank-lines": "a table is not surrounded by blank lines",
+	"thematic-break-style": "thematic breaks do not use one style",
 	"trailing-backslash": "a trailing backslash adds spacing without meaning",
 	"trailing-whitespace": "trailing whitespace is not part of the content",
 };
@@ -58,6 +68,14 @@ const HEADING_MISSING_SPACE = /^ {0,3}#{1,6}(?![#\s])/;
 const HEADING_EXTRA_SPACE = /^ {0,3}#{1,6}\s{2,}(?=\S)/;
 const REVERSED_LINK = /\([^()]*\)\[[^[\]]*\]/g;
 const HEADING_TRAILING_PUNCTUATION = /[。、，．.,;:!?！？]$/;
+const HEADING_LINE = /^ {0,3}#{1,6}(?:\s|$)/;
+const HEADING_INDENTED = /^( {1,3})(?=#{1,6}(?:\s|$))/;
+const TABLE_ROW = /^\s*\|/;
+const SETEXT_UNDERLINE = /^ {0,3}(=+|-+)\s*$/;
+const LIST_MARKER_SPACE = /^([ \t]*)([-+*]|\d+[.)])([ \t]+)(?=\S)/;
+const EMPHASIS_SPAN = /(\*\*|__|\*|_)(\S(?:[\s\S]*?\S)?)\1/g;
+const EMPHASIS_TRAILING_PUNCTUATION = /[.,;:!?。，；：！？]$/;
+const FENCE_MARKER = /^( {0,3})(`{3,}|~{3,})/;
 
 /**
  * 本文行にある最初の日本語句点の位置を返す 無ければ-1を返す
@@ -268,6 +286,257 @@ export function findHeadingTrailingPunctuation(
 }
 
 /**
+ * 見出し行の体裁か判定する 字下げ3までを含む
+ *
+ * @param line - 判定する本文の1行
+ * @returns 見出し行ならtrue
+ */
+function isHeadingLine(line: string): boolean {
+	return HEADING_LINE.test(line);
+}
+
+/**
+ * 字下げした見出しの字下げ幅を返す 無ければundefined
+ *
+ * @param line - 字下げを読む本文の1行
+ * @returns 先頭の半角スペースの数 字下げした見出しでなければundefined
+ */
+function headingIndent(line: string): number | undefined {
+	const match = HEADING_INDENTED.exec(line);
+	return match === null ? undefined : (match[1] ?? "").length;
+}
+
+/**
+ * 見出し行の字下げを取り除く
+ *
+ * @param line - 字下げを除く見出し行
+ * @returns 先頭から`#`までを詰めた見出し行
+ */
+function normalizeHeadingIndent(line: string): string {
+	return line.replace(HEADING_INDENTED, "");
+}
+
+/**
+ * 表の行か判定する
+ *
+ * @param line - 判定する本文の1行
+ * @returns 表の行ならtrue
+ */
+function isTableRow(line: string): boolean {
+	return TABLE_ROW.test(line);
+}
+
+/**
+ * リスト記号の後ろの区切り位置を返す 半角スペース1つならundefined
+ *
+ * @param line - 区切りを読む本文の1行
+ * @returns 区切りの0始まりの位置 1つの半角スペースで区切ったリストでなければundefined
+ */
+function findListMarkerSpace(line: string): number | undefined {
+	if (THEMATIC_BREAK.test(line)) {
+		return undefined;
+	}
+	const match = LIST_MARKER_SPACE.exec(line);
+	if (match === null || match[3] === " ") {
+		return undefined;
+	}
+	return (match[1] ?? "").length + (match[2] ?? "").length;
+}
+
+/**
+ * リスト記号の後ろを半角スペース1つへ揃える
+ *
+ * @param line - 区切りを揃える本文の1行
+ * @returns 区切りを半角スペース1つにした本文の1行
+ */
+function normalizeListMarkerSpace(line: string): string {
+	const match = LIST_MARKER_SPACE.exec(line);
+	if (match === null) {
+		return line;
+	}
+	const head = `${match[1] ?? ""}${match[2] ?? ""}`;
+	return `${head} ${line.slice(match[0].length)}`;
+}
+
+/**
+ * 語の途中で開く強調記号か判定する
+ *
+ * @param marker - 強調記号
+ * @param line - 強調記号を含む本文の1行
+ * @param position - 強調記号の0始まりの位置
+ * @returns 語の途中の強調記号ならtrue
+ */
+function opensIntraword(
+	marker: string,
+	line: string,
+	position: number,
+): boolean {
+	return marker.startsWith("_") && /[A-Za-z0-9]/.test(line[position - 1] ?? "");
+}
+
+/**
+ * 本文行が使う強調の記号と範囲を順に返す
+ *
+ * @param line - 強調記号を探すマスク済みの1行
+ * @returns 記号の種類と範囲の一覧
+ */
+function emphasisMarkers(
+	line: string,
+): { end: number; marker: string; position: number; width: number }[] {
+	const markers: {
+		end: number;
+		marker: string;
+		position: number;
+		width: number;
+	}[] = [];
+	for (const match of line.matchAll(EMPHASIS_SPAN)) {
+		const raw = match[1] ?? "";
+		if (opensIntraword(raw, line, match.index)) {
+			continue;
+		}
+		markers.push({
+			end: match.index + match[0].length,
+			marker: raw.slice(0, 1),
+			position: match.index,
+			width: raw.length,
+		});
+	}
+	return markers;
+}
+
+/**
+ * 強調記号を指定した種類へ揃える
+ *
+ * @param line - 強調記号を揃える本文の1行
+ * @param marker - 揃え先の強調記号
+ * @returns 強調記号を揃えた本文の1行
+ */
+function alignEmphasisMarker(line: string, marker: string): string {
+	const spans = inlineCodeSpans(line);
+	let result = "";
+	let cursor = 0;
+	for (const match of line.matchAll(EMPHASIS_SPAN)) {
+		const start = match.index;
+		const current = match[1] ?? "";
+		if (
+			spans.some(([from, to]) => start >= from && start < to) ||
+			opensIntraword(current, line, start) ||
+			current.startsWith(marker)
+		) {
+			continue;
+		}
+		result +=
+			line.slice(cursor, start) +
+			marker.repeat(current.length) +
+			(match[2] ?? "") +
+			marker.repeat(current.length);
+		cursor = start + match[0].length;
+	}
+	return result + line.slice(cursor);
+}
+
+/**
+ * 強調だけの本文行を違反として返す
+ *
+ * @param item - 判定する本文の1行
+ * @param masked - インラインコードを空白に置き換えた同じ行
+ * @param file - 指摘に載せるfileのpath
+ * @returns 強調を見出しの代わりに使った検出
+ */
+function emphasisHeadingFinding(
+	item: MarkdownLine,
+	masked: string,
+	file: string,
+): Finding[] {
+	if (item.structural) {
+		return [];
+	}
+	const trimmed = masked.trim();
+	const leading = masked.length - masked.trimStart().length;
+	const first = emphasisMarkers(masked)[0];
+	if (
+		first === undefined ||
+		first.position !== leading ||
+		first.end !== leading + trimmed.length
+	) {
+		return [];
+	}
+	const inner = masked.slice(
+		first.position + first.width,
+		first.end - first.width,
+	);
+	if (EMPHASIS_TRAILING_PUNCTUATION.test(inner)) {
+		return [];
+	}
+	return [finding("emphasis-as-heading", "warning", file, item.number, 1)];
+}
+
+/**
+ * 直前の行がsetext見出しの本文か判定する
+ *
+ * @param previous - 直前の行
+ * @returns 段落の本文ならtrue
+ */
+function isSetextParagraph(previous: MarkdownLine | undefined): boolean {
+	return (
+		previous !== undefined &&
+		previous.region === "body" &&
+		!previous.blank &&
+		!previous.structural
+	);
+}
+
+/**
+ * 区切り線として扱える行か判定する
+ *
+ * @param line - 判定する本文の1行
+ * @param previous - 直前の行
+ * @returns 区切り線ならtrue
+ */
+function isThematicBreakLine(
+	line: string,
+	previous: MarkdownLine | undefined,
+): boolean {
+	if (!THEMATIC_BREAK.test(line)) {
+		return false;
+	}
+	if (!line.trim().startsWith("-")) {
+		return true;
+	}
+	return !isSetextParagraph(previous);
+}
+
+/**
+ * 区切り線の流儀を返す 無ければundefined
+ *
+ * @param line - 流儀を読む本文の1行
+ * @returns 空白を畳んだ区切り線 区切り線でなければundefined
+ */
+function thematicBreakStyle(line: string): string | undefined {
+	return THEMATIC_BREAK.test(line)
+		? line.trim().replace(/\s+/g, " ")
+		: undefined;
+}
+
+/**
+ * setext見出しの下線の位置を返す 無ければundefined
+ *
+ * @param line - 下線を探す本文の1行
+ * @param previous - 直前の行
+ * @returns 下線の0始まりの位置 setext見出しの下線でなければundefined
+ */
+function findSetextUnderline(
+	line: string,
+	previous: MarkdownLine | undefined,
+): number | undefined {
+	if (!SETEXT_UNDERLINE.test(line) || !isSetextParagraph(previous)) {
+		return undefined;
+	}
+	const trimmed = line.trimStart();
+	return line.length - trimmed.length;
+}
+
+/**
  * 箇条書き記号を指定した記号へ揃える
  */
 function normalizeListMarker(line: string, marker: string): string {
@@ -306,6 +575,13 @@ function alignListMarker(line: string, state: MarkerState): string {
  */
 interface HeadingState {
 	level: number;
+}
+
+/**
+ * 最初に見つけた書式の流儀を、以降の判定の基準として保持する
+ */
+interface StyleState {
+	style: string | undefined;
 }
 
 /**
@@ -528,27 +804,21 @@ function replaceOutsideInlineCode(
 }
 
 /**
- * 通常本文の1行から、位置で示せる違反を検出する
+ * 有効なopt-in ruleによる本文行の検出を返す
+ *
+ * @param item - 判定する本文の1行
+ * @param masked - インラインコードを空白に置き換えた同じ行
+ * @param enabled - 有効にするopt-in ruleの識別子
+ * @param file - 指摘に載せるfileのpath
+ * @returns 有効なopt-in ruleの検出
  */
-function lintBodyLine(
+function optInFindings(
 	item: MarkdownLine,
-	file: string,
+	masked: string,
 	enabled: readonly OptInRuleId[],
+	file: string,
 ): Finding[] {
 	const findings: Finding[] = [];
-	const trailing = item.line.length - item.line.trimEnd().length;
-	if (trailing > 0) {
-		findings.push(
-			finding(
-				"trailing-whitespace",
-				"error",
-				file,
-				item.number,
-				item.line.length - trailing + 1,
-			),
-		);
-	}
-	const masked = maskInlineCode(item.line);
 	if (enabled.includes("japanese-period")) {
 		const period = findJapanesePeriod(masked);
 		if (period >= 0) {
@@ -579,6 +849,32 @@ function lintBodyLine(
 			);
 		}
 	}
+	return findings;
+}
+
+/**
+ * 通常本文の1行から、位置で示せる違反を検出する
+ */
+function lintBodyLine(
+	item: MarkdownLine,
+	file: string,
+	enabled: readonly OptInRuleId[],
+): Finding[] {
+	const findings: Finding[] = [];
+	const trailing = item.line.length - item.line.trimEnd().length;
+	if (trailing > 0) {
+		findings.push(
+			finding(
+				"trailing-whitespace",
+				"error",
+				file,
+				item.number,
+				item.line.length - trailing + 1,
+			),
+		);
+	}
+	const masked = maskInlineCode(item.line);
+	findings.push(...optInFindings(item, masked, enabled, file));
 	const hardBreak = masked.search(HARD_BREAK);
 	if (hardBreak >= 0) {
 		findings.push(
@@ -614,6 +910,13 @@ function lintBodyLine(
 			finding("empty-link", "error", file, item.number, emptyLink + 1),
 		);
 	}
+	const markerSpace = findListMarkerSpace(item.line);
+	if (markerSpace !== undefined) {
+		findings.push(
+			finding("list-marker-space", "error", file, item.number, markerSpace + 1),
+		);
+	}
+	findings.push(...emphasisHeadingFinding(item, masked, file));
 	findings.push(...lintHeadingAndLink(item, masked, file));
 	return findings;
 }
@@ -641,31 +944,46 @@ function blankAfterFence(
 }
 
 /**
- * リスト開始行の前に空行が要るか判定する
+ * 塊の開始行の前に空行が要るか判定する
+ *
+ * @param line - 判定する本文の1行
+ * @param previous - 直前の行
+ * @param isBlock - 同じ塊を構成する行か判定する関数
+ * @returns 空行が要るならtrue
  */
-function blankBeforeList(
+function blankBeforeBlock(
 	line: string,
 	previous: MarkdownLine | undefined,
+	isBlock: (candidate: string) => boolean,
 ): boolean {
 	return (
-		isListItem(line) &&
+		isBlock(line) &&
 		previous !== undefined &&
 		previous.region === "body" &&
 		!previous.blank &&
-		!isListItem(previous.line)
+		!isBlock(previous.line)
 	);
 }
 
 /**
- * リスト終了行の後に空行が要るか判定する
+ * 塊の終了行の後に空行が要るか判定する
+ *
+ * @param line - 判定する本文の1行
+ * @param next - 次の行
+ * @param isBlock - 同じ塊を構成する行か判定する関数
+ * @returns 空行が要るならtrue
  */
-function blankAfterList(line: string, next: MarkdownLine | undefined): boolean {
+function blankAfterBlock(
+	line: string,
+	next: MarkdownLine | undefined,
+	isBlock: (candidate: string) => boolean,
+): boolean {
 	return (
-		isListItem(line) &&
+		isBlock(line) &&
 		next !== undefined &&
 		next.region === "body" &&
 		!next.blank &&
-		!isListItem(next.line)
+		!isBlock(next.line)
 	);
 }
 
@@ -678,6 +996,10 @@ function lintHeadingAndLink(
 	file: string,
 ): Finding[] {
 	const findings: Finding[] = [];
+	const indent = headingIndent(item.line);
+	if (indent !== undefined) {
+		findings.push(finding("heading-indent", "error", file, item.number, 1));
+	}
 	const headingSpace = headingSpaceColumn(item.line);
 	if (headingSpace !== undefined) {
 		findings.push(
@@ -712,6 +1034,36 @@ function lintHeadingAndLink(
 }
 
 /**
+ * 本文以外の領域にある行を検出する
+ *
+ * @param item - 判定する行
+ * @param previous - 直前の行
+ * @param next - 次の行
+ * @param enabled - 有効にするopt-in ruleの識別子
+ * @param fences - 最初のフェンスの記号を保持する状態
+ * @param file - 指摘に載せるfileのpath
+ * @returns フェンスの言語指定と記号と空行不足の検出
+ */
+function lintNonBodyLine(
+	item: MarkdownLine,
+	previous: MarkdownLine | undefined,
+	next: MarkdownLine | undefined,
+	enabled: readonly OptInRuleId[],
+	fences: StyleState,
+	file: string,
+): Finding[] {
+	const findings: Finding[] = [];
+	if (item.region === "fence-open") {
+		findings.push(...fenceLanguageFinding(item, file));
+		if (enabled.includes("fence-style")) {
+			findings.push(...fenceStyleFinding(item, fences, file));
+		}
+	}
+	findings.push(...lintFenceBlanks(item, previous, next, file));
+	return findings;
+}
+
+/**
  * 本文以外の領域にあるフェンスの空行不足を検出する
  */
 function lintFenceBlanks(
@@ -727,23 +1079,228 @@ function lintFenceBlanks(
 }
 
 /**
- * リスト前後の空行不足を検出する
+ * 塊の前後にある空行不足を検出する
+ *
+ * @param rule - 検出に載せるrule識別子
+ * @param line - 判定する本文の1行
+ * @param previous - 直前の行
+ * @param next - 次の行
+ * @param isBlock - 同じ塊を構成する行か判定する関数
+ * @param itemNumber - 指摘に載せる行番号
+ * @param file - 指摘に載せるfileのpath
+ * @returns 空行不足の検出
  */
-function lintListBlanks(
+function lintBlockBlanks(
+	rule: RuleId,
 	line: string,
 	previous: MarkdownLine | undefined,
 	next: MarkdownLine | undefined,
+	isBlock: (candidate: string) => boolean,
 	itemNumber: number,
 	file: string,
 ): Finding[] {
 	const findings: Finding[] = [];
-	if (blankBeforeList(line, previous)) {
-		findings.push(finding("list-blank-lines", "error", file, itemNumber, 1));
+	if (blankBeforeBlock(line, previous, isBlock)) {
+		findings.push(finding(rule, "error", file, itemNumber, 1));
 	}
-	if (blankAfterList(line, next)) {
-		findings.push(finding("list-blank-lines", "error", file, itemNumber, 1));
+	if (blankAfterBlock(line, next, isBlock)) {
+		findings.push(finding(rule, "error", file, itemNumber, 1));
 	}
 	return findings;
+}
+
+/**
+ * リスト、見出し、表の前後にある空行不足を検出する
+ *
+ * @param item - 判定する本文の1行
+ * @param previous - 直前の行
+ * @param next - 次の行
+ * @param file - 指摘に載せるfileのpath
+ * @returns 前後の空行不足の検出
+ */
+function lintBlockLines(
+	item: MarkdownLine,
+	previous: MarkdownLine | undefined,
+	next: MarkdownLine | undefined,
+	file: string,
+): Finding[] {
+	return [
+		...lintBlockBlanks(
+			"list-blank-lines",
+			item.line,
+			previous,
+			next,
+			isListItem,
+			item.number,
+			file,
+		),
+		...lintBlockBlanks(
+			"heading-blank-lines",
+			item.line,
+			previous,
+			next,
+			isHeadingLine,
+			item.number,
+			file,
+		),
+		...lintBlockBlanks(
+			"table-blank-lines",
+			item.line,
+			previous,
+			next,
+			isTableRow,
+			item.number,
+			file,
+		),
+	];
+}
+
+/**
+ * 有効なopt-in ruleによる流儀の混在を検出する
+ *
+ * @param item - 判定する本文の1行
+ * @param masked - インラインコードを空白に置き換えた同じ行
+ * @param previous - 直前の行
+ * @param enabled - 有効にするopt-in ruleの識別子
+ * @param breaks - 最初の区切り線の流儀を保持する状態
+ * @param emphasis - 最初の強調記号を保持する状態
+ * @param file - 指摘に載せるfileのpath
+ * @returns 流儀の混在の検出
+ */
+function lintStyleLines(
+	item: MarkdownLine,
+	masked: string,
+	previous: MarkdownLine | undefined,
+	enabled: readonly OptInRuleId[],
+	breaks: StyleState,
+	emphasis: StyleState,
+	file: string,
+): Finding[] {
+	const findings: Finding[] = [];
+	if (enabled.includes("thematic-break-style")) {
+		findings.push(...thematicBreakFinding(item, previous, breaks, file));
+	}
+	if (enabled.includes("emphasis-marker")) {
+		findings.push(...emphasisMarkerFinding(item, masked, emphasis, file));
+	}
+	return findings;
+}
+
+/**
+ * setext見出しの下線を違反として返す
+ *
+ * @param item - 判定する本文の1行
+ * @param previous - 直前の行
+ * @param file - 指摘に載せるfileのpath
+ * @returns setext見出しの下線の検出
+ */
+function setextHeadingFinding(
+	item: MarkdownLine,
+	previous: MarkdownLine | undefined,
+	file: string,
+): Finding[] {
+	const underline = findSetextUnderline(item.line, previous);
+	if (underline === undefined) {
+		return [];
+	}
+	return [
+		finding("setext-heading", "warning", file, item.number, underline + 1),
+	];
+}
+
+/**
+ * 最初の区切り線と違う流儀の区切り線を違反として返す
+ *
+ * @param item - 判定する本文の1行
+ * @param previous - 直前の行
+ * @param state - 最初の区切り線の流儀を保持する状態
+ * @param file - 指摘に載せるfileのpath
+ * @returns 流儀の混在の検出
+ */
+function thematicBreakFinding(
+	item: MarkdownLine,
+	previous: MarkdownLine | undefined,
+	state: StyleState,
+	file: string,
+): Finding[] {
+	if (!isThematicBreakLine(item.line, previous)) {
+		return [];
+	}
+	const style = thematicBreakStyle(item.line);
+	if (style === undefined) {
+		return [];
+	}
+	if (state.style === undefined) {
+		state.style = style;
+		return [];
+	}
+	return style === state.style
+		? []
+		: [finding("thematic-break-style", "error", file, item.number, 1)];
+}
+
+/**
+ * 最初のフェンスと違う記号のフェンスを違反として返す
+ *
+ * @param item - 判定するフェンス開始行
+ * @param state - 最初のフェンスの記号を保持する状態
+ * @param file - 指摘に載せるfileのpath
+ * @returns フェンス記号の混在の検出
+ */
+function fenceStyleFinding(
+	item: MarkdownLine,
+	state: StyleState,
+	file: string,
+): Finding[] {
+	const char = FENCE_MARKER.exec(item.line)?.[2]?.slice(0, 1);
+	if (char === undefined) {
+		return [];
+	}
+	if (state.style === undefined) {
+		state.style = char;
+		return [];
+	}
+	return char === state.style
+		? []
+		: [finding("fence-style", "error", file, item.number, 1)];
+}
+
+/**
+ * 最初の強調と違う記号の強調を違反として返す
+ *
+ * @param item - 判定する本文の1行
+ * @param masked - インラインコードを空白に置き換えた同じ行
+ * @param state - 最初の強調記号を保持する状態
+ * @param file - 指摘に載せるfileのpath
+ * @returns 強調記号の混在の検出
+ */
+function emphasisMarkerFinding(
+	item: MarkdownLine,
+	masked: string,
+	state: StyleState,
+	file: string,
+): Finding[] {
+	const markers = emphasisMarkers(masked);
+	if (markers.length === 0) {
+		return [];
+	}
+	if (state.style === undefined) {
+		state.style = markers[0]?.marker;
+	}
+	for (const marker of markers) {
+		if (marker.marker !== state.style) {
+			return [
+				finding(
+					"emphasis-marker",
+					"error",
+					file,
+					item.number,
+					marker.position + 1,
+				),
+			];
+		}
+	}
+	return [];
 }
 
 /**
@@ -842,20 +1399,22 @@ export function lintSource(
 	let blankStreak = 0;
 	const markers: MarkerState = { marker: undefined };
 	const headings: HeadingState = { level: 0 };
+	const breaks: StyleState = { style: undefined };
+	const fences: StyleState = { style: undefined };
+	const emphasis: StyleState = { style: undefined };
 	let ordered: OrderedState | undefined;
 	for (let index = 0; index < items.length; index += 1) {
 		const item = items[index];
 		if (item === undefined) {
 			continue;
 		}
+		const previous = items[index - 1];
+		const next = items[index + 1];
 		if (item.region !== "body") {
 			blankStreak = 0;
 			ordered = undefined;
-			if (item.region === "fence-open") {
-				findings.push(...fenceLanguageFinding(item, file));
-			}
 			findings.push(
-				...lintFenceBlanks(item, items[index - 1], items[index + 1], file),
+				...lintNonBodyLine(item, previous, next, enabled, fences, file),
 			);
 			continue;
 		}
@@ -867,14 +1426,19 @@ export function lintSource(
 			continue;
 		}
 		blankStreak = 0;
+		const masked = maskInlineCode(item.line);
 		findings.push(...lintBodyLine(item, file, enabled));
 		findings.push(...headingJumpFinding(item, headings, file));
+		findings.push(...setextHeadingFinding(item, previous, file));
+		findings.push(...lintBlockLines(item, previous, next, file));
 		findings.push(
-			...lintListBlanks(
-				item.line,
-				items[index - 1],
-				items[index + 1],
-				item.number,
+			...lintStyleLines(
+				item,
+				masked,
+				previous,
+				enabled,
+				breaks,
+				emphasis,
 				file,
 			),
 		);
@@ -906,14 +1470,26 @@ function fixLine(item: MarkdownLine, disabled: readonly RuleId[]): string {
 	if (!item.structural && !disabled.includes("trailing-backslash")) {
 		line = line.replace(/\\+$/, "");
 	}
-	if (!disabled.includes("trailing-whitespace")) {
-		line = line.replace(/[ \t]+$/, "");
+	if (
+		!disabled.includes("list-marker-space") &&
+		findListMarkerSpace(line) !== undefined
+	) {
+		line = normalizeListMarkerSpace(line);
+	}
+	if (
+		!disabled.includes("heading-indent") &&
+		headingIndent(line) !== undefined
+	) {
+		line = normalizeHeadingIndent(line);
 	}
 	if (
 		!disabled.includes("heading-space") &&
 		headingSpaceColumn(line) !== undefined
 	) {
 		line = normalizeHeadingSpace(line);
+	}
+	if (!disabled.includes("trailing-whitespace")) {
+		line = line.replace(/[ \t]+$/, "");
 	}
 	return line;
 }
@@ -925,6 +1501,7 @@ function fixLine(item: MarkdownLine, disabled: readonly RuleId[]): string {
  */
 function pushNonBodyLine(
 	item: MarkdownLine,
+	line: string,
 	previous: MarkdownLine | undefined,
 	next: MarkdownLine | undefined,
 	result: string[],
@@ -933,7 +1510,7 @@ function pushNonBodyLine(
 	if (fenceBlanks && blankBeforeFence(item, previous)) {
 		result.push("");
 	}
-	result.push(item.line);
+	result.push(line);
 	if (fenceBlanks && blankAfterFence(item, next)) {
 		result.push("");
 		return true;
@@ -942,8 +1519,63 @@ function pushNonBodyLine(
 }
 
 /**
- * 本文行を結果へ積み リスト前後の空行を補う
+ * 前後に空行を補う塊の指定
+ */
+interface BlankBlocks {
+	heading: boolean;
+	list: boolean;
+	table: boolean;
+}
+
+/**
+ * 塊の開始行の前に空行を補うか判定する
  *
+ * @param line - 判定する本文の1行
+ * @param previous - 直前の行
+ * @param blocks - 前後に空行を補う塊の指定
+ * @returns 空行を補うならtrue
+ */
+function needsBlankBefore(
+	line: string,
+	previous: MarkdownLine | undefined,
+	blocks: BlankBlocks,
+): boolean {
+	return (
+		(blocks.heading && blankBeforeBlock(line, previous, isHeadingLine)) ||
+		(blocks.list && blankBeforeBlock(line, previous, isListItem)) ||
+		(blocks.table && blankBeforeBlock(line, previous, isTableRow))
+	);
+}
+
+/**
+ * 塊の終了行の後に空行を補うか判定する
+ *
+ * @param line - 判定する本文の1行
+ * @param next - 次の行
+ * @param blocks - 前後に空行を補う塊の指定
+ * @returns 空行を補うならtrue
+ */
+function needsBlankAfter(
+	line: string,
+	next: MarkdownLine | undefined,
+	blocks: BlankBlocks,
+): boolean {
+	return (
+		(blocks.heading && blankAfterBlock(line, next, isHeadingLine)) ||
+		(blocks.list && blankAfterBlock(line, next, isListItem)) ||
+		(blocks.table && blankAfterBlock(line, next, isTableRow))
+	);
+}
+
+/**
+ * 本文行を結果へ積み 塊の前後の空行を補う
+ *
+ * @param line - 積む本文の1行
+ * @param previous - 直前の行
+ * @param next - 次の行
+ * @param result - 積み先の行一覧
+ * @param blocks - 前後に空行を補う塊の指定
+ * @param keepConsecutive - 連続空行をそのまま積むか
  * @returns 積んだ末尾が空行ならtrue
  */
 function pushBodyLine(
@@ -951,17 +1583,118 @@ function pushBodyLine(
 	previous: MarkdownLine | undefined,
 	next: MarkdownLine | undefined,
 	result: string[],
-	listBlanks: boolean,
+	blocks: BlankBlocks,
+	keepConsecutive: boolean,
 ): boolean {
-	if (listBlanks && blankBeforeList(line, previous)) {
-		result.push("");
+	if (needsBlankBefore(line, previous, blocks)) {
+		appendBlankLine(result, keepConsecutive, result[result.length - 1] === "");
 	}
 	result.push(line);
-	if (listBlanks && blankAfterList(line, next)) {
+	if (needsBlankAfter(line, next, blocks)) {
 		result.push("");
 		return true;
 	}
 	return false;
+}
+
+/**
+ * 最初のフェンスと同じ記号へフェンス行を揃える
+ *
+ * @param item - 揃える行
+ * @param state - 最初のフェンスの記号を保持する状態
+ * @param enabled - フェンス記号を揃えるか
+ * @returns 記号を揃えた行
+ */
+function alignFenceLine(
+	item: MarkdownLine,
+	state: StyleState,
+	enabled: boolean,
+): string {
+	if (
+		!enabled ||
+		(item.region !== "fence-open" && item.region !== "fence-close")
+	) {
+		return item.line;
+	}
+	const match = FENCE_MARKER.exec(item.line);
+	if (match === null) {
+		return item.line;
+	}
+	const marker = match[2] ?? "";
+	const char = marker.slice(0, 1);
+	if (state.style === undefined) {
+		state.style = char;
+		return item.line;
+	}
+	if (char === state.style) {
+		return item.line;
+	}
+	return `${match[1] ?? ""}${state.style.repeat(marker.length)}${item.line.slice(match[0].length)}`;
+}
+
+/**
+ * 最初の区切り線と同じ流儀へ区切り線を揃える
+ *
+ * @param line - 揃える本文の1行
+ * @param previous - 直前の行
+ * @param state - 最初の区切り線の流儀を保持する状態
+ * @param enabled - 区切り線を揃えるか
+ * @returns 流儀を揃えた本文の1行
+ */
+function alignThematicBreak(
+	line: string,
+	previous: MarkdownLine | undefined,
+	state: StyleState,
+	enabled: boolean,
+): string {
+	if (!enabled || !isThematicBreakLine(line, previous)) {
+		return line;
+	}
+	const style = thematicBreakStyle(line);
+	if (style === undefined) {
+		return line;
+	}
+	if (state.style === undefined) {
+		state.style = style;
+		return line;
+	}
+	if (style === state.style) {
+		return line;
+	}
+	const indent = /^\s*/.exec(line)?.[0] ?? "";
+	return `${indent}${state.style}`;
+}
+
+/**
+ * 最初の強調と同じ記号へ強調記号を揃える
+ *
+ * @param line - 揃える本文の1行
+ * @param state - 最初の強調記号を保持する状態
+ * @param enabled - 強調記号を揃えるか
+ * @returns 記号を揃えた本文の1行
+ */
+function alignEmphasisLine(
+	line: string,
+	state: StyleState,
+	enabled: boolean,
+): string {
+	if (!enabled) {
+		return line;
+	}
+	const markers = emphasisMarkers(maskInlineCode(line));
+	if (markers.length === 0) {
+		return line;
+	}
+	if (state.style === undefined) {
+		state.style = markers[0]?.marker;
+	}
+	const style = state.style;
+	if (style === undefined) {
+		return line;
+	}
+	return markers.some((marker) => marker.marker !== style)
+		? alignEmphasisMarker(line, style)
+		: line;
 }
 
 /**
@@ -1001,46 +1734,61 @@ export function fixSource(
 	const result: string[] = [];
 	let previousBlank = false;
 	const markers: MarkerState = { marker: undefined };
+	const fences: StyleState = { style: undefined };
+	const breaks: StyleState = { style: undefined };
+	const emphasis: StyleState = { style: undefined };
 	const consistentMarkers =
 		enabled.includes("list-marker-consistency") &&
 		!disabled.includes("list-marker-consistency");
+	const optIn = (rule: OptInRuleId): boolean =>
+		enabled.includes(rule) && !disabled.includes(rule);
 	const fenceBlanks = !disabled.includes("fence-blank-lines");
-	const listBlanks = !disabled.includes("list-blank-lines");
+	const keepConsecutive = disabled.includes("consecutive-blank-lines");
+	const blocks: BlankBlocks = {
+		heading: !disabled.includes("heading-blank-lines"),
+		list: !disabled.includes("list-blank-lines"),
+		table: !disabled.includes("table-blank-lines"),
+	};
 	for (let index = 0; index < items.length; index += 1) {
 		const item = items[index];
 		if (item === undefined) {
 			continue;
 		}
+		const previous = items[index - 1];
+		const next = items[index + 1];
 		if (item.region !== "body") {
 			previousBlank = pushNonBodyLine(
 				item,
-				items[index - 1],
-				items[index + 1],
+				alignFenceLine(item, fences, optIn("fence-style")),
+				previous,
+				next,
 				result,
 				fenceBlanks,
 			);
 			continue;
 		}
-		const line = alignMarkerLine(
-			fixLine(item, disabled),
-			markers,
-			consistentMarkers,
+		const fixed = alignEmphasisLine(
+			alignThematicBreak(
+				alignMarkerLine(fixLine(item, disabled), markers, consistentMarkers),
+				previous,
+				breaks,
+				optIn("thematic-break-style"),
+			),
+			emphasis,
+			optIn("emphasis-marker"),
 		);
-		if (line === "") {
-			appendBlankLine(
-				result,
-				disabled.includes("consecutive-blank-lines"),
-				previousBlank,
-			);
+		if (fixed === "") {
+			appendBlankLine(result, keepConsecutive, previousBlank);
 			previousBlank = true;
 			continue;
 		}
 		previousBlank = pushBodyLine(
-			line,
-			items[index - 1],
-			items[index + 1],
+			fixed,
+			previous,
+			next,
 			result,
-			listBlanks,
+			blocks,
+			keepConsecutive,
 		);
 	}
 	let fixed = bom + result.join(eol);
