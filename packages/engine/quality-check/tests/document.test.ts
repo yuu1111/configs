@@ -70,6 +70,7 @@ test("lintの--preset allで全opt-in ruleを有効にする", () => {
 		"japanese-comma",
 		"japanese-period",
 		"list-marker-consistency",
+		"ordered-list-marker",
 	]);
 });
 
@@ -79,8 +80,15 @@ test("lintの--preset noneで既定のruleを無効にする", () => {
 		"consecutive-blank-lines",
 		"date-anchored-statement",
 		"empty-link",
+		"fence-blank-lines",
 		"hard-break-html",
+		"hard-tabs",
 		"heading-level-jump",
+		"heading-space",
+		"heading-trailing-punctuation",
+		"list-blank-lines",
+		"reversed-link",
+		"single-trailing-newline",
 		"trailing-backslash",
 		"trailing-whitespace",
 	]);
@@ -99,6 +107,7 @@ test("lintの--preset allへ--disableを重ねられる", () => {
 		"full-width-alphanumeric",
 		"japanese-comma",
 		"list-marker-consistency",
+		"ordered-list-marker",
 	]);
 	expect(options.disabled).toEqual(["japanese-period"]);
 });

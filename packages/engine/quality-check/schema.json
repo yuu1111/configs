@@ -386,6 +386,26 @@
 											],
 											"type": "string"
 										},
+										"hard-tabs": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										"single-trailing-newline": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
 										"trailing-backslash": {
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
@@ -486,6 +506,16 @@
 											],
 											"type": "string"
 										},
+										"fence-blank-lines": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
 										"heading-level-jump": {
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
@@ -496,7 +526,47 @@
 											],
 											"type": "string"
 										},
+										"heading-space": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										"heading-trailing-punctuation": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										"list-blank-lines": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
 										"list-marker-consistency": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										"ordered-list-marker": {
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -537,6 +607,16 @@
 											"type": "string"
 										},
 										"empty-link": {
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										"reversed-link": {
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",

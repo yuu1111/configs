@@ -18,14 +18,23 @@ const MESSAGES: Record<RuleId, string> = {
 		"consecutive blank lines add spacing without meaning",
 	"date-anchored-statement": "a check date is not the identity of the subject",
 	"empty-link": "a link has no text or no destination",
+	"fence-blank-lines": "a fenced code block is not surrounded by blank lines",
 	"full-width-alphanumeric":
 		"a full-width alphanumeric is not the ASCII character",
 	"hard-break-html": "an HTML hard break adds spacing without meaning",
+	"hard-tabs": "a hard tab is not spaces for indentation",
 	"heading-level-jump": "a heading level skips a step",
+	"heading-space":
+		"a heading does not separate hashes and text with a single space",
+	"heading-trailing-punctuation": "a heading does not end with punctuation",
 	"japanese-comma":
 		"a Japanese sentence does not separate clauses with a half-width comma",
 	"japanese-period": "a Japanese sentence does not end with a period",
+	"list-blank-lines": "a list is not surrounded by blank lines",
 	"list-marker-consistency": "unordered list markers do not mix styles",
+	"ordered-list-marker": "ordered list markers do not mix numbering styles",
+	"reversed-link": "a link does not reverse brackets and parentheses",
+	"single-trailing-newline": "a file does not end with a single newline",
 	"trailing-backslash": "a trailing backslash adds spacing without meaning",
 	"trailing-whitespace": "trailing whitespace is not part of the content",
 };
@@ -43,6 +52,12 @@ const UNORDERED_LIST_MARKER = /^([ \t]*)([-+*])(?=[ \t]+\S)/;
 const FENCE_OPEN = /^ {0,3}(?:`{3,}|~{3,})/;
 const HEADING = /^(#{1,6})(?:\s|$)/;
 const EMPTY_LINK = /\[([^\]]*)\]\(([^)]*)\)/g;
+const ORDERED_LIST_MARKER = /^([ \t]*)(\d+)([.)])(?=[ \t]+\S)/;
+const HEADING_PREFIX = /^ {0,3}#{1,6}/;
+const HEADING_MISSING_SPACE = /^ {0,3}#{1,6}(?![#\s])/;
+const HEADING_EXTRA_SPACE = /^ {0,3}#{1,6}\s{2,}(?=\S)/;
+const REVERSED_LINK = /\([^()]*\)\[[^[\]]*\]/g;
+const HEADING_TRAILING_PUNCTUATION = /[。、，．.,;:!?！？]$/;
 
 /**
  * 本文行にある最初の日本語句点の位置を返す 無ければ-1を返す
@@ -150,6 +165,109 @@ export function unorderedListMarker(
 }
 
 /**
+ * 本文行の順序リスト記号と位置を返す 順序リストでなければundefined
+ *
+ * @param line - 順序リスト記号を探す本文の1行
+ * @returns 順序番号と区切り記号と0始まりの位置 順序リストでなければundefined
+ */
+export function orderedListMarker(
+	line: string,
+): { delimiter: string; number: number; position: number } | undefined {
+	const match = ORDERED_LIST_MARKER.exec(line);
+	if (match === null) {
+		return undefined;
+	}
+	return {
+		delimiter: match[3] ?? "",
+		number: Number(match[2]),
+		position: (match[1] ?? "").length,
+	};
+}
+
+/**
+ * 箇条書きまたは順序リストの項目行か判定する
+ *
+ * @param line - 判定する本文の1行
+ * @returns リスト項目の行ならtrue
+ */
+export function isListItem(line: string): boolean {
+	return (
+		unorderedListMarker(line) !== undefined ||
+		orderedListMarker(line) !== undefined
+	);
+}
+
+/**
+ * 見出しの`#`と本文の区切り位置を返す 見出しの体裁でなければundefined
+ *
+ * @param line - 見出しの区切りを探す本文の1行
+ * @returns `#`の終わりの0始まりの位置 見出しでなければundefined
+ */
+export function headingSpaceColumn(line: string): number | undefined {
+	if (!HEADING_MISSING_SPACE.test(line) && !HEADING_EXTRA_SPACE.test(line)) {
+		return undefined;
+	}
+	return HEADING_PREFIX.exec(line)?.[0].length;
+}
+
+/**
+ * 見出しの`#`と本文を半角スペース1つで区切る
+ *
+ * @param line - 区切りを揃える見出し行
+ * @returns 区切りを揃えた見出し行
+ */
+export function normalizeHeadingSpace(line: string): string {
+	const match = /^(\s*#{1,6})(.*)$/.exec(line);
+	if (match === null) {
+		return line;
+	}
+	const hashes = match[1] ?? "";
+	const rest = match[2] ?? "";
+	if (rest.trim() === "") {
+		return hashes;
+	}
+	return `${hashes} ${rest.replace(/^\s+/, "")}`;
+}
+
+/**
+ * 逆順リンクの位置を返す 無ければundefined
+ *
+ * @param line - 逆順リンクを探す本文の1行
+ * @returns 最初の逆順リンクの0始まりの位置 見つからなければundefined
+ */
+export function findReversedLink(line: string): number | undefined {
+	const spans = inlineCodeSpans(line);
+	for (const match of line.matchAll(REVERSED_LINK)) {
+		if (spans.some(([from, to]) => match.index >= from && match.index < to)) {
+			continue;
+		}
+		if (match[0].includes(")[^")) {
+			continue;
+		}
+		return match.index;
+	}
+	return undefined;
+}
+
+/**
+ * 見出し末尾の句読点の位置を返す 無ければundefined
+ *
+ * @param line - 見出し末尾の句読点を探す本文の1行
+ * @returns 末尾の句読点の0始まりの位置 見つからなければundefined
+ */
+export function findHeadingTrailingPunctuation(
+	line: string,
+): number | undefined {
+	const trimmed = line.trimEnd();
+	if (!HEADING_PREFIX.test(trimmed)) {
+		return undefined;
+	}
+	const noClose = trimmed.replace(/\s#+\s*$/, "");
+	const match = HEADING_TRAILING_PUNCTUATION.exec(noClose);
+	return match === null ? undefined : match.index;
+}
+
+/**
  * 箇条書き記号を指定した記号へ揃える
  */
 function normalizeListMarker(line: string, marker: string): string {
@@ -251,6 +369,104 @@ function markerFinding(
 			marker.position + 1,
 		),
 	];
+}
+
+/**
+ * 同じ字下げの順序リストが守る採番の状態
+ */
+interface OrderedState {
+	delimiter: string;
+	indent: string;
+	last: number;
+	style: "ordered" | "repeat" | undefined;
+}
+
+/**
+ * 採番の流儀から外れた順序リスト項目を違反として返す
+ *
+ * @param item - 判定する本文の1行
+ * @param file - 指摘に載せるfileのpath
+ * @param previous - 直前の同じ字下げの項目の状態 途切れたらundefined
+ * @returns 検出と次の行へ渡す状態
+ */
+function orderedMarkerFinding(
+	item: MarkdownLine,
+	file: string,
+	previous: OrderedState | undefined,
+): { findings: Finding[]; state: OrderedState | undefined } {
+	const marker = orderedListMarker(item.line);
+	if (marker === undefined) {
+		return { findings: [], state: undefined };
+	}
+	const indent = " ".repeat(marker.position);
+	if (previous === undefined || previous.indent !== indent) {
+		return {
+			findings: [],
+			state: {
+				delimiter: marker.delimiter,
+				indent,
+				last: marker.number,
+				style: undefined,
+			},
+		};
+	}
+	if (marker.delimiter !== previous.delimiter) {
+		return {
+			findings: [
+				finding(
+					"ordered-list-marker",
+					"error",
+					file,
+					item.number,
+					marker.position + 1,
+				),
+			],
+			state: { ...previous, last: marker.number },
+		};
+	}
+	if (previous.style === undefined) {
+		if (marker.number === previous.last) {
+			return {
+				findings: [],
+				state: { ...previous, last: marker.number, style: "repeat" },
+			};
+		}
+		if (marker.number === previous.last + 1) {
+			return {
+				findings: [],
+				state: { ...previous, last: marker.number, style: "ordered" },
+			};
+		}
+		return {
+			findings: [
+				finding(
+					"ordered-list-marker",
+					"error",
+					file,
+					item.number,
+					marker.position + 1,
+				),
+			],
+			state: { ...previous, last: marker.number },
+		};
+	}
+	const expected =
+		previous.style === "repeat" ? previous.last : previous.last + 1;
+	if (marker.number !== expected) {
+		return {
+			findings: [
+				finding(
+					"ordered-list-marker",
+					"error",
+					file,
+					item.number,
+					marker.position + 1,
+				),
+			],
+			state: { ...previous, last: marker.number },
+		};
+	}
+	return { findings: [], state: { ...previous, last: marker.number } };
 }
 
 /**
@@ -398,7 +614,212 @@ function lintBodyLine(
 			finding("empty-link", "error", file, item.number, emptyLink + 1),
 		);
 	}
+	findings.push(...lintHeadingAndLink(item, masked, file));
 	return findings;
+}
+
+/**
+ * フェンス開始行の前に空行が要るか判定する
+ */
+function blankBeforeFence(
+	item: MarkdownLine,
+	previous: MarkdownLine | undefined,
+): boolean {
+	return (
+		item.region === "fence-open" && previous !== undefined && !previous.blank
+	);
+}
+
+/**
+ * フェンス終了行の後に空行が要るか判定する
+ */
+function blankAfterFence(
+	item: MarkdownLine,
+	next: MarkdownLine | undefined,
+): boolean {
+	return item.region === "fence-close" && next !== undefined && !next.blank;
+}
+
+/**
+ * リスト開始行の前に空行が要るか判定する
+ */
+function blankBeforeList(
+	line: string,
+	previous: MarkdownLine | undefined,
+): boolean {
+	return (
+		isListItem(line) &&
+		previous !== undefined &&
+		previous.region === "body" &&
+		!previous.blank &&
+		!isListItem(previous.line)
+	);
+}
+
+/**
+ * リスト終了行の後に空行が要るか判定する
+ */
+function blankAfterList(line: string, next: MarkdownLine | undefined): boolean {
+	return (
+		isListItem(line) &&
+		next !== undefined &&
+		next.region === "body" &&
+		!next.blank &&
+		!isListItem(next.line)
+	);
+}
+
+/**
+ * 見出しの体裁とリンクの向きと字下げを検出する
+ */
+function lintHeadingAndLink(
+	item: MarkdownLine,
+	masked: string,
+	file: string,
+): Finding[] {
+	const findings: Finding[] = [];
+	const headingSpace = headingSpaceColumn(item.line);
+	if (headingSpace !== undefined) {
+		findings.push(
+			finding("heading-space", "error", file, item.number, headingSpace + 1),
+		);
+	}
+	const trailingPunctuation = findHeadingTrailingPunctuation(item.line);
+	if (trailingPunctuation !== undefined) {
+		findings.push(
+			finding(
+				"heading-trailing-punctuation",
+				"warning",
+				file,
+				item.number,
+				trailingPunctuation + 1,
+			),
+		);
+	}
+	const hardTab = masked.indexOf("\t");
+	if (hardTab >= 0) {
+		findings.push(
+			finding("hard-tabs", "error", file, item.number, hardTab + 1),
+		);
+	}
+	const reversedLink = findReversedLink(item.line);
+	if (reversedLink !== undefined) {
+		findings.push(
+			finding("reversed-link", "error", file, item.number, reversedLink + 1),
+		);
+	}
+	return findings;
+}
+
+/**
+ * 本文以外の領域にあるフェンスの空行不足を検出する
+ */
+function lintFenceBlanks(
+	item: MarkdownLine,
+	previous: MarkdownLine | undefined,
+	next: MarkdownLine | undefined,
+	file: string,
+): Finding[] {
+	if (!blankBeforeFence(item, previous) && !blankAfterFence(item, next)) {
+		return [];
+	}
+	return [finding("fence-blank-lines", "error", file, item.number, 1)];
+}
+
+/**
+ * リスト前後の空行不足を検出する
+ */
+function lintListBlanks(
+	line: string,
+	previous: MarkdownLine | undefined,
+	next: MarkdownLine | undefined,
+	itemNumber: number,
+	file: string,
+): Finding[] {
+	const findings: Finding[] = [];
+	if (blankBeforeList(line, previous)) {
+		findings.push(finding("list-blank-lines", "error", file, itemNumber, 1));
+	}
+	if (blankAfterList(line, next)) {
+		findings.push(finding("list-blank-lines", "error", file, itemNumber, 1));
+	}
+	return findings;
+}
+
+/**
+ * 空行を数えて連続空行を検出する
+ *
+ * @returns 検出と更新した連続数
+ */
+function lintBlankLine(
+	streak: number,
+	item: MarkdownLine,
+	file: string,
+): {
+	findings: Finding[];
+	streak: number;
+} {
+	const next = streak + 1;
+	if (next < 2) {
+		return { findings: [], streak: next };
+	}
+	return {
+		findings: [
+			finding("consecutive-blank-lines", "error", file, item.number, 1),
+		],
+		streak: next,
+	};
+}
+
+/**
+ * 順序リストの採番を追跡して混在を検出する
+ */
+function trackOrderedMarker(
+	item: MarkdownLine,
+	file: string,
+	ordered: OrderedState | undefined,
+	enabled: readonly OptInRuleId[],
+): { findings: Finding[]; state: OrderedState | undefined } {
+	if (!enabled.includes("ordered-list-marker")) {
+		return { findings: [], state: undefined };
+	}
+	return orderedMarkerFinding(item, file, ordered);
+}
+
+/**
+ * 有効なときだけ箇条書き記号を最初の記号へ揃える
+ */
+function alignMarkerLine(
+	line: string,
+	markers: MarkerState,
+	consistentMarkers: boolean,
+): string {
+	if (!consistentMarkers || line === "") {
+		return line;
+	}
+	return alignListMarker(line, markers);
+}
+
+/**
+ * 文書末尾の改行不足または重複を検出する
+ */
+function lintTrailingNewline(source: string, file: string): Finding[] {
+	const stripped = source.replace(/^\uFEFF/, "");
+	const single = /(\r?\n)$/.test(stripped) && !/(\r?\n){2}$/.test(stripped);
+	if (stripped === "" || single) {
+		return [];
+	}
+	const rows = stripped.split(/\r?\n/);
+	const last = rows[rows.length - 1] ?? "";
+	return [
+		finding(
+			"single-trailing-newline",
+			"error",
+			file,
+			rows.length,
+			last.length + 1,
+		),
+	];
 }
 
 /**
@@ -417,33 +838,54 @@ export function lintSource(
 	disabled: readonly RuleId[] = [],
 ): Finding[] {
 	const findings: Finding[] = [];
+	const items = markdownLines(source);
 	let blankStreak = 0;
 	const markers: MarkerState = { marker: undefined };
 	const headings: HeadingState = { level: 0 };
-	for (const item of markdownLines(source)) {
+	let ordered: OrderedState | undefined;
+	for (let index = 0; index < items.length; index += 1) {
+		const item = items[index];
+		if (item === undefined) {
+			continue;
+		}
 		if (item.region !== "body") {
 			blankStreak = 0;
+			ordered = undefined;
 			if (item.region === "fence-open") {
 				findings.push(...fenceLanguageFinding(item, file));
 			}
+			findings.push(
+				...lintFenceBlanks(item, items[index - 1], items[index + 1], file),
+			);
 			continue;
 		}
 		if (item.blank) {
-			blankStreak += 1;
-			if (blankStreak >= 2) {
-				findings.push(
-					finding("consecutive-blank-lines", "error", file, item.number, 1),
-				);
-			}
+			const blank = lintBlankLine(blankStreak, item, file);
+			blankStreak = blank.streak;
+			ordered = undefined;
+			findings.push(...blank.findings);
 			continue;
 		}
 		blankStreak = 0;
 		findings.push(...lintBodyLine(item, file, enabled));
 		findings.push(...headingJumpFinding(item, headings, file));
+		findings.push(
+			...lintListBlanks(
+				item.line,
+				items[index - 1],
+				items[index + 1],
+				item.number,
+				file,
+			),
+		);
 		if (enabled.includes("list-marker-consistency")) {
 			findings.push(...markerFinding(item, markers, file));
 		}
+		const tracked = trackOrderedMarker(item, file, ordered, enabled);
+		ordered = tracked.state;
+		findings.push(...tracked.findings);
 	}
+	findings.push(...lintTrailingNewline(source, file));
 	return findings.filter((finding) => !disabled.includes(finding.rule));
 }
 
@@ -452,6 +894,9 @@ export function lintSource(
  */
 function fixLine(item: MarkdownLine, disabled: readonly RuleId[]): string {
 	let line = item.line;
+	if (!disabled.includes("hard-tabs")) {
+		line = line.replace(/\t/g, "  ");
+	}
 	if (!disabled.includes("trailing-whitespace")) {
 		line = line.replace(/[ \t]+$/, "");
 	}
@@ -464,7 +909,59 @@ function fixLine(item: MarkdownLine, disabled: readonly RuleId[]): string {
 	if (!disabled.includes("trailing-whitespace")) {
 		line = line.replace(/[ \t]+$/, "");
 	}
+	if (
+		!disabled.includes("heading-space") &&
+		headingSpaceColumn(line) !== undefined
+	) {
+		line = normalizeHeadingSpace(line);
+	}
 	return line;
+}
+
+/**
+ * 本文以外の領域を結果へ積み 前後の空行を補う
+ *
+ * @returns 積んだ末尾が空行ならtrue
+ */
+function pushNonBodyLine(
+	item: MarkdownLine,
+	previous: MarkdownLine | undefined,
+	next: MarkdownLine | undefined,
+	result: string[],
+	fenceBlanks: boolean,
+): boolean {
+	if (fenceBlanks && blankBeforeFence(item, previous)) {
+		result.push("");
+	}
+	result.push(item.line);
+	if (fenceBlanks && blankAfterFence(item, next)) {
+		result.push("");
+		return true;
+	}
+	return false;
+}
+
+/**
+ * 本文行を結果へ積み リスト前後の空行を補う
+ *
+ * @returns 積んだ末尾が空行ならtrue
+ */
+function pushBodyLine(
+	line: string,
+	previous: MarkdownLine | undefined,
+	next: MarkdownLine | undefined,
+	result: string[],
+	listBlanks: boolean,
+): boolean {
+	if (listBlanks && blankBeforeList(line, previous)) {
+		result.push("");
+	}
+	result.push(line);
+	if (listBlanks && blankAfterList(line, next)) {
+		result.push("");
+		return true;
+	}
+	return false;
 }
 
 /**
@@ -500,33 +997,58 @@ export function fixSource(
 	const bom = source.startsWith("\uFEFF") ? "\uFEFF" : "";
 	const body = bom === "" ? source : source.slice(1);
 	const eol = body.includes("\r\n") ? "\r\n" : "\n";
+	const items = markdownLines(body);
 	const result: string[] = [];
 	let previousBlank = false;
 	const markers: MarkerState = { marker: undefined };
 	const consistentMarkers =
 		enabled.includes("list-marker-consistency") &&
 		!disabled.includes("list-marker-consistency");
-	for (const item of markdownLines(body)) {
+	const fenceBlanks = !disabled.includes("fence-blank-lines");
+	const listBlanks = !disabled.includes("list-blank-lines");
+	for (let index = 0; index < items.length; index += 1) {
+		const item = items[index];
+		if (item === undefined) {
+			continue;
+		}
 		if (item.region !== "body") {
-			previousBlank = false;
-			result.push(item.line);
+			previousBlank = pushNonBodyLine(
+				item,
+				items[index - 1],
+				items[index + 1],
+				result,
+				fenceBlanks,
+			);
 			continue;
 		}
-		let line = fixLine(item, disabled);
-		if (consistentMarkers && line !== "") {
-			line = alignListMarker(line, markers);
-		}
-		if (line !== "") {
-			previousBlank = false;
-			result.push(line);
-			continue;
-		}
-		appendBlankLine(
-			result,
-			disabled.includes("consecutive-blank-lines"),
-			previousBlank,
+		const line = alignMarkerLine(
+			fixLine(item, disabled),
+			markers,
+			consistentMarkers,
 		);
-		previousBlank = true;
+		if (line === "") {
+			appendBlankLine(
+				result,
+				disabled.includes("consecutive-blank-lines"),
+				previousBlank,
+			);
+			previousBlank = true;
+			continue;
+		}
+		previousBlank = pushBodyLine(
+			line,
+			items[index - 1],
+			items[index + 1],
+			result,
+			listBlanks,
+		);
 	}
-	return bom + result.join(eol);
+	let fixed = bom + result.join(eol);
+	if (
+		!disabled.includes("single-trailing-newline") &&
+		fixed.replace(/^\uFEFF/, "") !== ""
+	) {
+		fixed = fixed.replace(/(\r?\n)*$/, eol);
+	}
+	return fixed;
 }

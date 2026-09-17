@@ -145,6 +145,7 @@ test("本文、見出し、箇条書き、表の句点を検出する", () => {
 
 	expect(enabledRulesOf(source)).toEqual([
 		"japanese-period",
+		"heading-trailing-punctuation",
 		"japanese-period",
 		"japanese-period",
 		"japanese-period",
@@ -278,7 +279,7 @@ test("最初の記号と違う箇条書き記号を検出する", () => {
 
 test("ネストした箇条書きも基準の記号と比べる", () => {
 	expect(
-		optedRulesOf("- 項目\n\t* 子項目\n", ["list-marker-consistency"]),
+		optedRulesOf("- 項目\n  * 子項目\n", ["list-marker-consistency"]),
 	).toEqual(["list-marker-consistency"]);
 });
 
@@ -421,4 +422,99 @@ test("--disableで連続空行の圧縮を取り消す", () => {
 test("全てのruleがgroupへ重複なく入る", () => {
 	const grouped = Object.values(RULE_GROUPS).flatMap((rules) => [...rules]);
 	expect(grouped.slice().sort()).toEqual([...RULE_IDS].sort());
+});
+test("見出しの#と本文の区切りを検出して整える", () => {
+	expect(rulesOf("#見出し\n")).toEqual(["heading-space"]);
+	expect(rulesOf("#  見出し\n")).toEqual(["heading-space"]);
+	expect(rulesOf("# 見出し\n")).toEqual([]);
+	expect(fixSource("#見出し\n")).toBe("# 見出し\n");
+	expect(fixSource("#  見出し\n")).toBe("# 見出し\n");
+	expect(fixSource("   ##  見出し\n")).toBe("   ## 見出し\n");
+});
+
+test("フェンス前後の空行不足を検出して空行を入れる", () => {
+	const source = "本文です\n```js\ncode\n```\n続きです\n";
+	expect(rulesOf(source)).toEqual(["fence-blank-lines", "fence-blank-lines"]);
+	const fixed = "本文です\n\n```js\ncode\n```\n\n続きです\n";
+	expect(fixSource(source)).toBe(fixed);
+	expect(fixSource(fixed)).toBe(fixed);
+	expect(rulesOf(fixed)).toEqual([]);
+});
+
+test("リスト前後の空行不足を検出して空行を入れる", () => {
+	const source = "本文です\n- 項目A\n- 項目B\n続きです\n";
+	expect(rulesOf(source)).toEqual(["list-blank-lines", "list-blank-lines"]);
+	const fixed = "本文です\n\n- 項目A\n- 項目B\n\n続きです\n";
+	expect(fixSource(source)).toBe(fixed);
+	expect(rulesOf(fixed)).toEqual([]);
+});
+
+test("文書の先頭と末尾のリストに空行を求めない", () => {
+	expect(rulesOf("- 項目A\n- 項目B\n")).toEqual([]);
+	expect(rulesOf("1. 項目A\n2. 項目B\n")).toEqual([]);
+});
+
+test("末尾の改行不足と重複を検出して単一改行へ整える", () => {
+	expect(rulesOf("本文です")).toEqual(["single-trailing-newline"]);
+	expect(fixSource("本文です")).toBe("本文です\n");
+	expect(rulesOf("本文です\n\n")).toEqual([
+		"consecutive-blank-lines",
+		"single-trailing-newline",
+	]);
+	expect(fixSource("本文です\n\n")).toBe("本文です\n");
+});
+
+test("ハードタブを検出してスペースへ置き換える", () => {
+	expect(rulesOf("a\tb\n")).toEqual(["hard-tabs"]);
+	expect(fixSource("a\tb\n")).toBe("a  b\n");
+	expect(fixSource("a\tb\n", [], ["hard-tabs"])).toBe("a\tb\n");
+});
+
+test("見出し末尾の句読点を警告する", () => {
+	expect(rulesOf("## 使い方。\n")).toEqual(["heading-trailing-punctuation"]);
+	expect(rulesOf("## 使い方\n")).toEqual([]);
+	expect(rulesOf("## 使い方 ##\n")).toEqual([]);
+	const findings = lintSource("## 使い方。\n", "doc.md");
+	expect(findings.map((finding) => finding.severity)).toEqual(["warning"]);
+	expect(fixSource("## 使い方。\n")).toBe("## 使い方。\n");
+});
+
+test("逆順リンクを検出する", () => {
+	expect(rulesOf("(説明)[https://example.com]\n")).toEqual(["reversed-link"]);
+	expect(rulesOf("[説明](https://example.com)\n")).toEqual([]);
+	expect(rulesOf("(例)[^1]\n")).toEqual([]);
+	expect(rulesOf("`(a)[b]` の形を説明する\n")).toEqual([]);
+});
+
+test("既定では順序リストの採番混在を検出しない", () => {
+	expect(rulesOf("1. 項目A\n1. 項目B\n2. 項目C\n")).toEqual([]);
+});
+
+test("順序リストの採番混在を検出する", () => {
+	const enabled = ["ordered-list-marker"] as const;
+	const mixed = "1. 項目A\n1. 項目B\n2. 項目C\n";
+	const found = lintSource(mixed, "doc.md", [...enabled]);
+	expect(found.map((finding) => finding.rule)).toEqual(["ordered-list-marker"]);
+	expect(found[0]?.line).toBe(3);
+	expect(optedRulesOf("1. 項目A\n2. 項目B\n3. 項目C\n", [...enabled])).toEqual(
+		[],
+	);
+	expect(optedRulesOf("1. 項目A\n1. 項目B\n", [...enabled])).toEqual([]);
+	expect(optedRulesOf("1. 項目A\n1) 項目B\n", [...enabled])).toEqual([
+		"ordered-list-marker",
+	]);
+});
+
+test("--disableで追加したruleの検出と整形を取り消す", () => {
+	expect(
+		lintSource(
+			"#見出し",
+			"doc.md",
+			[],
+			["heading-space", "single-trailing-newline"],
+		),
+	).toEqual([]);
+	expect(
+		fixSource("本文\n```js\ncode\n```\n続き\n", [], ["fence-blank-lines"]),
+	).toBe("本文\n```js\ncode\n```\n続き\n");
 });

@@ -146,6 +146,8 @@ describe("quality config", () => {
 			[
 				"consecutive-blank-lines",
 				"hard-break-html",
+				"hard-tabs",
+				"single-trailing-newline",
 				"trailing-backslash",
 				"trailing-whitespace",
 			],
