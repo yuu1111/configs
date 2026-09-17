@@ -1,8 +1,14 @@
 import { describe, expect, test } from "bun:test";
+import type { OptInRuleId } from "../src/rule-ids";
 import { scanSource } from "../src/scan";
 
-function rulesOf(source: string): string[] {
-	return scanSource(source, "src/sample.ts").map((finding) => finding.rule);
+function rulesOf(
+	source: string,
+	enabled: readonly OptInRuleId[] = [],
+): string[] {
+	return scanSource(source, "src/sample.ts", enabled).map(
+		(finding) => finding.rule,
+	);
 }
 
 describe("tsdoc checks", () => {
@@ -19,8 +25,8 @@ describe("tsdoc checks", () => {
 
 	test("reports a TSDoc comment written on a single line", () => {
 		const source = "/** Runs the task */\nexport function run(): void {}\n";
-		const findings = scanSource(source, "src/sample.ts");
-		expect(rulesOf(source)).toEqual(["single-line-doc"]);
+		const findings = scanSource(source, "src/sample.ts", ["single-line-doc"]);
+		expect(rulesOf(source, ["single-line-doc"])).toEqual(["single-line-doc"]);
 		expect(findings[0]?.severity).toBe("warning");
 	});
 
@@ -34,7 +40,9 @@ describe("tsdoc checks", () => {
 			"\treturn value",
 			"}",
 		].join("\n");
-		const findings = scanSource(source, "src/sample.ts");
+		const findings = scanSource(source, "src/sample.ts", [
+			"blank-line-before-tags",
+		]);
 		expect(findings.map((finding) => finding.rule)).toEqual([
 			"blank-line-before-tags",
 		]);
@@ -54,7 +62,9 @@ describe("tsdoc checks", () => {
 			"\treturn value",
 			"}",
 		].join("\n");
-		expect(scanSource(source, "src/sample.ts")).toEqual([]);
+		expect(
+			scanSource(source, "src/sample.ts", ["blank-line-before-tags"]),
+		).toEqual([]);
 	});
 
 	test("accepts tags without a summary", () => {
@@ -64,7 +74,9 @@ describe("tsdoc checks", () => {
 			" */",
 			"export function read(value: number): void {}",
 		].join("\n");
-		expect(scanSource(source, "src/sample.ts")).toEqual([]);
+		expect(
+			scanSource(source, "src/sample.ts", ["blank-line-before-tags"]),
+		).toEqual([]);
 	});
 
 	test("reports a parameter that the signature does not declare", () => {
@@ -75,8 +87,8 @@ describe("tsdoc checks", () => {
 			" */",
 			"export function run(value: number): void {}",
 		].join("\n");
-		const findings = scanSource(source, "src/sample.ts");
-		expect(rulesOf(source).sort()).toEqual([
+		const findings = scanSource(source, "src/sample.ts", ["param-untagged"]);
+		expect(rulesOf(source, ["param-untagged"]).sort()).toEqual([
 			"param-mismatch",
 			"param-untagged",
 		]);
@@ -95,12 +107,13 @@ describe("tsdoc checks", () => {
 			"\treturn value",
 			"}",
 		].join("\n");
-		const findings = scanSource(source, "src/sample.ts");
-		expect(rulesOf(source).sort()).toEqual([
+		const findings = scanSource(source, "src/sample.ts", [
 			"param-untagged",
-			"type-param-mismatch",
 			"type-param-untagged",
 		]);
+		expect(
+			rulesOf(source, ["param-untagged", "type-param-untagged"]).sort(),
+		).toEqual(["param-untagged", "type-param-mismatch", "type-param-untagged"]);
 		expect(
 			findings.find((finding) => finding.rule === "type-param-mismatch")
 				?.severity,
@@ -142,7 +155,7 @@ describe("tsdoc checks", () => {
 			"export function run(): void {}",
 		].join("\n");
 
-		expect(rulesOf(source)).toEqual([]);
+		expect(rulesOf(source, ["single-line-doc"])).toEqual([]);
 	});
 
 	test("reports a tag that TSDoc does not define as a warning", () => {
@@ -159,7 +172,9 @@ describe("tsdoc checks", () => {
 	});
 
 	test("warns about an exported declaration without a comment", () => {
-		const findings = scanSource("export const value = 1\n", "src/sample.ts");
+		const findings = scanSource("export const value = 1\n", "src/sample.ts", [
+			"missing-doc",
+		]);
 		expect(findings).toHaveLength(1);
 		expect(findings[0]?.rule).toBe("missing-doc");
 		expect(findings[0]?.severity).toBe("warning");
@@ -196,7 +211,7 @@ describe("tsdoc checks", () => {
 			"function run(value: number): void {}",
 			"export { run }",
 		].join("\n");
-		expect(rulesOf(source).sort()).toEqual([
+		expect(rulesOf(source, ["param-untagged"]).sort()).toEqual([
 			"param-mismatch",
 			"param-untagged",
 		]);
@@ -248,7 +263,7 @@ describe("tsdoc checks", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", [], [], "documented")
+			scanSource(source, "src/sample.ts", ["param-untagged"], [], "documented")
 				.map((finding) => finding.rule)
 				.sort(),
 		).toEqual(["param-mismatch", "param-untagged"]);
@@ -294,18 +309,28 @@ describe("tsdoc checks", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
-				(finding) => finding.rule,
-			),
+			scanSource(
+				source,
+				"src/sample.ts",
+				["single-line-doc"],
+				[],
+				"exported",
+				"documented",
+			).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
-	test("keeps a single-line doc off an unexported declaration under styleScope documented", () => {
+	test("checks a single-line doc on an unexported declaration under styleScope documented", () => {
 		const source = "/** Runs the task */\nfunction run(): void {}\n";
 		expect(
-			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
-				(finding) => finding.rule,
-			),
+			scanSource(
+				source,
+				"src/sample.ts",
+				["single-line-doc"],
+				[],
+				"exported",
+				"documented",
+			).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
@@ -318,7 +343,7 @@ describe("tsdoc checks", () => {
 			"function run(value: number): void {}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", [], [], "documented")
+			scanSource(source, "src/sample.ts", ["param-untagged"], [], "documented")
 				.map((finding) => finding.rule)
 				.sort(),
 		).toEqual(["param-mismatch", "param-untagged"]);
@@ -329,7 +354,7 @@ describe("tsdoc checks", () => {
 			scanSource(
 				"function run(): void {}\n",
 				"src/sample.ts",
-				[],
+				["missing-doc"],
 				[],
 				"documented",
 			),
@@ -341,7 +366,7 @@ describe("tsdoc checks", () => {
 			scanSource(
 				"function run(): void {}\n",
 				"src/sample.ts",
-				[],
+				["missing-doc"],
 				[],
 				"all",
 			).map((finding) => finding.rule),
@@ -356,7 +381,9 @@ describe("tsdoc checks", () => {
 			"\tconst load = (): void => {}",
 			"}",
 		].join("\n");
-		expect(scanSource(source, "src/sample.ts", [], [], "all")).toEqual([]);
+		expect(
+			scanSource(source, "src/sample.ts", ["missing-doc"], [], "all"),
+		).toEqual([]);
 	});
 
 	test("skips a file that does not parse", () => {
@@ -368,7 +395,7 @@ describe("tsdoc checks", () => {
 			"// tsdoc-check-ignore missing-doc: the value is read by the loader",
 			"export const value = 1",
 		].join("\n");
-		expect(rulesOf(source)).toEqual([]);
+		expect(rulesOf(source, ["missing-doc"])).toEqual([]);
 	});
 
 	test("reports a suppression without a reason", () => {
@@ -384,7 +411,10 @@ describe("tsdoc checks", () => {
 			"// tsdoc-check-ignore missing-docs: a typo",
 			"export const value = 1",
 		].join("\n");
-		expect(rulesOf(source).sort()).toEqual(["missing-doc", "suppression"]);
+		expect(rulesOf(source, ["missing-doc"]).sort()).toEqual([
+			"missing-doc",
+			"suppression",
+		]);
 	});
 
 	test("reports a suppression that covers nothing", () => {
@@ -406,7 +436,7 @@ describe("tsdoc checks", () => {
 			" */",
 			"export const value = 1",
 		].join("\n");
-		expect(rulesOf(source)).toEqual([]);
+		expect(rulesOf(source, ["missing-doc"])).toEqual([]);
 	});
 
 	test("reports a parameter without a @param tag", () => {
@@ -417,8 +447,8 @@ describe("tsdoc checks", () => {
 			" */",
 			"export function run(value: number): void {}",
 		].join("\n");
-		const findings = scanSource(source, "src/sample.ts");
-		expect(rulesOf(source).sort()).toEqual([
+		const findings = scanSource(source, "src/sample.ts", ["param-untagged"]);
+		expect(rulesOf(source, ["param-untagged"]).sort()).toEqual([
 			"param-mismatch",
 			"param-untagged",
 		]);
@@ -438,7 +468,9 @@ describe("tsdoc checks", () => {
 			" */",
 			"export function run<T, U>(value: T): void {}",
 		].join("\n");
-		expect(rulesOf(source)).toEqual(["type-param-untagged"]);
+		expect(rulesOf(source, ["type-param-untagged"])).toEqual([
+			"type-param-untagged",
+		]);
 	});
 
 	test("keeps the parameter order rule off by default", () => {
@@ -544,7 +576,7 @@ describe("tsdoc checks", () => {
 			" */",
 			"export function run(value: number): void {}",
 		].join("\n");
-		expect(rulesOf(source)).toEqual(["param-mismatch"]);
+		expect(rulesOf(source, ["param-untagged"])).toEqual(["param-mismatch"]);
 	});
 
 	test("reports an empty @deprecated as a syntax error", () => {
@@ -785,7 +817,7 @@ describe("orphan TSDoc", () => {
 			"/* the value read by the loader */",
 			"export const value = 1",
 		].join("\n");
-		expect(rulesOf(source)).toEqual(["missing-doc"]);
+		expect(rulesOf(source, ["missing-doc"])).toEqual(["missing-doc"]);
 	});
 });
 
@@ -800,9 +832,14 @@ describe("object literal members", () => {
 			"})",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
-				(finding) => finding.rule,
-			),
+			scanSource(
+				source,
+				"src/sample.ts",
+				["single-line-doc"],
+				[],
+				"exported",
+				"documented",
+			).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
@@ -832,9 +869,14 @@ describe("object literal members", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
-				(finding) => finding.rule,
-			),
+			scanSource(
+				source,
+				"src/sample.ts",
+				["single-line-doc"],
+				[],
+				"exported",
+				"documented",
+			).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
@@ -848,9 +890,14 @@ describe("object literal members", () => {
 			"}] as const",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", [], [], "exported", "documented").map(
-				(finding) => finding.rule,
-			),
+			scanSource(
+				source,
+				"src/sample.ts",
+				["single-line-doc"],
+				[],
+				"exported",
+				"documented",
+			).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
@@ -869,7 +916,7 @@ describe("object literal members", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", [], [], "documented")
+			scanSource(source, "src/sample.ts", ["param-untagged"], [], "documented")
 				.map((finding) => finding.rule)
 				.sort(),
 		).toEqual(["param-mismatch", "param-untagged"]);
@@ -878,10 +925,14 @@ describe("object literal members", () => {
 
 describe("disabled rules", () => {
 	test("turns off a rule that is on by default", () => {
-		const source = "/** Runs the task */\nexport function run(): void {}\n";
-		expect(rulesOf(source)).toEqual(["single-line-doc"]);
-		expect(
-			scanSource(source, "src/sample.ts", [], ["single-line-doc"]),
-		).toEqual([]);
+		const source = [
+			"/** Runs the task",
+			" *",
+			" * @bogus",
+			" */",
+			"export function run(): void {}",
+		].join("\n");
+		expect(rulesOf(source)).toEqual(["tsdoc-tag"]);
+		expect(scanSource(source, "src/sample.ts", [], ["tsdoc-tag"])).toEqual([]);
 	});
 });

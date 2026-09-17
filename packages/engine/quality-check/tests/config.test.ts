@@ -47,7 +47,7 @@ describe("quality config", () => {
 		expect(engineConfig(config, "tsdoc-check")).toEqual({
 			includes: ["src/**", "!src/generated/**"],
 			options: { docScope: "exported", styleScope: "exported" },
-			rules: { disable: [], enable: [], error: [], warn: [] },
+			rules: { disable: [], enable: ["missing-doc"], error: [], warn: [] },
 		});
 	});
 
@@ -242,7 +242,11 @@ describe("quality config", () => {
 			"test",
 		);
 		const options = engineConfig(config, "tsdoc-check");
-		expect(options?.rules.enable).toEqual(["param-order"]);
+		expect(options?.rules.enable).toEqual([
+			"param-order",
+			"param-untagged",
+			"type-param-untagged",
+		]);
 		expect(options?.rules.error).toEqual([
 			"param-mismatch",
 			"param-order",

@@ -28,9 +28,14 @@ export type RuleId = (typeof RULE_IDS)[number];
  * 既定では実行せず--enableで明示的に有効にするruleの識別子一覧
  */
 export const OPT_IN_RULE_IDS = [
+	"blank-line-before-tags",
 	"deprecated-without-guidance",
+	"missing-doc",
 	"missing-returns",
 	"param-order",
+	"param-untagged",
+	"single-line-doc",
+	"type-param-untagged",
 ] as const;
 
 /**

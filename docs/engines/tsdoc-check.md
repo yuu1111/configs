@@ -14,14 +14,19 @@
     "rules": {
       "preset": "recommended",
       "syntax": {
+        "blank-line-before-tags": "on",
+        "single-line-doc": "on",
         "tsdoc-tag": "error"
       },
       "documentation": {
-        "missing-returns": "on",
-        "deprecated-without-guidance": "on"
+        "deprecated-without-guidance": "on",
+        "missing-doc": "on",
+        "missing-returns": "on"
       },
       "contract": {
-        "param-order": "on"
+        "param-order": "on",
+        "param-untagged": "on",
+        "type-param-untagged": "on"
       }
     }
   }
@@ -35,6 +40,7 @@
 
 書き足りないdocを咎める範囲を `docScope` が、書いたTSDocの体裁を検査する範囲を `styleScope` が選ぶ
 どちらも省略すると `exported` になる
+どちらのscopeもopt-inのruleだけに効くため、`preset` の `recommended` では指定しても何も変わらない
 
 ### docScope
 
@@ -71,17 +77,18 @@ object literal のメンバーは変数の初期化式から辿り、引数、�
 | `suppression` | `suppression` | error | true | 全文書 | 理由の無い抑制、未知のrule、ruleを書いていない抑制 |
 | `tsdoc-tag` | `syntax` | warning | true | 全文書 | TSDoc設定が定義していないtag |
 | `suppression-unused` | `suppression` | warning | true | 全文書 | 何も抑制しない抑制 |
-| `missing-doc` | `documentation` | warning | true | docScope | TSDoc commentの無い宣言 |
-| `single-line-doc` | `syntax` | warning | true | styleScope | 1行で書いたTSDoc comment |
-| `blank-line-before-tags` | `syntax` | warning | true | styleScope | summaryの直下に書いたblock tag |
+| `missing-doc` | `documentation` | warning | false | docScope | TSDoc commentの無い宣言 |
+| `single-line-doc` | `syntax` | warning | false | styleScope | 1行で書いたTSDoc comment |
+| `blank-line-before-tags` | `syntax` | warning | false | styleScope | summaryの直下に書いたblock tag |
 | `orphan-doc` | `syntax` | warning | true | 全文書 | どの宣言にも付いていないTSDoc comment |
-| `param-untagged` | `contract` | warning | true | docScope | `@param` の無い宣言済みparameter |
-| `type-param-untagged` | `contract` | warning | true | docScope | `@typeParam` の無い宣言済みtype parameter |
+| `param-untagged` | `contract` | warning | false | docScope | `@param` の無い宣言済みparameter |
+| `type-param-untagged` | `contract` | warning | false | docScope | `@typeParam` の無い宣言済みtype parameter |
 | `param-order` | `contract` | warning | false | docScope | 宣言順と違う `@param` の並び |
 | `missing-returns` | `documentation` | warning | false | docScope | `@returns` の無い値を返す関数 |
 | `deprecated-without-guidance` | `documentation` | warning | false | docScope | 代替先を示さない `@deprecated` |
 
-`param-order`、`missing-returns`、`deprecated-without-guidance` はopt-inで、`rules` が `on` にするまで実行しない
+`documentation` groupのruleと、`syntax` の `blank-line-before-tags`・`single-line-doc`、`contract` の `param-order`・`param-untagged`・`type-param-untagged` はopt-inで、`rules` が `on` にするまで実行しない
+そのため `preset` の `recommended` は書かれたTSDocの構文と契約の整合だけを検査し、docの有無と体裁を要求しない
 
 `warn` と `error` はruleの重大度を変更し、opt-inのruleは先に有効にする
 
