@@ -144,6 +144,7 @@ describe("quality config", () => {
 		);
 		expect(engineConfig(config, "document-style-check")?.rules.disable).toEqual(
 			[
+				"blockquote-space",
 				"code-span-padding",
 				"consecutive-blank-lines",
 				"emphasis-padding",

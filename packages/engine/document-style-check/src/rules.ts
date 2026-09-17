@@ -13,13 +13,17 @@ export interface Finding extends Located {
 
 const MESSAGES: Record<RuleId, string> = {
 	"bare-url": "a bare URL is not an autolink",
+	"blockquote-blank": "a blank line splits one blockquote into two",
+	"blockquote-space": "a blockquote symbol has more than one space after it",
 	"code-fence-language":
 		"a code fence without a language renders without highlighting",
 	"code-span-padding": "a code span contains padding without meaning",
+	"command-prompt": "a command prompt is shown without its output",
 	"consecutive-blank-lines":
 		"consecutive blank lines add spacing without meaning",
 	"date-anchored-statement": "a check date is not the identity of the subject",
 	"descriptive-link-text": "link text does not describe its destination",
+	"duplicate-heading": "two headings in a document have the same text",
 	"emphasis-as-heading": "emphasis is not a heading",
 	"emphasis-marker": "emphasis markers do not mix styles",
 	"emphasis-padding": "emphasis markers contain padding without meaning",
@@ -43,6 +47,7 @@ const MESSAGES: Record<RuleId, string> = {
 	"japanese-period": "a Japanese sentence does not end with a period",
 	"link-label-padding": "link text contains padding without meaning",
 	"list-blank-lines": "a list is not surrounded by blank lines",
+	"list-indent": "a list item is not indented like its level",
 	"list-marker-consistency": "unordered list markers do not mix styles",
 	"list-marker-space":
 		"a list marker does not separate its content with a single space",
@@ -53,6 +58,7 @@ const MESSAGES: Record<RuleId, string> = {
 	"single-trailing-newline": "a file does not end with a single newline",
 	"table-blank-lines": "a table is not surrounded by blank lines",
 	"table-column-count": "a table row has more columns than its header",
+	"table-style": "a table does not use the style of the first table",
 	"thematic-break-style": "thematic breaks do not use one style",
 	"trailing-backslash": "a trailing backslash adds spacing without meaning",
 	"trailing-whitespace": "trailing whitespace is not part of the content",
@@ -96,6 +102,11 @@ const TABLE_DELIMITER = /^[\s|:-]+$/;
 const TOP_LEVEL_HEADING = /^ {0,3}#(?:\s|$)/;
 const LINK_TEXT_EDGE =
 	/^[.,;:!?。、，．；：！？「」『』（）()]+|[.,;:!?。、，．；：！？「」『』（）()]+$/g;
+const BLOCKQUOTE = /^ {0,3}>/;
+const BLOCKQUOTE_SPACE = /^ {0,3}>+([ \t]{2,})(?=\S)/;
+const COMMAND_PROMPT = /^( *)\$ (?=\S)/;
+const HEADING_TEXT = /^ {0,3}#{1,6}\s*(.+?)\s*$/;
+const TABLE_PADDED = /\s[:-]/;
 const PROHIBITED_LINK_TEXTS = new Set([
 	"click here",
 	"here",
@@ -962,11 +973,18 @@ function lintDocument(
 	file: string,
 ): Finding[] {
 	const findings: Finding[] = [];
+	findings.push(...commandPromptFindings(items, file));
+	findings.push(...duplicateHeadingFindings(items, file));
+	findings.push(...listIndentFindings(items, file));
+	findings.push(...blockquoteBlankFindings(items, file));
 	if (enabled.includes("single-top-level-heading")) {
 		findings.push(...topLevelHeadingFindings(items, file));
 	}
 	if (enabled.includes("first-line-heading")) {
 		findings.push(...firstHeadingFinding(items, file));
+	}
+	if (enabled.includes("table-style")) {
+		findings.push(...tableStyleFindings(items, file));
 	}
 	return findings;
 }
@@ -1023,6 +1041,554 @@ function lintInlineSpacing(item: MarkdownLine, file: string): Finding[] {
 		);
 	}
 	return findings;
+}
+
+/**
+ * 引用記号の後に半角スペースが2つ以上ある位置を返す 無ければundefined
+ *
+ * @param line - 判定する本文の1行
+ * @returns 2つ目の空白の0始まりの位置 該当しなければundefined
+ */
+function blockquoteSpaceColumn(line: string): number | undefined {
+	const match = BLOCKQUOTE_SPACE.exec(line);
+	if (match === null) {
+		return undefined;
+	}
+	return match[0].length - (match[1] ?? "").length;
+}
+
+/**
+ * 引用記号の後の空白を半角スペース1つへ揃える
+ *
+ * @param line - 揃える本文の1行
+ * @returns 引用記号の後を半角スペース1つにした本文の1行
+ */
+function normalizeBlockquoteSpace(line: string): string {
+	const match = BLOCKQUOTE_SPACE.exec(line);
+	if (match === null) {
+		return line;
+	}
+	const head = match[0].slice(0, match[0].length - (match[1] ?? "").length);
+	return `${head} ${line.slice(match[0].length)}`;
+}
+
+/**
+ * 引用記号で始まる行か判定する
+ *
+ * @param line - 判定する本文の1行
+ * @returns 引用の行ならtrue
+ */
+function isBlockquoteLine(line: string): boolean {
+	return BLOCKQUOTE.test(line);
+}
+
+/**
+ * 引用記号の後の空白を違反として返す
+ *
+ * @param item - 判定する本文の1行
+ * @param file - 指摘に載せるfileのpath
+ * @returns 引用記号の後の空白の検出
+ */
+function blockquoteSpaceFinding(item: MarkdownLine, file: string): Finding[] {
+	const column = blockquoteSpaceColumn(item.line);
+	return column === undefined
+		? []
+		: [finding("blockquote-space", "error", file, item.number, column + 1)];
+}
+
+/**
+ * 引用を分断する空行を違反として返す
+ *
+ * @param items - 文書の行一覧
+ * @param file - 指摘に載せるfileのpath
+ * @returns 引用の間にある空行の検出
+ */
+function blockquoteBlankFindings(
+	items: MarkdownLine[],
+	file: string,
+): Finding[] {
+	const findings: Finding[] = [];
+	for (let index = 1; index < items.length - 1; index += 1) {
+		const item = items[index];
+		const before = items[index - 1];
+		const after = items[index + 1];
+		if (
+			item === undefined ||
+			before === undefined ||
+			after === undefined ||
+			item.region !== "body" ||
+			!item.blank ||
+			!isBlockquoteLine(before.line) ||
+			!isBlockquoteLine(after.line)
+		) {
+			continue;
+		}
+		findings.push(finding("blockquote-blank", "warning", file, item.number, 1));
+	}
+	return findings;
+}
+
+/**
+ * コードブロックを走査する状態
+ */
+interface CommandScanState {
+	found: MarkdownLine[];
+	open: boolean;
+	output: boolean;
+	prompts: MarkdownLine[];
+}
+
+/**
+ * 1行をコマンドの走査へ加える
+ *
+ * @param item - 走査する行
+ * @param state - 走査の状態
+ */
+function scanCommandLine(item: MarkdownLine, state: CommandScanState): void {
+	if (item.region === "fence-open") {
+		state.prompts.length = 0;
+		state.output = false;
+		state.open = true;
+		return;
+	}
+	if (item.region === "fence-close") {
+		if (state.open && !state.output) {
+			state.found.push(...state.prompts);
+		}
+		state.prompts.length = 0;
+		state.output = false;
+		state.open = false;
+		return;
+	}
+	if (item.region !== "fence" || item.blank) {
+		return;
+	}
+	if (COMMAND_PROMPT.test(item.line)) {
+		state.prompts.push(item);
+	} else {
+		state.output = true;
+	}
+}
+
+/**
+ * 出力を示さずコマンドだけを並べたコードブロックの行を返す
+ *
+ * @param items - 文書の行一覧
+ * @returns コマンドの行とみなした行の一覧
+ */
+function commandPromptLines(items: MarkdownLine[]): MarkdownLine[] {
+	const state: CommandScanState = {
+		found: [],
+		open: false,
+		output: false,
+		prompts: [],
+	};
+	for (const item of items) {
+		scanCommandLine(item, state);
+	}
+	if (state.open && !state.output) {
+		state.found.push(...state.prompts);
+	}
+	return state.found;
+}
+
+/**
+ * 出力を示さないコマンドの行を違反として返す
+ *
+ * @param items - 文書の行一覧
+ * @param file - 指摘に載せるfileのpath
+ * @returns コマンド記号の検出
+ */
+function commandPromptFindings(items: MarkdownLine[], file: string): Finding[] {
+	return commandPromptLines(items).map((item) =>
+		finding("command-prompt", "error", file, item.number, 1),
+	);
+}
+
+/**
+ * コマンド記号を本文から取り除く
+ *
+ * @param line - 取り除く本文の1行
+ * @returns コマンド記号を除いた本文の1行
+ */
+function removeCommandPrompt(line: string): string {
+	return line.replace(
+		COMMAND_PROMPT,
+		(_match: string, indent: string) => indent,
+	);
+}
+
+/**
+ * 見出し行の本文を返す 見出しでなければundefined
+ *
+ * @param line - 見出しの本文を読む本文の1行
+ * @returns 末尾の`#`を除いた見出しの本文 見出しでなければundefined
+ */
+function headingText(line: string): string | undefined {
+	const text = HEADING_TEXT.exec(line)?.[1];
+	if (text === undefined) {
+		return undefined;
+	}
+	const trimmed = text.replace(/\s*#+\s*$/, "").trim();
+	return trimmed === "" ? undefined : trimmed;
+}
+
+/**
+ * 同じ本文を持つ2つ目以降の見出しを違反として返す
+ *
+ * @param items - 文書の行一覧
+ * @param file - 指摘に載せるfileのpath
+ * @returns 同名見出しの検出
+ */
+function duplicateHeadingFindings(
+	items: MarkdownLine[],
+	file: string,
+): Finding[] {
+	const seen = new Set<string>();
+	const findings: Finding[] = [];
+	for (const item of items) {
+		if (item.region !== "body") {
+			continue;
+		}
+		const text = headingText(item.line);
+		if (text === undefined) {
+			continue;
+		}
+		if (seen.has(text)) {
+			findings.push(
+				finding("duplicate-heading", "warning", file, item.number, 1),
+			);
+		}
+		seen.add(text);
+	}
+	return findings;
+}
+
+/**
+ * リスト項目の字下げと種類を返す リスト項目でなければundefined
+ *
+ * @param line - 判定する本文の1行
+ * @returns 字下げと順序リストかどうか リスト項目でなければundefined
+ */
+function listItemIndent(
+	line: string,
+): { indent: number; ordered: boolean } | undefined {
+	const ordered = orderedListMarker(line);
+	if (ordered !== undefined) {
+		return { indent: ordered.position, ordered: true };
+	}
+	const unordered = unorderedListMarker(line);
+	return unordered === undefined
+		? undefined
+		: { indent: unordered.position, ordered: false };
+}
+
+/**
+ * 開いているリストの階層
+ */
+interface ListLevel {
+	corrected: number;
+	ordered: boolean;
+	raw: number;
+}
+
+/**
+ * 開いているリストの階層を保持する
+ */
+interface ListIndentState {
+	levels: ListLevel[];
+}
+
+/**
+ * リスト項目の字下げの期待値を返し 階層を更新する
+ *
+ * @param state - 開いている階層を保持する状態
+ * @param item - 判定するリスト項目の字下げと種類
+ * @returns 字下げの期待値
+ */
+function listIndentExpectation(
+	state: ListIndentState,
+	item: { indent: number; ordered: boolean },
+): number {
+	const levels = state.levels;
+	while (levels.length > 0) {
+		const level = levels[levels.length - 1];
+		if (level === undefined || level.raw <= item.indent) {
+			break;
+		}
+		levels.pop();
+	}
+	const parent = levels[levels.length - 1];
+	if (parent === undefined) {
+		levels.push({
+			corrected: item.indent,
+			ordered: item.ordered,
+			raw: item.indent,
+		});
+		return item.indent;
+	}
+	if (parent.raw === item.indent) {
+		return parent.corrected;
+	}
+	if (
+		(parent.ordered && item.indent > parent.raw) ||
+		item.indent >= parent.raw + 2
+	) {
+		const corrected = parent.ordered ? item.indent : parent.corrected + 2;
+		levels.push({ corrected, ordered: item.ordered, raw: item.indent });
+		return corrected;
+	}
+	return parent.corrected;
+}
+
+/**
+ * 階層に合わない字下げのリスト項目を違反として返す
+ *
+ * @param items - 文書の行一覧
+ * @param file - 指摘に載せるfileのpath
+ * @returns リストの字下げの検出
+ */
+function listIndentFindings(items: MarkdownLine[], file: string): Finding[] {
+	const state: ListIndentState = { levels: [] };
+	const findings: Finding[] = [];
+	for (const item of items) {
+		if (item.region !== "body") {
+			state.levels = [];
+			continue;
+		}
+		if (item.blank) {
+			continue;
+		}
+		const marker = listItemIndent(item.line);
+		if (marker === undefined) {
+			state.levels = [];
+			continue;
+		}
+		if (listIndentExpectation(state, marker) !== marker.indent) {
+			findings.push(finding("list-indent", "error", file, item.number, 1));
+		}
+	}
+	return findings;
+}
+
+/**
+ * リスト項目の字下げを階層へ揃える
+ *
+ * @param line - 揃える本文の1行
+ * @param state - 開いている階層を保持する状態
+ * @param enabled - 字下げを揃えるか
+ * @returns 字下げを揃えた本文の1行
+ */
+function alignListIndent(
+	line: string,
+	state: ListIndentState,
+	enabled: boolean,
+): string {
+	if (!enabled) {
+		return line;
+	}
+	const marker = listItemIndent(line);
+	if (marker === undefined) {
+		if (line !== "") {
+			state.levels = [];
+		}
+		return line;
+	}
+	const expected = listIndentExpectation(state, marker);
+	return marker.indent === expected
+		? line
+		: " ".repeat(expected) + line.slice(marker.indent);
+}
+
+/**
+ * 表の行のパイプの流儀
+ */
+type TablePipeStyle = "both" | "leading" | "none";
+
+/**
+ * 表の行のパイプの流儀を返す
+ *
+ * @param line - 判定する表の行
+ * @returns 行頭と行末のパイプの有無
+ */
+function tablePipeStyle(line: string): TablePipeStyle {
+	const trimmed = line.trim();
+	const leading = trimmed.startsWith("|");
+	if (leading && trimmed.endsWith("|")) {
+		return "both";
+	}
+	return leading ? "leading" : "none";
+}
+
+/**
+ * 最初の表の流儀を保持する
+ */
+interface TableStyleState {
+	delimiterPadded: boolean | undefined;
+	pipes: TablePipeStyle | undefined;
+}
+
+/**
+ * 最初の表と流儀の違う表の行を違反として返す
+ *
+ * @param items - 文書の行一覧
+ * @param file - 指摘に載せるfileのpath
+ * @returns 表の流儀の混在の検出
+ */
+function tableStyleFindings(items: MarkdownLine[], file: string): Finding[] {
+	const scan: TableStyleScan = {
+		findings: [],
+		rows: 0,
+		style: { delimiterPadded: undefined, pipes: undefined },
+	};
+	for (const item of items) {
+		scanTableStyleRow(item, scan, file);
+	}
+	return scan.findings;
+}
+
+/**
+ * 表の流儀を走査する状態
+ */
+interface TableStyleScan {
+	findings: Finding[];
+	rows: number;
+	style: TableStyleState;
+}
+
+/**
+ * 表の1行を流儀の判定へ加える
+ *
+ * @param item - 走査する行
+ * @param scan - 走査の状態
+ * @param file - 指摘に載せるfileのpath
+ */
+function scanTableStyleRow(
+	item: MarkdownLine,
+	scan: TableStyleScan,
+	file: string,
+): void {
+	if (item.region !== "body" || !isTableRow(item.line)) {
+		scan.rows = 0;
+		return;
+	}
+	scan.rows += 1;
+	const pipes = tablePipeStyle(item.line);
+	if (scan.style.pipes === undefined) {
+		scan.style.pipes = pipes;
+	} else if (pipes !== scan.style.pipes) {
+		scan.findings.push(finding("table-style", "error", file, item.number, 1));
+	}
+	if (scan.rows !== 2 || !isTableDelimiter(item.line)) {
+		return;
+	}
+	const padded = TABLE_PADDED.test(item.line);
+	if (scan.style.delimiterPadded === undefined) {
+		scan.style.delimiterPadded = padded;
+	} else if (padded !== scan.style.delimiterPadded) {
+		scan.findings.push(finding("table-style", "error", file, item.number, 1));
+	}
+}
+
+/**
+ * 表の流儀を揃えるために数えた行数を保持する
+ */
+interface TableFixState {
+	rows: number;
+	style: TableStyleState;
+}
+
+/**
+ * 表の行のパイプを指定した流儀へ揃える
+ *
+ * @param line - 揃える表の行
+ * @param pipes - 揃え先のパイプの流儀
+ * @returns パイプを揃えた表の行
+ */
+function alignTablePipes(line: string, pipes: TablePipeStyle): string {
+	const match = /^(\s*)(.*?)(\s*)$/.exec(line);
+	if (match === null) {
+		return line;
+	}
+	const indent = match[1] ?? "";
+	const trailing = match[3] ?? "";
+	const body = (match[2] ?? "").replace(/^\|\s?/, "").replace(/\s?\|$/, "");
+	if (body === "") {
+		return line;
+	}
+	if (pipes === "both") {
+		return `${indent}| ${body} |${trailing}`;
+	}
+	return pipes === "leading"
+		? `${indent}| ${body}${trailing}`
+		: `${indent}${body}${trailing}`;
+}
+
+/**
+ * 表の区切り行を指定した流儀へ揃える
+ *
+ * @param line - 揃える区切り行
+ * @param pipes - 揃え先のパイプの流儀
+ * @param padded - セルを空白で詰めるか
+ * @returns 流儀を揃えた区切り行
+ */
+function alignTableDelimiter(
+	line: string,
+	pipes: TablePipeStyle,
+	padded: boolean,
+): string {
+	const match = /^(\s*)(.*?)(\s*)$/.exec(line);
+	if (match === null) {
+		return line;
+	}
+	const indent = match[1] ?? "";
+	const trailing = match[3] ?? "";
+	const body = (match[2] ?? "").replace(/^\|/, "").replace(/\|$/, "");
+	const cells = body.split("|").map((cell) => cell.trim());
+	const joined = padded ? cells.join(" | ") : cells.join("|");
+	if (pipes === "both") {
+		return `${indent}| ${joined} |${trailing}`;
+	}
+	return pipes === "leading"
+		? `${indent}| ${joined}${trailing}`
+		: `${indent}${joined}${trailing}`;
+}
+
+/**
+ * 表の行を最初の表の流儀へ揃える
+ *
+ * @param line - 揃える本文の1行
+ * @param state - 最初の表の流儀と行数を保持する状態
+ * @param enabled - 流儀を揃えるか
+ * @returns 流儀を揃えた本文の1行
+ */
+function alignTableLine(
+	line: string,
+	state: TableFixState,
+	enabled: boolean,
+): string {
+	if (!isTableRow(line)) {
+		state.rows = 0;
+		return line;
+	}
+	state.rows += 1;
+	if (!enabled) {
+		return line;
+	}
+	if (state.style.pipes === undefined) {
+		state.style.pipes = tablePipeStyle(line);
+	}
+	if (state.rows === 2 && isTableDelimiter(line)) {
+		state.style.delimiterPadded ??= TABLE_PADDED.test(line);
+	}
+	const { delimiterPadded, pipes } = state.style;
+	if (pipes === undefined) {
+		return line;
+	}
+	if (isTableDelimiter(line) && delimiterPadded !== undefined) {
+		return alignTableDelimiter(line, pipes, delimiterPadded);
+	}
+	return alignTablePipes(line, pipes);
 }
 
 /**
@@ -1408,6 +1974,7 @@ function lintBodyLine(
 	findings.push(...emphasisHeadingFinding(item, masked, file));
 	findings.push(...lintHeadingAndLink(item, masked, file));
 	findings.push(...lintInlineSpacing(item, file));
+	findings.push(...blockquoteSpaceFinding(item, file));
 	return findings;
 }
 
@@ -1990,6 +2557,9 @@ function fixLine(item: MarkdownLine, disabled: readonly RuleId[]): string {
 		line = line.replace(/\\+$/, "");
 	}
 	line = fixInlineSpacing(line, disabled);
+	if (!disabled.includes("blockquote-space")) {
+		line = normalizeBlockquoteSpace(line);
+	}
 	if (
 		!disabled.includes("list-marker-space") &&
 		findListMarkerSpace(line) !== undefined
@@ -2115,6 +2685,27 @@ function pushBodyLine(
 		return true;
 	}
 	return false;
+}
+
+/**
+ * 本文以外の行を整形する
+ *
+ * @param item - 整形する行
+ * @param fences - 最初のフェンスの記号を保持する状態
+ * @param fenceStyle - フェンス記号を揃えるか
+ * @param prompts - コマンド記号を取り除く行番号の一覧
+ * @returns 整形した行
+ */
+function fixNonBodyLine(
+	item: MarkdownLine,
+	fences: StyleState,
+	fenceStyle: boolean,
+	prompts: Set<number>,
+): string {
+	const line = alignFenceLine(item, fences, fenceStyle);
+	return item.region === "fence" && prompts.has(item.number)
+		? removeCommandPrompt(line)
+		: line;
 }
 
 /**
@@ -2257,6 +2848,16 @@ export function fixSource(
 	const fences: StyleState = { style: undefined };
 	const breaks: StyleState = { style: undefined };
 	const emphasis: StyleState = { style: undefined };
+	const listIndent: ListIndentState = { levels: [] };
+	const tableFix: TableFixState = {
+		rows: 0,
+		style: { delimiterPadded: undefined, pipes: undefined },
+	};
+	const prompts = new Set(
+		disabled.includes("command-prompt")
+			? []
+			: commandPromptLines(items).map((item) => item.number),
+	);
 	const consistentMarkers =
 		enabled.includes("list-marker-consistency") &&
 		!disabled.includes("list-marker-consistency");
@@ -2277,9 +2878,11 @@ export function fixSource(
 		const previous = items[index - 1];
 		const next = items[index + 1];
 		if (item.region !== "body") {
+			listIndent.levels = [];
+			tableFix.rows = 0;
 			previousBlank = pushNonBodyLine(
 				item,
-				alignFenceLine(item, fences, optIn("fence-style")),
+				fixNonBodyLine(item, fences, optIn("fence-style"), prompts),
 				previous,
 				next,
 				result,
@@ -2287,15 +2890,27 @@ export function fixSource(
 			);
 			continue;
 		}
-		const fixed = alignEmphasisLine(
-			alignThematicBreak(
-				alignMarkerLine(fixLine(item, disabled), markers, consistentMarkers),
-				previous,
-				breaks,
-				optIn("thematic-break-style"),
+		const fixed = alignTableLine(
+			alignListIndent(
+				alignEmphasisLine(
+					alignThematicBreak(
+						alignMarkerLine(
+							fixLine(item, disabled),
+							markers,
+							consistentMarkers,
+						),
+						previous,
+						breaks,
+						optIn("thematic-break-style"),
+					),
+					emphasis,
+					optIn("emphasis-marker"),
+				),
+				listIndent,
+				!disabled.includes("list-indent"),
 			),
-			emphasis,
-			optIn("emphasis-marker"),
+			tableFix,
+			optIn("table-style"),
 		);
 		if (fixed === "") {
 			appendBlankLine(result, keepConsecutive, previousBlank);

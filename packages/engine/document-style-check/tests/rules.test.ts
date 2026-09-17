@@ -358,7 +358,7 @@ test("見出しレベルの飛びを検出する", () => {
 });
 
 test("一段ずつ増える見出しは検出しない", () => {
-	expect(rulesOf("# 見出し\n\n## 見出し\n\n### 見出し\n")).toEqual([]);
+	expect(rulesOf("# 見出し\n\n## 節\n\n### 項\n")).toEqual([]);
 });
 
 test("最初の見出しを飛びとして扱わない", () => {
@@ -770,4 +770,80 @@ test("--disableで今回追加したruleの検出と整形を取り消す", () =
 	expect(
 		fixSource("[ 仕様書 ](https://example.com)\n", [], ["link-label-padding"]),
 	).toBe("[ 仕様書 ](https://example.com)\n");
+});
+
+test("出力を示さないコマンド記号を検出して取り除く", () => {
+	const source = "```sh\n$ bun install\n$ bun test\n```\n";
+	expect(rulesOf(source)).toEqual(["command-prompt", "command-prompt"]);
+	expect(fixSource(source)).toBe("```sh\nbun install\nbun test\n```\n");
+	const withOutput = "```sh\n$ bun install\nadded 3 packages\n```\n";
+	expect(rulesOf(withOutput)).toEqual([]);
+	expect(fixSource(withOutput)).toBe(withOutput);
+	expect(rulesOf("```sh\nbun install\n```\n")).toEqual([]);
+});
+
+test("同じ本文の見出しを警告する", () => {
+	expect(rulesOf("## 設定\n\n本文\n\n## 設定\n")).toEqual([
+		"duplicate-heading",
+	]);
+	expect(rulesOf("# 見出し\n\n## 見出し\n")).toEqual(["duplicate-heading"]);
+	expect(rulesOf("## 設定\n\n## 優先順位\n")).toEqual([]);
+	expect(rulesOf("```md\n## 設定\n\n## 設定\n```\n")).toEqual([]);
+	const findings = lintSource("## 設定\n\n## 設定\n", "doc.md");
+	expect(findings.map((finding) => finding.severity)).toEqual(["warning"]);
+});
+
+test("階層に合わないリストの字下げを検出して揃える", () => {
+	expect(rulesOf("- 親\n   - 子\n")).toEqual(["list-indent"]);
+	expect(rulesOf("- 親\n  - 子\n")).toEqual([]);
+	expect(rulesOf("- 親\n  - 子\n    - 孫\n")).toEqual([]);
+	expect(rulesOf("- 親\n - 子\n")).toEqual(["list-indent"]);
+	expect(rulesOf("1. 親\n   - 子\n")).toEqual([]);
+	expect(fixSource("- 親\n   - 子\n")).toBe("- 親\n  - 子\n");
+	expect(fixSource("- 親\n - 子\n")).toBe("- 親\n- 子\n");
+	expect(fixSource("- 親\n  - 子\n    - 孫\n")).toBe(
+		"- 親\n  - 子\n    - 孫\n",
+	);
+});
+
+test("既定では表の流儀の混在を検出しない", () => {
+	const source =
+		"| A | B |\n| --- | --- |\n| 1 | 2 |\n\n| C | D |\n|------|------|\n| 3 | 4 |\n";
+	expect(rulesOf(source)).toEqual([]);
+});
+
+test("最初の表と違う流儀を検出して揃える", () => {
+	const enabled = ["table-style"] as const;
+	const source =
+		"| A | B |\n| --- | --- |\n| 1 | 2 |\n\n| C | D |\n|------|------|\n| 3 | 4 |\n";
+	expect(optedRulesOf(source, [...enabled])).toEqual(["table-style"]);
+	const fixed =
+		"| A | B |\n| --- | --- |\n| 1 | 2 |\n\n| C | D |\n| ------ | ------ |\n| 3 | 4 |\n";
+	expect(fixSource(source, [...enabled])).toBe(fixed);
+	expect(optedRulesOf(fixed, [...enabled])).toEqual([]);
+});
+
+test("引用記号の後の余分な空白を検出して揃える", () => {
+	expect(rulesOf(">   引用の文\n")).toEqual(["blockquote-space"]);
+	expect(rulesOf("> 引用の文\n")).toEqual([]);
+	expect(fixSource(">   引用の文\n")).toBe("> 引用の文\n");
+	expect(fixSource(">>  入れ子の引用\n")).toBe(">> 入れ子の引用\n");
+});
+
+test("引用を分断する空行を警告する", () => {
+	expect(rulesOf("> 前の引用\n\n> 後の引用\n")).toEqual(["blockquote-blank"]);
+	expect(rulesOf("> 前の引用\n>\n> 後の引用\n")).toEqual([]);
+	expect(rulesOf("> 引用\n\n本文\n")).toEqual([]);
+	const findings = lintSource("> 前の引用\n\n> 後の引用\n", "doc.md");
+	expect(findings.map((finding) => finding.severity)).toEqual(["warning"]);
+});
+
+test("--disableで追加した構文ruleの整形を取り消す", () => {
+	expect(fixSource("```sh\n$ bun install\n```\n", [], ["command-prompt"])).toBe(
+		"```sh\n$ bun install\n```\n",
+	);
+	expect(fixSource("- 親\n   - 子\n", [], ["list-indent"])).toBe(
+		"- 親\n   - 子\n",
+	);
+	expect(fixSource(">   引用\n", [], ["blockquote-space"])).toBe(">   引用\n");
 });

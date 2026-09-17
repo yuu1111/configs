@@ -31,11 +31,15 @@
 | Rule | Group | 重大度 | Default | 検出対象 |
 |------|-------|--------|---------|----------|
 | `bare-url` | `content` | error | true | 角括弧で囲まれていないURL |
+| `blockquote-blank` | `structure` | warning | true | 引用を2つに分ける空行 |
+| `blockquote-space` | `whitespace` | error | true | `>` の後に半角スペースが2つ以上ある引用 |
 | `code-fence-language` | `structure` | error | true | 言語指定の無いコードフェンス |
 | `code-span-padding` | `whitespace` | error | true | 前後を半角スペースで詰めたコードスパン |
+| `command-prompt` | `structure` | error | true | 出力を示さない `$` 付きのコマンド |
 | `consecutive-blank-lines` | `whitespace` | error | true | 意味を持たない連続空行 |
 | `date-anchored-statement` | `content` | warning | true | 対象の識別を確認日で代用した記述 |
 | `descriptive-link-text` | `content` | error | true | 行き先を説明しないリンクテキスト |
+| `duplicate-heading` | `structure` | warning | true | 本文が同じ見出しの重複 |
 | `emphasis-as-heading` | `structure` | warning | true | 強調だけを置いた見出しの代用行 |
 | `emphasis-marker` | `typography` | error | false | 最初と違う強調記号 |
 | `emphasis-padding` | `whitespace` | error | true | 内側に空白のある強調記号 |
@@ -56,6 +60,7 @@
 | `japanese-period` | `typography` | error | false | 日本語の文を終える `。` |
 | `link-label-padding` | `whitespace` | error | true | 内側に空白のあるリンクテキスト |
 | `list-blank-lines` | `structure` | error | true | 前後が空行でないリスト |
+| `list-indent` | `structure` | error | true | 階層に合わないリストの字下げ |
 | `list-marker-consistency` | `structure` | error | false | 最初の記号と違う箇条書き記号 |
 | `list-marker-space` | `structure` | error | true | 記号の後ろを半角スペース1つで区切らないリスト |
 | `ordered-list-marker` | `structure` | error | false | 採番の流儀が混在した順序リスト |
@@ -65,6 +70,7 @@
 | `single-trailing-newline` | `whitespace` | error | true | 単一改行で終わらない文書末尾 |
 | `table-blank-lines` | `structure` | error | true | 前後が空行でない表 |
 | `table-column-count` | `structure` | error | true | 見出しより列の多い表の行 |
+| `table-style` | `structure` | error | false | 最初の表と違うパイプや区切りの流儀 |
 | `thematic-break-style` | `structure` | error | false | 最初と違う区切り線の流儀 |
 | `trailing-backslash` | `whitespace` | error | true | 本文行の末尾のバックスラッシュ |
 | `trailing-whitespace` | `whitespace` | error | true | 行末の空白 |
@@ -73,9 +79,9 @@
 
 ## 整形できるrule
 
-`bare-url`、`code-span-padding`、`consecutive-blank-lines`、`emphasis-padding`、`fence-blank-lines`、`hard-break-html`、`hard-tabs`、`heading-blank-lines`、`heading-indent`、`heading-space`、`link-label-padding`、`list-blank-lines`、`list-marker-space`、`single-trailing-newline`、`table-blank-lines`、`trailing-backslash`、`trailing-whitespace` は整形できるため `quality-check document-style lint --write` で解消する
+`bare-url`、`blockquote-space`、`code-span-padding`、`command-prompt`、`consecutive-blank-lines`、`emphasis-padding`、`fence-blank-lines`、`hard-break-html`、`hard-tabs`、`heading-blank-lines`、`heading-indent`、`heading-space`、`link-label-padding`、`list-blank-lines`、`list-indent`、`list-marker-space`、`single-trailing-newline`、`table-blank-lines`、`trailing-backslash`、`trailing-whitespace` は整形できるため `quality-check document-style lint --write` で解消する
 
-`emphasis-marker`、`fence-style`、`list-marker-consistency`、`thematic-break-style` も整形できるが、有効にしたときだけ最初に見つけた流儀へ揃える
+`emphasis-marker`、`fence-style`、`list-marker-consistency`、`table-style`、`thematic-break-style` も整形できるが、有効にしたときだけ最初に見つけた流儀へ揃える
 
 次のruleは `--write` の後にもerrorとして残り、本文の判断が要る
 
@@ -107,6 +113,12 @@
 
 `descriptive-link-text` は「こちら」や `here` のような行き先を説明しないリンクテキストを報告する
 リンク先を特定できる語へ変える
+
+`duplicate-heading` は同一文書内で本文が同じ見出しを報告する
+見出しの本文を具体化するか、同じ内容の節を統合する
+
+`blockquote-blank` は2つの引用を分ける空行を報告する
+1つの引用にするなら空行へ `>` を置き、別の引用にするなら前後に地の文を挟む
 
 `setext-heading` は下線で見出しレベルを表した見出しを報告する
 `#` の記法へ変えるか、区切り線のつもりなら前に空行を置く

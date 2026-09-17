@@ -3,11 +3,15 @@
  */
 export const RULE_IDS = [
 	"bare-url",
+	"blockquote-blank",
+	"blockquote-space",
 	"code-fence-language",
 	"code-span-padding",
+	"command-prompt",
 	"consecutive-blank-lines",
 	"date-anchored-statement",
 	"descriptive-link-text",
+	"duplicate-heading",
 	"emphasis-as-heading",
 	"emphasis-marker",
 	"emphasis-padding",
@@ -28,6 +32,7 @@ export const RULE_IDS = [
 	"japanese-period",
 	"link-label-padding",
 	"list-blank-lines",
+	"list-indent",
 	"list-marker-consistency",
 	"list-marker-space",
 	"ordered-list-marker",
@@ -37,6 +42,7 @@ export const RULE_IDS = [
 	"single-trailing-newline",
 	"table-blank-lines",
 	"table-column-count",
+	"table-style",
 	"thematic-break-style",
 	"trailing-backslash",
 	"trailing-whitespace",
@@ -60,6 +66,7 @@ export const OPT_IN_RULE_IDS = [
 	"list-marker-consistency",
 	"ordered-list-marker",
 	"single-top-level-heading",
+	"table-style",
 	"thematic-break-style",
 ] as const;
 
@@ -73,6 +80,7 @@ export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
  */
 export const RULE_GROUPS = {
 	whitespace: [
+		"blockquote-space",
 		"code-span-padding",
 		"consecutive-blank-lines",
 		"emphasis-padding",
@@ -90,7 +98,10 @@ export const RULE_GROUPS = {
 		"japanese-period",
 	],
 	structure: [
+		"blockquote-blank",
 		"code-fence-language",
+		"command-prompt",
+		"duplicate-heading",
 		"emphasis-as-heading",
 		"fence-blank-lines",
 		"fence-style",
@@ -102,6 +113,7 @@ export const RULE_GROUPS = {
 		"heading-trailing-punctuation",
 		"indented-code-block",
 		"list-blank-lines",
+		"list-indent",
 		"list-marker-consistency",
 		"list-marker-space",
 		"ordered-list-marker",
@@ -109,6 +121,7 @@ export const RULE_GROUPS = {
 		"single-top-level-heading",
 		"table-blank-lines",
 		"table-column-count",
+		"table-style",
 		"thematic-break-style",
 	],
 	content: [
