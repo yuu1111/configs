@@ -144,9 +144,12 @@ describe("quality config", () => {
 		);
 		expect(engineConfig(config, "document-style-check")?.rules.disable).toEqual(
 			[
+				"code-span-padding",
 				"consecutive-blank-lines",
+				"emphasis-padding",
 				"hard-break-html",
 				"hard-tabs",
+				"link-label-padding",
 				"single-trailing-newline",
 				"trailing-backslash",
 				"trailing-whitespace",

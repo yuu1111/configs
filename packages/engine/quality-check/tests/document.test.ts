@@ -68,21 +68,27 @@ test("lintの--preset allで全opt-in ruleを有効にする", () => {
 	expect(parseArguments(["lint", "--preset", "all", "."]).enabled).toEqual([
 		"emphasis-marker",
 		"fence-style",
+		"first-line-heading",
 		"full-width-alphanumeric",
 		"japanese-comma",
 		"japanese-period",
 		"list-marker-consistency",
 		"ordered-list-marker",
+		"single-top-level-heading",
 		"thematic-break-style",
 	]);
 });
 
 test("lintの--preset noneで既定のruleを無効にする", () => {
 	expect(parseArguments(["lint", "--preset", "none", "."]).disabled).toEqual([
+		"bare-url",
 		"code-fence-language",
+		"code-span-padding",
 		"consecutive-blank-lines",
 		"date-anchored-statement",
+		"descriptive-link-text",
 		"emphasis-as-heading",
+		"emphasis-padding",
 		"empty-link",
 		"fence-blank-lines",
 		"hard-break-html",
@@ -92,12 +98,15 @@ test("lintの--preset noneで既定のruleを無効にする", () => {
 		"heading-level-jump",
 		"heading-space",
 		"heading-trailing-punctuation",
+		"indented-code-block",
+		"link-label-padding",
 		"list-blank-lines",
 		"list-marker-space",
 		"reversed-link",
 		"setext-heading",
 		"single-trailing-newline",
 		"table-blank-lines",
+		"table-column-count",
 		"trailing-backslash",
 		"trailing-whitespace",
 	]);
@@ -115,10 +124,12 @@ test("lintの--preset allへ--disableを重ねられる", () => {
 	expect(options.enabled).toEqual([
 		"emphasis-marker",
 		"fence-style",
+		"first-line-heading",
 		"full-width-alphanumeric",
 		"japanese-comma",
 		"list-marker-consistency",
 		"ordered-list-marker",
+		"single-top-level-heading",
 		"thematic-break-style",
 	]);
 	expect(options.disabled).toEqual(["japanese-period"]);
@@ -127,7 +138,7 @@ test("lintの--preset allへ--disableを重ねられる", () => {
 test("lintの--preset allでopt-in ruleの検出を報告する", () => {
 	const root = mkdtempSync(join(tmpdir(), "quality-check-document-"));
 	try {
-		writeFileSync(join(root, "doc.md"), "本文です。\n", "utf8");
+		writeFileSync(join(root, "doc.md"), "# 見出し\n\n本文です。\n", "utf8");
 		const report = runMain(["lint", "--preset", "all", root]);
 
 		expect(report.code).toBe(1);

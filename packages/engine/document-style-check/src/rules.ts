@@ -12,16 +12,21 @@ export interface Finding extends Located {
 }
 
 const MESSAGES: Record<RuleId, string> = {
+	"bare-url": "a bare URL is not an autolink",
 	"code-fence-language":
 		"a code fence without a language renders without highlighting",
+	"code-span-padding": "a code span contains padding without meaning",
 	"consecutive-blank-lines":
 		"consecutive blank lines add spacing without meaning",
 	"date-anchored-statement": "a check date is not the identity of the subject",
+	"descriptive-link-text": "link text does not describe its destination",
 	"emphasis-as-heading": "emphasis is not a heading",
 	"emphasis-marker": "emphasis markers do not mix styles",
+	"emphasis-padding": "emphasis markers contain padding without meaning",
 	"empty-link": "a link has no text or no destination",
 	"fence-blank-lines": "a fenced code block is not surrounded by blank lines",
 	"fence-style": "code fences do not use one style",
+	"first-line-heading": "a document does not start with a top-level heading",
 	"full-width-alphanumeric":
 		"a full-width alphanumeric is not the ASCII character",
 	"hard-break-html": "an HTML hard break adds spacing without meaning",
@@ -32,9 +37,11 @@ const MESSAGES: Record<RuleId, string> = {
 	"heading-space":
 		"a heading does not separate hashes and text with a single space",
 	"heading-trailing-punctuation": "a heading does not end with punctuation",
+	"indented-code-block": "an indented code block is not a fence",
 	"japanese-comma":
 		"a Japanese sentence does not separate clauses with a half-width comma",
 	"japanese-period": "a Japanese sentence does not end with a period",
+	"link-label-padding": "link text contains padding without meaning",
 	"list-blank-lines": "a list is not surrounded by blank lines",
 	"list-marker-consistency": "unordered list markers do not mix styles",
 	"list-marker-space":
@@ -42,8 +49,10 @@ const MESSAGES: Record<RuleId, string> = {
 	"ordered-list-marker": "ordered list markers do not mix numbering styles",
 	"reversed-link": "a link does not reverse brackets and parentheses",
 	"setext-heading": "a setext heading does not show its level",
+	"single-top-level-heading": "a document has more than one top-level heading",
 	"single-trailing-newline": "a file does not end with a single newline",
 	"table-blank-lines": "a table is not surrounded by blank lines",
+	"table-column-count": "a table row has more columns than its header",
 	"thematic-break-style": "thematic breaks do not use one style",
 	"trailing-backslash": "a trailing backslash adds spacing without meaning",
 	"trailing-whitespace": "trailing whitespace is not part of the content",
@@ -76,6 +85,27 @@ const LIST_MARKER_SPACE = /^([ \t]*)([-+*]|\d+[.)])([ \t]+)(?=\S)/;
 const EMPHASIS_SPAN = /(\*\*|__|\*|_)(\S(?:[\s\S]*?\S)?)\1/g;
 const EMPHASIS_TRAILING_PUNCTUATION = /[.,;:!?。，；：！？]$/;
 const FENCE_MARKER = /^( {0,3})(`{3,}|~{3,})/;
+const BARE_URL = /https?:\/\/[^\s<>`]+/g;
+const URL_BOUNDARY = /[<([!"']/;
+const URL_TRAILING = /[.,;:!?、。！？）)\]"'」』]+$/;
+const EMPHASIS_PADDED = /(\*\*|__|\*|_)((?:(?!\1)[^\n])+)\1/g;
+const CODE_SPAN = /(`+)([^`]+)\1/g;
+const LINK_LABEL = /\[([^[\]]*)\](?=\(|\[)/g;
+const INDENTED_CODE = /^(?: {4}|\t)/;
+const TABLE_DELIMITER = /^[\s|:-]+$/;
+const TOP_LEVEL_HEADING = /^ {0,3}#(?:\s|$)/;
+const LINK_TEXT_EDGE =
+	/^[.,;:!?。、，．；：！？「」『』（）()]+|[.,;:!?。、，．；：！？「」『』（）()]+$/g;
+const PROHIBITED_LINK_TEXTS = new Set([
+	"click here",
+	"here",
+	"link",
+	"more",
+	"こちら",
+	"ここ",
+	"詳細はこちら",
+	"リンク",
+]);
 
 /**
  * 本文行にある最初の日本語句点の位置を返す 無ければ-1を返す
@@ -213,6 +243,16 @@ export function isListItem(line: string): boolean {
 		unorderedListMarker(line) !== undefined ||
 		orderedListMarker(line) !== undefined
 	);
+}
+
+/**
+ * リストの塊を構成する行か判定する 字下げした継続行を含む
+ *
+ * @param line - 判定する本文の1行
+ * @returns リスト項目かその継続行ならtrue
+ */
+function isListBlock(line: string): boolean {
+	return isListItem(line) || /^(?: {2,}|\t)/.test(line);
 }
 
 /**
@@ -534,6 +574,455 @@ function findSetextUnderline(
 	}
 	const trimmed = line.trimStart();
 	return line.length - trimmed.length;
+}
+
+/**
+ * インラインコードの外側にある裸のURLの範囲を返す
+ *
+ * @param line - 裸のURLを探す本文の1行
+ * @returns 角括弧で囲まれていないURLの範囲の一覧
+ */
+function bareUrlSpans(line: string): { from: number; to: number }[] {
+	const code = inlineCodeSpans(line);
+	const spans: { from: number; to: number }[] = [];
+	for (const match of line.matchAll(BARE_URL)) {
+		const from = match.index;
+		if (code.some(([start, end]) => from >= start && from < end)) {
+			continue;
+		}
+		if (URL_BOUNDARY.test(line[from - 1] ?? "")) {
+			continue;
+		}
+		const text = match[0].replace(URL_TRAILING, "");
+		if (text === "") {
+			continue;
+		}
+		spans.push({ from, to: from + text.length });
+	}
+	return spans;
+}
+
+/**
+ * 裸のURLを角括弧で囲む
+ *
+ * @param line - 裸のURLを囲む本文の1行
+ * @returns 裸のURLを角括弧で囲んだ本文の1行
+ */
+function normalizeBareUrls(line: string): string {
+	const spans = bareUrlSpans(line);
+	if (spans.length === 0) {
+		return line;
+	}
+	let result = "";
+	let cursor = 0;
+	for (const { from, to } of spans) {
+		result += `${line.slice(cursor, from)}<${line.slice(from, to)}>`;
+		cursor = to;
+	}
+	return result + line.slice(cursor);
+}
+
+/**
+ * 強調記号の内側に空白がある範囲を返す
+ *
+ * @param line - 詰め物を探す本文の1行
+ * @returns 詰め物のある強調の範囲と中身と記号の一覧
+ */
+function paddedEmphasisSpans(
+	line: string,
+): { end: number; from: number; inner: string; marker: string }[] {
+	const code = inlineCodeSpans(line);
+	const spans: { end: number; from: number; inner: string; marker: string }[] =
+		[];
+	for (const match of line.matchAll(EMPHASIS_PADDED)) {
+		const from = match.index;
+		const marker = match[1] ?? "";
+		const inner = match[2] ?? "";
+		if (
+			code.some(([start, end]) => from >= start && from < end) ||
+			opensIntraword(marker, line, from) ||
+			inner.trim() === "" ||
+			inner === inner.trim()
+		) {
+			continue;
+		}
+		spans.push({ end: from + match[0].length, from, inner, marker });
+	}
+	return spans;
+}
+
+/**
+ * 強調記号の内側の空白を取り除く
+ *
+ * @param line - 詰め物を除く本文の1行
+ * @returns 強調記号の内側の空白を除いた本文の1行
+ */
+function normalizeEmphasisPadding(line: string): string {
+	let result = "";
+	let cursor = 0;
+	for (const span of paddedEmphasisSpans(line)) {
+		result +=
+			line.slice(cursor, span.from) +
+			span.marker +
+			span.inner.trim() +
+			span.marker;
+		cursor = span.end;
+	}
+	return result + line.slice(cursor);
+}
+
+/**
+ * 前後を半角スペース1つで詰めたコードスパンか判定する
+ *
+ * @param inner - コードスパンの中身
+ * @returns 前後が半角スペース1つずつならtrue
+ */
+function isPaddedCodeSpan(inner: string): boolean {
+	const content = inner.trim();
+	return (
+		content !== "" &&
+		inner.length - content.length === 2 &&
+		inner.startsWith(" ") &&
+		inner.endsWith(" ") &&
+		!/^`|`$/.test(content)
+	);
+}
+
+/**
+ * 前後を半角スペース1つで詰めたコードスパンの位置を返す 無ければundefined
+ *
+ * @param line - 詰め物を探す本文の1行
+ * @returns コードスパンの0始まりの位置 詰め物が無ければundefined
+ */
+function findPaddedCodeSpan(line: string): number | undefined {
+	for (const match of line.matchAll(CODE_SPAN)) {
+		if (isPaddedCodeSpan(match[2] ?? "")) {
+			return match.index;
+		}
+	}
+	return undefined;
+}
+
+/**
+ * コードスパンの内側の空白を取り除く
+ *
+ * @param line - 詰め物を除く本文の1行
+ * @returns コードスパンの内側の空白を除いた本文の1行
+ */
+function normalizeCodeSpanPadding(line: string): string {
+	let result = "";
+	let cursor = 0;
+	for (const match of line.matchAll(CODE_SPAN)) {
+		const inner = match[2] ?? "";
+		if (!isPaddedCodeSpan(inner)) {
+			continue;
+		}
+		const marker = match[1] ?? "";
+		result += line.slice(cursor, match.index) + marker + inner.trim() + marker;
+		cursor = match.index + match[0].length;
+	}
+	return result + line.slice(cursor);
+}
+
+/**
+ * リンクテキストの内側にある空白の位置を返す 無ければundefined
+ *
+ * @param line - 詰め物を探す本文の1行
+ * @returns 空白の0始まりの位置 詰め物が無ければundefined
+ */
+function findLinkLabelPadding(line: string): number | undefined {
+	for (const match of line.matchAll(LINK_LABEL)) {
+		const from = match.index;
+		if (from > 0 && line[from - 1] === "!") {
+			continue;
+		}
+		const label = match[1] ?? "";
+		if (label.trim() === "" || label === label.trim()) {
+			continue;
+		}
+		const leading = label.length - label.trimStart().length;
+		return leading > 0 ? from + 1 : from + 1 + label.trimEnd().length;
+	}
+	return undefined;
+}
+
+/**
+ * リンクテキストの内側の空白を取り除く
+ *
+ * @param line - 詰め物を除く本文の1行
+ * @returns リンクテキストの内側の空白を除いた本文の1行
+ */
+function normalizeLinkLabelPadding(line: string): string {
+	let result = "";
+	let cursor = 0;
+	for (const match of line.matchAll(LINK_LABEL)) {
+		const from = match.index;
+		const label = match[1] ?? "";
+		if (
+			(from > 0 && line[from - 1] === "!") ||
+			label.trim() === "" ||
+			label === label.trim()
+		) {
+			continue;
+		}
+		result += `${line.slice(cursor, from)}[${label.trim()}]`;
+		cursor = from + match[0].length;
+	}
+	return result + line.slice(cursor);
+}
+
+/**
+ * リンクテキストを比較用に正規化する
+ *
+ * @param text - 正規化するリンクテキスト
+ * @returns 空白を畳み前後の句読点を除いた小文字の文字列
+ */
+function normalizeLinkText(text: string): string {
+	return text
+		.replace(/[\s\u3000]+/g, " ")
+		.trim()
+		.toLowerCase()
+		.replace(LINK_TEXT_EDGE, "")
+		.trim();
+}
+
+/**
+ * 行き先を説明しないリンクテキストの位置を返す 無ければundefined
+ *
+ * @param line - リンクテキストを探す本文の1行
+ * @returns リンクラベルの0始まりの位置 該当しなければundefined
+ */
+function findDescriptiveLink(line: string): number | undefined {
+	for (const match of line.matchAll(LINK_LABEL)) {
+		const from = match.index;
+		if (from > 0 && line[from - 1] === "!") {
+			continue;
+		}
+		if (PROHIBITED_LINK_TEXTS.has(normalizeLinkText(match[1] ?? ""))) {
+			return from;
+		}
+	}
+	return undefined;
+}
+
+/**
+ * 表の列数を数える
+ *
+ * @param line - 列数を数える表の行
+ * @returns インラインコード内の区切りを除いた列数
+ */
+function cellCount(line: string): number {
+	const masked = maskInlineCode(line).replace(/\\\|/g, "\u0000");
+	const cells = masked.trim().replace(/^\|/, "").replace(/\|$/, "");
+	return cells.split("|").length;
+}
+
+/**
+ * 表の区切り行か判定する
+ *
+ * @param line - 判定する本文の1行
+ * @returns 区切り行ならtrue
+ */
+function isTableDelimiter(line: string): boolean {
+	return TABLE_DELIMITER.test(line) && line.includes("-");
+}
+
+/**
+ * 表の行数と列数を保持する
+ */
+interface TableState {
+	columns: number;
+	rows: number;
+}
+
+/**
+ * 見出しより列の多い表の行を違反として返す
+ *
+ * @param item - 判定する本文の1行
+ * @param state - 表の行数と列数を保持する状態
+ * @param file - 指摘に載せるfileのpath
+ * @returns 列数が多い表の行の検出
+ */
+function tableColumnFinding(
+	item: MarkdownLine,
+	state: TableState,
+	file: string,
+): Finding[] {
+	if (!isTableRow(item.line)) {
+		state.rows = 0;
+		return [];
+	}
+	const columns = cellCount(item.line);
+	if (state.rows === 0) {
+		state.rows = 1;
+		return [];
+	}
+	if (state.rows === 1) {
+		if (isTableDelimiter(item.line)) {
+			state.columns = columns;
+			state.rows = 2;
+		}
+		return [];
+	}
+	state.rows += 1;
+	return state.columns > 0 && columns > state.columns
+		? [finding("table-column-count", "error", file, item.number, 1)]
+		: [];
+}
+
+/**
+ * 字下げコードブロックの開始行を違反として返す
+ *
+ * @param items - 文書の行一覧
+ * @param index - 判定する行の添字
+ * @param file - 指摘に載せるfileのpath
+ * @returns 字下げコードブロックの検出
+ */
+function indentedCodeFinding(
+	items: MarkdownLine[],
+	index: number,
+	file: string,
+): Finding[] {
+	const item = items[index];
+	if (
+		item === undefined ||
+		item.region !== "body" ||
+		!INDENTED_CODE.test(item.line)
+	) {
+		return [];
+	}
+	const previous = items[index - 1];
+	if (previous !== undefined && !previous.blank) {
+		return [];
+	}
+	for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+		const candidate = items[cursor];
+		if (candidate === undefined || candidate.blank) {
+			continue;
+		}
+		if (candidate.region === "body" && isListItem(candidate.line)) {
+			return [];
+		}
+		break;
+	}
+	return [finding("indented-code-block", "error", file, item.number, 1)];
+}
+
+/**
+ * 2つ目以降のトップレベル見出しを違反として返す
+ *
+ * @param items - 文書の行一覧
+ * @param file - 指摘に載せるfileのpath
+ * @returns トップレベル見出しの重複の検出
+ */
+function topLevelHeadingFindings(
+	items: MarkdownLine[],
+	file: string,
+): Finding[] {
+	return items
+		.filter(
+			(item) => item.region === "body" && TOP_LEVEL_HEADING.test(item.line),
+		)
+		.slice(1)
+		.map((item) =>
+			finding("single-top-level-heading", "error", file, item.number, 1),
+		);
+}
+
+/**
+ * 先頭のトップレベル見出しの不足を違反として返す
+ *
+ * @param items - 文書の行一覧
+ * @param file - 指摘に載せるfileのpath
+ * @returns 先頭のトップレベル見出しの検出
+ */
+function firstHeadingFinding(items: MarkdownLine[], file: string): Finding[] {
+	for (const item of items) {
+		if (item.region === "frontmatter" || item.blank) {
+			continue;
+		}
+		return TOP_LEVEL_HEADING.test(item.line)
+			? []
+			: [finding("first-line-heading", "error", file, item.number, 1)];
+	}
+	return [];
+}
+
+/**
+ * 文書全体を対象にするopt-in ruleの検出を返す
+ *
+ * @param items - 文書の行一覧
+ * @param enabled - 有効にするopt-in ruleの識別子
+ * @param file - 指摘に載せるfileのpath
+ * @returns 文書全体の検出
+ */
+function lintDocument(
+	items: MarkdownLine[],
+	enabled: readonly OptInRuleId[],
+	file: string,
+): Finding[] {
+	const findings: Finding[] = [];
+	if (enabled.includes("single-top-level-heading")) {
+		findings.push(...topLevelHeadingFindings(items, file));
+	}
+	if (enabled.includes("first-line-heading")) {
+		findings.push(...firstHeadingFinding(items, file));
+	}
+	return findings;
+}
+
+/**
+ * 記号の内側の空白と裸のURLとリンクテキストを検出する
+ *
+ * @param item - 判定する本文の1行
+ * @param file - 指摘に載せるfileのpath
+ * @returns 詰め物と裸のURLとリンクテキストの検出
+ */
+function lintInlineSpacing(item: MarkdownLine, file: string): Finding[] {
+	const findings: Finding[] = [];
+	const bare = bareUrlSpans(item.line)[0];
+	if (bare !== undefined) {
+		findings.push(
+			finding("bare-url", "error", file, item.number, bare.from + 1),
+		);
+	}
+	const emphasis = paddedEmphasisSpans(item.line)[0];
+	if (emphasis !== undefined) {
+		findings.push(
+			finding(
+				"emphasis-padding",
+				"error",
+				file,
+				item.number,
+				emphasis.from + 1,
+			),
+		);
+	}
+	const code = findPaddedCodeSpan(item.line);
+	if (code !== undefined) {
+		findings.push(
+			finding("code-span-padding", "error", file, item.number, code + 1),
+		);
+	}
+	const label = findLinkLabelPadding(item.line);
+	if (label !== undefined) {
+		findings.push(
+			finding("link-label-padding", "error", file, item.number, label + 1),
+		);
+	}
+	const descriptive = findDescriptiveLink(item.line);
+	if (descriptive !== undefined) {
+		findings.push(
+			finding(
+				"descriptive-link-text",
+				"error",
+				file,
+				item.number,
+				descriptive + 1,
+			),
+		);
+	}
+	return findings;
 }
 
 /**
@@ -918,6 +1407,7 @@ function lintBodyLine(
 	}
 	findings.push(...emphasisHeadingFinding(item, masked, file));
 	findings.push(...lintHeadingAndLink(item, masked, file));
+	findings.push(...lintInlineSpacing(item, file));
 	return findings;
 }
 
@@ -1130,7 +1620,7 @@ function lintBlockLines(
 			item.line,
 			previous,
 			next,
-			isListItem,
+			isListBlock,
 			item.number,
 			file,
 		),
@@ -1402,6 +1892,7 @@ export function lintSource(
 	const breaks: StyleState = { style: undefined };
 	const fences: StyleState = { style: undefined };
 	const emphasis: StyleState = { style: undefined };
+	const table: TableState = { columns: 0, rows: 0 };
 	let ordered: OrderedState | undefined;
 	for (let index = 0; index < items.length; index += 1) {
 		const item = items[index];
@@ -1413,11 +1904,13 @@ export function lintSource(
 		if (item.region !== "body") {
 			blankStreak = 0;
 			ordered = undefined;
+			table.rows = 0;
 			findings.push(
 				...lintNonBodyLine(item, previous, next, enabled, fences, file),
 			);
 			continue;
 		}
+		findings.push(...tableColumnFinding(item, table, file));
 		if (item.blank) {
 			const blank = lintBlankLine(blankStreak, item, file);
 			blankStreak = blank.streak;
@@ -1428,6 +1921,7 @@ export function lintSource(
 		blankStreak = 0;
 		const masked = maskInlineCode(item.line);
 		findings.push(...lintBodyLine(item, file, enabled));
+		findings.push(...indentedCodeFinding(items, index, file));
 		findings.push(...headingJumpFinding(item, headings, file));
 		findings.push(...setextHeadingFinding(item, previous, file));
 		findings.push(...lintBlockLines(item, previous, next, file));
@@ -1450,7 +1944,32 @@ export function lintSource(
 		findings.push(...tracked.findings);
 	}
 	findings.push(...lintTrailingNewline(source, file));
+	findings.push(...lintDocument(items, enabled, file));
 	return findings.filter((finding) => !disabled.includes(finding.rule));
+}
+
+/**
+ * 記号の内側の空白と裸のURLを取り除く
+ *
+ * @param line - 整形する本文の1行
+ * @param disabled - 追加で無効にするruleの一覧
+ * @returns 詰め物と裸のURLを除いた本文の1行
+ */
+function fixInlineSpacing(line: string, disabled: readonly RuleId[]): string {
+	let result = line;
+	if (!disabled.includes("bare-url")) {
+		result = normalizeBareUrls(result);
+	}
+	if (!disabled.includes("emphasis-padding")) {
+		result = normalizeEmphasisPadding(result);
+	}
+	if (!disabled.includes("code-span-padding")) {
+		result = normalizeCodeSpanPadding(result);
+	}
+	if (!disabled.includes("link-label-padding")) {
+		result = normalizeLinkLabelPadding(result);
+	}
+	return result;
 }
 
 /**
@@ -1470,6 +1989,7 @@ function fixLine(item: MarkdownLine, disabled: readonly RuleId[]): string {
 	if (!item.structural && !disabled.includes("trailing-backslash")) {
 		line = line.replace(/\\+$/, "");
 	}
+	line = fixInlineSpacing(line, disabled);
 	if (
 		!disabled.includes("list-marker-space") &&
 		findListMarkerSpace(line) !== undefined
@@ -1542,7 +2062,7 @@ function needsBlankBefore(
 ): boolean {
 	return (
 		(blocks.heading && blankBeforeBlock(line, previous, isHeadingLine)) ||
-		(blocks.list && blankBeforeBlock(line, previous, isListItem)) ||
+		(blocks.list && blankBeforeBlock(line, previous, isListBlock)) ||
 		(blocks.table && blankBeforeBlock(line, previous, isTableRow))
 	);
 }
@@ -1562,7 +2082,7 @@ function needsBlankAfter(
 ): boolean {
 	return (
 		(blocks.heading && blankAfterBlock(line, next, isHeadingLine)) ||
-		(blocks.list && blankAfterBlock(line, next, isListItem)) ||
+		(blocks.list && blankAfterBlock(line, next, isListBlock)) ||
 		(blocks.table && blankAfterBlock(line, next, isTableRow))
 	);
 }

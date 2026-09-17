@@ -28,7 +28,10 @@
 	"document-style-check": {
 		"enabled": true,
 		"rules": {
-			"preset": "all"
+			"preset": "all",
+			"structure": {
+				"first-line-heading": "off"
+			}
 		}
 	},
 	"tsdoc-check": {

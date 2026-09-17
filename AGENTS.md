@@ -46,6 +46,7 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 - 設定は `quality.json` だけにし、`$schema` が指す JSON Schema を `schema.json` として commit する (統合CLIは起動時に engine の `./rule-ids` から同じ語彙を読む)
 - `rules` は `preset`、group単位、rule単位の3段で書き、具体的な指定が勝つ (group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所)
 - このリポジトリ自身を最厳格な利用例にするため、全 engine を有効にし、全 opt-in rule を有効にして warning は `error` へ上げる
+- `first-line-heading` だけは、README と言語切替のリンクを1行目に置く規約と両立しないため切る
 - `preset` でまとめて選ぶ形と `rules` で個別に選ぶ形の両方を見せ、rule名を手で並べる例は1 engine だけにする
 
 ## ツールチェーン

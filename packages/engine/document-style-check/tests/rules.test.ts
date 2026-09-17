@@ -472,7 +472,7 @@ test("表の前後の空行不足を検出して空行を入れる", () => {
 test("リスト記号の後ろの区切りを半角スペース1つへ揃える", () => {
 	expect(rulesOf("-  項目\n")).toEqual(["list-marker-space"]);
 	expect(rulesOf("1.  項目\n")).toEqual(["list-marker-space"]);
-	expect(rulesOf("\t- 項目\n")).toEqual(["hard-tabs"]);
+	expect(rulesOf("\t- 項目\n")).toEqual(["hard-tabs", "indented-code-block"]);
 	expect(rulesOf("- 項目\n")).toEqual([]);
 	expect(fixSource("-  項目\n")).toBe("- 項目\n");
 	expect(fixSource("1.  項目\n")).toBe("1. 項目\n");
@@ -650,4 +650,124 @@ test("--disableで追加したruleの検出と整形を取り消す", () => {
 	expect(
 		fixSource("本文\n```js\ncode\n```\n続き\n", [], ["fence-blank-lines"]),
 	).toBe("本文\n```js\ncode\n```\n続き\n");
+});
+
+test("角括弧で囲まれていないURLを検出して囲む", () => {
+	expect(rulesOf("仕様は https://example.com/spec にある\n")).toEqual([
+		"bare-url",
+	]);
+	expect(rulesOf("仕様は <https://example.com/spec> にある\n")).toEqual([]);
+	expect(rulesOf("仕様は [仕様書](https://example.com/spec) にある\n")).toEqual(
+		[],
+	);
+	expect(rulesOf("`https://example.com` はコード表記です\n")).toEqual([]);
+	expect(fixSource("仕様は https://example.com/spec にある\n")).toBe(
+		"仕様は <https://example.com/spec> にある\n",
+	);
+	expect(fixSource("参照: https://example.com/a, 続き\n")).toBe(
+		"参照: <https://example.com/a>, 続き\n",
+	);
+});
+
+test("強調記号の内側の空白を検出して取り除く", () => {
+	expect(rulesOf("これは ** 強調 ** です\n")).toEqual(["emphasis-padding"]);
+	expect(rulesOf("これは * 強調* です\n")).toEqual(["emphasis-padding"]);
+	expect(rulesOf("これは **強調** です\n")).toEqual([]);
+	expect(rulesOf("`** 強調 **` はコード表記です\n")).toEqual([]);
+	expect(rulesOf("- - -\n")).toEqual([]);
+	expect(fixSource("これは ** 強調 ** です\n")).toBe("これは **強調** です\n");
+	expect(fixSource("これは * 強調 * です\n")).toBe("これは *強調* です\n");
+});
+
+test("コードスパンの内側の空白を検出して取り除く", () => {
+	expect(rulesOf("これは ` コード ` です\n")).toEqual(["code-span-padding"]);
+	expect(rulesOf("これは `コード` です\n")).toEqual([]);
+	expect(rulesOf("これは ` コード` です\n")).toEqual([]);
+	expect(fixSource("これは ` コード ` です\n")).toBe("これは `コード` です\n");
+});
+
+test("リンクテキストの内側の空白を検出して取り除く", () => {
+	expect(rulesOf("[ 仕様書 ](https://example.com)\n")).toEqual([
+		"link-label-padding",
+	]);
+	expect(rulesOf("[仕様書](https://example.com)\n")).toEqual([]);
+	expect(rulesOf("![ 図 ](diagram.png)\n")).toEqual([]);
+	expect(fixSource("[ 仕様書 ](https://example.com)\n")).toBe(
+		"[仕様書](https://example.com)\n",
+	);
+});
+
+test("行き先を説明しないリンクテキストを検出する", () => {
+	expect(rulesOf("詳細は[こちら](https://example.com)を参照\n")).toEqual([
+		"descriptive-link-text",
+	]);
+	expect(rulesOf("詳細は[here](https://example.com)を参照\n")).toEqual([
+		"descriptive-link-text",
+	]);
+	expect(rulesOf("詳細は[仕様書](https://example.com)を参照\n")).toEqual([]);
+	expect(rulesOf("詳細は[こちらの資料](https://example.com)を参照\n")).toEqual(
+		[],
+	);
+	expect(rulesOf("![こちら](diagram.png)\n")).toEqual([]);
+});
+
+test("字下げコードブロックを検出する", () => {
+	expect(rulesOf("説明です\n\n    const x = 1;\n")).toEqual([
+		"indented-code-block",
+	]);
+	expect(rulesOf("    const x = 1;\n")).toEqual(["indented-code-block"]);
+	expect(rulesOf("```js\nconst x = 1;\n```\n")).toEqual([]);
+	expect(rulesOf("- 項目\n\n    継続段落\n")).toEqual([]);
+	expect(rulesOf("- 項目\n    継続行\n")).toEqual([]);
+});
+
+test("見出しより列の多い表の行を検出する", () => {
+	expect(rulesOf("| A | B |\n| --- | --- |\n| 1 | 2 | 3 |\n")).toEqual([
+		"table-column-count",
+	]);
+	expect(rulesOf("| A | B |\n| --- | --- |\n| 1 | 2 |\n")).toEqual([]);
+	expect(rulesOf("| A | B |\n| --- | --- |\n| 1 |\n")).toEqual([]);
+	expect(rulesOf("| `a|b` | c |\n| --- | --- |\n| 1 | 2 |\n")).toEqual([]);
+});
+
+test("既定ではトップレベル見出しの重複と先頭の見出しを検査しない", () => {
+	expect(rulesOf("# 一つ目\n\n# 二つ目\n")).toEqual([]);
+	expect(rulesOf("## 見出しから始まる文書\n")).toEqual([]);
+});
+
+test("トップレベル見出しの重複を検出する", () => {
+	const enabled = ["single-top-level-heading"] as const;
+	expect(optedRulesOf("# 一つ目\n\n# 二つ目\n", [...enabled])).toEqual([
+		"single-top-level-heading",
+	]);
+	expect(optedRulesOf("# 一つ目\n\n## 節\n", [...enabled])).toEqual([]);
+});
+
+test("先頭のトップレベル見出しの不足を検出する", () => {
+	const enabled = ["first-line-heading"] as const;
+	expect(optedRulesOf("## 見出しから始まる文書\n", [...enabled])).toEqual([
+		"first-line-heading",
+	]);
+	expect(optedRulesOf("# 見出し\n\n本文\n", [...enabled])).toEqual([]);
+	expect(
+		optedRulesOf("---\ntitle: x\n---\n\n# 見出し\n", [...enabled]),
+	).toEqual([]);
+});
+
+test("--disableで今回追加したruleの検出と整形を取り消す", () => {
+	expect(
+		lintSource("参照: https://example.com\n", "doc.md", [], ["bare-url"]),
+	).toEqual([]);
+	expect(fixSource("参照: https://example.com\n", [], ["bare-url"])).toBe(
+		"参照: https://example.com\n",
+	);
+	expect(fixSource("これは ` コード ` です\n", [], ["code-span-padding"])).toBe(
+		"これは ` コード ` です\n",
+	);
+	expect(fixSource("これは ** 強調 ** です\n", [], ["emphasis-padding"])).toBe(
+		"これは ** 強調 ** です\n",
+	);
+	expect(
+		fixSource("[ 仕様書 ](https://example.com)\n", [], ["link-label-padding"]),
+	).toBe("[ 仕様書 ](https://example.com)\n");
 });
