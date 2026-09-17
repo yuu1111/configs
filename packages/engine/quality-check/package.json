@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/quality-check",
-	"version": "5.2.0",
+	"version": "5.3.0",
 	"description": "Integrated quality check runner with the check engines built in",
 	"homepage": "https://yuu1111.github.io/configs/packages/engine/quality-check/",
 	"repository": {
