@@ -87,41 +87,46 @@ export function returnsValue(annotation: string): boolean {
 }
 
 /**
- * 宣言にある引数と型引数のうちtagが無いものを報告する
+ * 宣言にある引数と型引数のうちtagが無いものを報告する opt-inのruleはenabledにあるときだけ実行する
  */
 function untaggedFindings(
 	declaration: Declaration,
 	file: string,
 	comment: Position,
 	parsed: TsdocResult,
+	enabled: readonly OptInRuleId[],
 ): Finding[] {
 	const findings: Finding[] = [];
-	const parameters = new Set(parsed.parameters);
-	for (const name of declaration.parameters) {
-		if (!parameters.has(name)) {
-			findings.push(
-				finding(
-					"param-untagged",
-					"warning",
-					file,
-					comment,
-					`${declaration.name} has no @param tag for the parameter ${name}`,
-				),
-			);
+	if (enabled.includes("param-untagged")) {
+		const parameters = new Set(parsed.parameters);
+		for (const name of declaration.parameters) {
+			if (!parameters.has(name)) {
+				findings.push(
+					finding(
+						"param-untagged",
+						"warning",
+						file,
+						comment,
+						`${declaration.name} has no @param tag for the parameter ${name}`,
+					),
+				);
+			}
 		}
 	}
-	const typeParameters = new Set(parsed.typeParameters);
-	for (const name of declaration.typeParameters) {
-		if (!typeParameters.has(name)) {
-			findings.push(
-				finding(
-					"type-param-untagged",
-					"warning",
-					file,
-					comment,
-					`${declaration.name} has no @typeParam tag for the type parameter ${name}`,
-				),
-			);
+	if (enabled.includes("type-param-untagged")) {
+		const typeParameters = new Set(parsed.typeParameters);
+		for (const name of declaration.typeParameters) {
+			if (!typeParameters.has(name)) {
+				findings.push(
+					finding(
+						"type-param-untagged",
+						"warning",
+						file,
+						comment,
+						`${declaration.name} has no @typeParam tag for the type parameter ${name}`,
+					),
+				);
+			}
 		}
 	}
 	return findings;
@@ -214,7 +219,13 @@ function contractFindings(
 	parsed: TsdocResult,
 	enabled: readonly OptInRuleId[],
 ): Finding[] {
-	const findings = untaggedFindings(declaration, file, comment, parsed);
+	const findings = untaggedFindings(
+		declaration,
+		file,
+		comment,
+		parsed,
+		enabled,
+	);
 	if (enabled.includes("deprecated-without-guidance")) {
 		const deprecated = deprecatedFinding(
 			declaration,
@@ -314,6 +325,44 @@ function tagSeparationFinding(
 }
 
 /**
+ * 書いたTSDocの体裁を検査する opt-inのruleはenabledにあるときだけ実行する
+ *
+ * @param declaration - 検査する宣言
+ * @param file - 指摘に載せるfileのpath
+ * @param source - 宣言を切り出したsource文字列
+ * @param comment - 検査するTSDoc comment
+ * @param enabled - 実行するopt-in ruleの識別子一覧
+ * @returns 体裁の指摘一覧
+ */
+function styleFindings(
+	declaration: Declaration,
+	file: string,
+	source: string,
+	comment: DocComment,
+	enabled: readonly OptInRuleId[],
+): Finding[] {
+	const findings: Finding[] = [];
+	if (enabled.includes("single-line-doc") && !comment.text.includes("\n")) {
+		findings.push(
+			finding(
+				"single-line-doc",
+				"warning",
+				file,
+				comment,
+				`${declaration.name} has a single-line TSDoc comment`,
+			),
+		);
+	}
+	if (enabled.includes("blank-line-before-tags")) {
+		const separation = tagSeparationFinding(declaration, file, comment, source);
+		if (separation !== null) {
+			findings.push(separation);
+		}
+	}
+	return findings;
+}
+
+/**
  * 宣言1つ分のTSDocを検査する
  */
 function checkDeclaration(
@@ -324,6 +373,9 @@ function checkDeclaration(
 ): Finding[] {
 	const comment = declaration.comment;
 	if (comment === null) {
+		if (!enabled.includes("missing-doc")) {
+			return [];
+		}
 		return [
 			finding(
 				"missing-doc",
@@ -335,22 +387,7 @@ function checkDeclaration(
 		];
 	}
 	const parsed = parseTsdoc(comment.text);
-	const findings: Finding[] = [];
-	if (!comment.text.includes("\n")) {
-		findings.push(
-			finding(
-				"single-line-doc",
-				"warning",
-				file,
-				comment,
-				`${declaration.name} has a single-line TSDoc comment`,
-			),
-		);
-	}
-	const separation = tagSeparationFinding(declaration, file, comment, source);
-	if (separation !== null) {
-		findings.push(separation);
-	}
+	const findings = styleFindings(declaration, file, source, comment, enabled);
 	for (const issue of parsed.issues) {
 		const position = positionAt(source, comment.start + issue.position);
 		const syntaxError = !TAG_MESSAGE_IDS.has(issue.messageId);

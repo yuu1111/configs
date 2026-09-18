@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { OptInRuleId } from "../src/rule-ids";
+import { OPT_IN_RULE_IDS, type OptInRuleId } from "../src/rule-ids";
 import { scanSource } from "../src/scan";
 
 function rulesOf(
@@ -934,5 +934,62 @@ describe("disabled rules", () => {
 		].join("\n");
 		expect(rulesOf(source)).toEqual(["tsdoc-tag"]);
 		expect(scanSource(source, "src/sample.ts", [], ["tsdoc-tag"])).toEqual([]);
+	});
+});
+
+describe("opt-in rules", () => {
+	const triggers: Record<OptInRuleId, string> = {
+		"blank-line-before-tags": [
+			"/** Runs the task",
+			" * @param value - the value to use",
+			" */",
+			"export function run(value: number): void {}",
+		].join("\n"),
+		"deprecated-without-guidance": [
+			"/** Runs the task",
+			" *",
+			" * @deprecated Use runAsync instead",
+			" */",
+			"export function run(): void {}",
+		].join("\n"),
+		"missing-doc": "export const value = 1\n",
+		"missing-returns": [
+			"/** Reads the value",
+			" */",
+			"export function read(): number {",
+			"\treturn 1",
+			"}",
+		].join("\n"),
+		"param-order": [
+			"/** Runs the task",
+			" *",
+			" * @param second - the second value",
+			" * @param first - the first value",
+			" */",
+			"export function run(first: number, second: number): void {}",
+		].join("\n"),
+		"param-untagged": [
+			"/** Runs the task",
+			" */",
+			"export function run(value: number): void {}",
+		].join("\n"),
+		"single-line-doc": "/** Runs the task */\nexport function run(): void {}\n",
+		"type-param-untagged": [
+			"/** Runs the task",
+			" */",
+			"export function run<T>(value: T): void {}",
+		].join("\n"),
+	};
+
+	test("covers every opt-in rule", () => {
+		expect(Object.keys(triggers).sort()).toEqual([...OPT_IN_RULE_IDS].sort());
+	});
+
+	test("keeps every opt-in rule off until it is enabled", () => {
+		for (const rule of OPT_IN_RULE_IDS) {
+			const source = triggers[rule];
+			expect(rulesOf(source), rule).toEqual([]);
+			expect(rulesOf(source, [rule]), rule).toEqual([rule]);
+		}
 	});
 });
