@@ -22,7 +22,8 @@
 				"noExcessiveCognitiveComplexity": "warn"
 			},
 			"nursery": {
-				"noFloatingPromises": "warn"
+				"noFloatingPromises": "warn",
+				"useImportsFirst": "error"
 			},
 			"performance": {
 				"noBarrelFile": "error",

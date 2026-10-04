@@ -18,7 +18,7 @@
     },
     "packages/config/biome-config": {
       "name": "@yuu1111/biome-config",
-      "version": "2.2.0",
+      "version": "2.2.2",
     },
     "packages/config/knip-config": {
       "name": "@yuu1111/knip-config",

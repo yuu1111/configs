@@ -48,6 +48,7 @@ bun add -D @yuu1111/biome-config
 | `assist.source.organizeImports` | `on` |
 | `linter.rules.recommended` | `true` |
 | `nursery.noFloatingPromises` | `warn` |
+| `nursery.useImportsFirst` | `error` |
 | `performance.noBarrelFile`、`performance.noReExportAll` | `error` |
 | `complexity.noExcessiveCognitiveComplexity` | `warn` |
 | `style.noExportedImports` | `error` |

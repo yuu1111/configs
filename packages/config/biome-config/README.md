@@ -48,6 +48,7 @@ The `plugins/*` presets only add rules, so list them after `biome` or `react`; t
 | `assist.source.organizeImports` | `on` |
 | `linter.rules.recommended` | `true` |
 | `nursery.noFloatingPromises` | `warn` |
+| `nursery.useImportsFirst` | `error` |
 | `performance.noBarrelFile`, `performance.noReExportAll` | `error` |
 | `complexity.noExcessiveCognitiveComplexity` | `warn` |
 | `style.noExportedImports` | `error` |
