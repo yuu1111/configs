@@ -15,13 +15,13 @@
 		"packages/engine/*"
 	],
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.13",
+		"@biomejs/biome": "^2.5.14",
 		"@types/bun": "^1.4.2",
 		"@yuu1111/biome-config": "workspace:*",
 		"@yuu1111/knip-config": "workspace:*",
 		"@yuu1111/quality-check": "workspace:*",
 		"@yuu1111/tsconfig": "workspace:*",
-		"knip": "^6.35.1",
+		"knip": "^6.38.0",
 		"typescript": "^7.0.2",
 		"vitepress": "^1.6.4"
 	}

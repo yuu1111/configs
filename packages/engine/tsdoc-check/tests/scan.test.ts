@@ -51,6 +51,33 @@ describe("tsdoc checks", () => {
 		expect(findings[0]?.column).toBe(4);
 	});
 
+	test.each(["\n", "\r\n"])(
+		"requires a blank line before tags in a documented shutdown function (%j)",
+		(newline) => {
+			const lines = [
+				"/**",
+				" * Discord接続を閉じ、FeatherPanelの停止要求を正常終了へ変換する",
+				" * @param reason - 終了要求の発生元",
+				" */",
+				"function shutdown(reason: string): void {}",
+			];
+			const scan = (source: string) =>
+				scanSource(
+					source,
+					"src/sample.ts",
+					["blank-line-before-tags"],
+					[],
+					"exported",
+					"documented",
+				);
+			expect(scan(lines.join(newline))).toMatchObject([
+				{ rule: "blank-line-before-tags", line: 3, column: 4 },
+			]);
+			lines.splice(2, 0, " *");
+			expect(scan(lines.join(newline))).toEqual([]);
+		},
+	);
+
 	test("accepts a blank line before the tags", () => {
 		const source = [
 			"/** Reads the value",
