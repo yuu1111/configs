@@ -32,7 +32,10 @@
 			"style": {
 				"noExportedImports": "error",
 				"noNestedTernary": "warn",
+				"noUselessElse": "error",
 				"useBlockStatements": "error",
+				"useCollapsedElseIf": "error",
+				"useCollapsedIf": "error",
 				"useErrorCause": "warn"
 			},
 			"suspicious": {
