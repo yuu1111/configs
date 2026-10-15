@@ -32,6 +32,7 @@
 			"style": {
 				"noExportedImports": "error",
 				"noNestedTernary": "warn",
+				"useBlockStatements": "error",
 				"useErrorCause": "warn"
 			},
 			"suspicious": {
