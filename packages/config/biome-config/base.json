@@ -36,7 +36,8 @@
 				"useBlockStatements": "error",
 				"useCollapsedElseIf": "error",
 				"useCollapsedIf": "error",
-				"useErrorCause": "warn"
+				"useErrorCause": "warn",
+				"useSingleVarDeclarator": "error"
 			},
 			"suspicious": {
 				"noEmptyBlockStatements": "warn"

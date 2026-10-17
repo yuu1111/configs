@@ -52,6 +52,7 @@ The `plugins/*` presets only add rules, so list them after `biome` or `react`; t
 | `performance.noBarrelFile`, `performance.noReExportAll` | `error` |
 | `complexity.noExcessiveCognitiveComplexity` | `warn` |
 | `style.noExportedImports` | `error` |
+| `style.useSingleVarDeclarator` | `error` |
 | `style.noNestedTernary`, `style.useErrorCause` | `warn` |
 | `suspicious.noEmptyBlockStatements` | `warn` |
 

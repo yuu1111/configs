@@ -211,6 +211,23 @@ describe("published Biome configurations", () => {
 		});
 	}
 
+	for (const configExport of ["biome", "react"] as const) {
+		test(`${configExport} export rejects multiple declarators in one statement`, () => {
+			const consumerDirectory = createConsumer(configExport);
+			try {
+				writeFileSync(
+					join(consumerDirectory, "index.ts"),
+					"export function span(): number {\n\tlet start = 0,\n\t\tend = 1;\n\tstart += 1;\n\tend += 1;\n\treturn start + end;\n}\n",
+				);
+				const result = runBiome(consumerDirectory, "lint", "index.ts");
+				expect(result.exitCode).not.toBe(0);
+				expect(result.output).toContain("lint/style/useSingleVarDeclarator");
+			} finally {
+				rmSync(consumerDirectory, { recursive: true, force: true });
+			}
+		});
+	}
+
 	test("plugin presets load and apply through extends", () => {
 		const cases = [
 			{

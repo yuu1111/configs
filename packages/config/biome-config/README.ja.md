@@ -52,6 +52,7 @@ bun add -D @yuu1111/biome-config
 | `performance.noBarrelFile`、`performance.noReExportAll` | `error` |
 | `complexity.noExcessiveCognitiveComplexity` | `warn` |
 | `style.noExportedImports` | `error` |
+| `style.useSingleVarDeclarator` | `error` |
 | `style.noNestedTernary`、`style.useErrorCause` | `warn` |
 | `suspicious.noEmptyBlockStatements` | `warn` |
 
