@@ -9,10 +9,10 @@
 		"./run": "./src/run.ts"
 	},
 	"dependencies": {
-		"@babel/parser": "^8.0.5",
+		"@babel/parser": "^8.0.7",
 		"@yuu1111/shared": "workspace:*"
 	},
 	"devDependencies": {
-		"@babel/types": "^8.0.5"
+		"@babel/types": "^8.0.6"
 	}
 }

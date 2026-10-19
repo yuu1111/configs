@@ -10,7 +10,7 @@
 	},
 	"dependencies": {
 		"@babel/parser": "^8.0.5",
-		"@microsoft/tsdoc": "^0.16.0",
+		"@microsoft/tsdoc": "^0.17.1",
 		"@yuu1111/shared": "workspace:*"
 	},
 	"devDependencies": {
