@@ -40,7 +40,14 @@ export interface CollectFilesOptions {
 	includes?: string[];
 }
 
-function isIncluded(path: string, includes: string[]): boolean {
+/**
+ * 相対pathが順序付きglobに選ばれるか 否定globは先に選んだ対象を除外し 後の肯定globで再び含められる
+ *
+ * @param path - 基準directoryからの相対path
+ * @param includes - 順序付きの肯定globと否定glob
+ * @returns 選ばれるならtrue
+ */
+export function isIncluded(path: string, includes: readonly string[]): boolean {
 	let included = false;
 	for (const entry of includes) {
 		const excluded = entry.startsWith("!");

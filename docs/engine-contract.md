@@ -17,7 +17,8 @@
 - 検出engineと `shared` は private な workspace package とし publish しない
 - 公開する `quality-check` が build 時に engine と `@yuu1111/shared` と外部依存を bundle し、runtime dependency を持たない
 - `src/rule-ids.ts` に `RULE_IDS` `OPT_IN_RULE_IDS` `RULE_GROUPS` を置き import を持たせない
-- engine固有の選択肢の語彙も `src/rule-ids.ts` へ置く (`tsdoc-check` の `DOC_SCOPES` `STYLE_SCOPES` と `SCOPED_RULE_IDS` `STYLE_RULE_IDS`)
+- 検査するfileの拡張子を `FILE_EXTENSIONS` として `src/rule-ids.ts` へ置き、統合runnerが上書きでfileを分けるときに使う
+- ruleごとのoptionの語彙も `src/rule-ids.ts` の `RULE_OPTIONS` へ置く (`tsdoc-check` の `scope` とその選択肢)
 - 全ruleがいずれかのgroupへ重複なく入ることを tests で検査する
 - `./rule-ids` と、検出の `./run`、整形の `./fix`、review ledger の `./audit` を公開する
 - engine の package は振る舞いの関数だけを公開し、個別コマンドのargv解析と出力は `quality-check` が持つ
@@ -39,8 +40,9 @@
 
 ### rule語彙
 
-- 統合runnerの `rules` は preset とgroup とruleの3段で解決し `RuleSelection` へ展開する
-- `RuleSelection` は `enable` `disable` `warn` `error` を持ち engineの関数へそのまま渡す
+- 統合runnerの `rules` は preset とgroup とruleの3段で解決し `RuleSelection` へ展開する rule名とgroup名は `rules` の直下へ並べて書く
+- `RuleSelection` は `enable` `disable` `warn` `error` とruleごとの `options` を持ち engineの関数へそのまま渡す
+- `overrides` は統合runnerが検出engineの起動前に解く fileごとにrule選択を畳み 同じ選択になるfileをまとめてengineを起動する engineは `overrides` を知らない
 - group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所になる
 
 ## 統合runner の契約
@@ -56,10 +58,10 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 | `biome` | 子プロセス | args |
 | `typecheck` | 子プロセス | args projects |
 | `knip` | 子プロセス | args |
-| `code-style-check` | in-process | includes rules |
-| `comment-check` | in-process | includes rules |
-| `document-style-check` | in-process | includes rules |
-| `tsdoc-check` | in-process | includes rules docScope styleScope |
+| `code-style-check` | in-process | includes rules overrides |
+| `comment-check` | in-process | includes rules overrides |
+| `document-style-check` | in-process | includes rules overrides |
+| `tsdoc-check` | in-process | includes rules overrides |
 
 `args` は子プロセスengineだけが受け取り 既定引数の後ろへ足す
 
@@ -82,7 +84,7 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 
 - ruleを足したengineは統合runnerのminorを上げる
 - 出力またはoptionの削除はmajorを上げる
-- `quality.json` を破壊的に変えるreleaseは旧書式を通常の読込では受け入れず、変更previewを既定にして `--write` で適用するmigration commandを同時に提供する
+- `quality.json` を破壊的に変えるreleaseは旧書式を通常の読込では受け入れず、変更previewを既定にして `--write` で適用するmigration command (`quality-check migrate`) を同時に提供する
 - 自動変換できない設定はmigration commandが書き換えず、必要な手作業を出力する
 - `schema.json` は `bun run build` で再生成してcommitする
 - `README.md` `README.ja.md` `AGENTS.md` の一覧と `bun.lock` のworkspaces entryを同じ変更で更新する

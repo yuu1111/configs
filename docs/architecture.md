@@ -40,6 +40,13 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 - 統合runnerは起動時に engine の rule 語彙を読み、`quality.json` の `$schema` が指す `schema.json` を生成する
 - `./rule-ids` を import の無い module にすると、build 前でも語彙だけを読み込める
 - group名とrule名は engine が唯一の出所になり、統合runnerの設定とschemaが同じ語彙を使う
+- rule名とgroup名は `rules` の直下へ並べて書き、rule名はengine内で一意なので衝突しない
+
+## `overrides` を統合runnerで解く理由
+
+- fileごとのrule選択は、検出が `file` と `rule` を持つため、engineの外で解決できる
+- engineへ `overrides` を渡すと4つのengineが同じ解決を持つ そこで統合runnerがfileごとにrule選択を畳み、同じ選択になるfileをまとめてengineを起動する
+- engineの `./run` の契約は変えず、`overrides` を使わない設定では起動は1回のままになる
 
 ## engineの説明を`docs/engines/`へ置く理由
 

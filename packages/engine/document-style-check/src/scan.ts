@@ -2,16 +2,15 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
-import type { OptInRuleId, RuleId } from "./rule-ids";
+import { FILE_EXTENSIONS, type OptInRuleId, type RuleId } from "./rule-ids";
 import { type Finding, fixSource, lintSource } from "./rules";
 
 /**
  * 検査するMarkdownの拡張子
  */
-export const DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
-	".markdown",
-	".md",
-]);
+export const DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set(
+	FILE_EXTENSIONS,
+);
 
 /**
  * fileを読み込んで違反を検出する

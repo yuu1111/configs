@@ -33,7 +33,7 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 ## engine の規約
 
 - engine をまたぐ契約 (engine 契約、rule 語彙、baseline、能力表) は `docs/engine-contract.md` を正本にする
-- engine の rule 語彙は `src/rule-ids.ts` へ `RULE_IDS` / `OPT_IN_RULE_IDS` / `RULE_GROUPS` として置き、import を持たせず `./rule-ids` として公開する
+- engine の rule 語彙は `src/rule-ids.ts` へ `RULE_IDS` / `OPT_IN_RULE_IDS` / `RULE_GROUPS` / `FILE_EXTENSIONS` として置き、import を持たせず `./rule-ids` として公開する (rule ごとの option があれば `RULE_OPTIONS` も置く)
 - 全 rule がいずれかの group へ重複なく入ることを tests で検査する
 - engine の package は `./run` `./fix` `./audit` の関数だけを公開し、個別コマンドの argv 解析と出力は `quality-check` が持つ
 - `quality-check` は engine の `./run` を in-process で呼び、`src/engines/index.ts` の `FINDING_ENGINES` に登録する
@@ -44,7 +44,9 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 ## quality-check の設定
 
 - 設定は `quality.json` だけにし、`$schema` が指す JSON Schema を `schema.json` として commit する (統合CLIは起動時に engine の `./rule-ids` から同じ語彙を読む)
-- `rules` は `preset`、group単位、rule単位の3段で書き、具体的な指定が勝つ (group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所)
+- `rules` は `preset`、group単位、rule単位の3段で書き、具体的な指定が勝つ rule名と group名は `rules` の直下へ並べる (group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所)
+- `overrides` は統合CLIが解き、fileごとの rule 選択を畳んでから engine を起動する (engine は `overrides` を知らない)
+- `quality.json` の書式を破壊的に変えたら、`quality-check migrate` が旧書式を移せるようにする
 - このリポジトリ自身を最厳格な利用例にするため、全 engine を有効にし、全 opt-in rule を有効にして warning は `error` へ上げる
 - `first-line-heading` だけは、README と言語切替のリンクを1行目に置く規約と両立しないため切る
 - `preset` でまとめて選ぶ形と `rules` で個別に選ぶ形の両方を見せ、rule名を手で並べる例は1 engine だけにする

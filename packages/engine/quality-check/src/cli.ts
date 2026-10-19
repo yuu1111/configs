@@ -15,6 +15,7 @@ import {
 	type QualityConfig,
 } from "./config";
 import { main as documentStyleMain } from "./document";
+import { main as migrateMain } from "./migrate";
 import { splitEngineSelection } from "./options";
 import { formatEngineSection, formatSummary, toJsonReport } from "./report";
 import { runEngines } from "./run";
@@ -22,6 +23,7 @@ import { runEngines } from "./run";
 const USAGE = [
 	"Usage: quality-check [engine...] [--config <path>] [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]",
 	"       quality-check document-style <scan|check|lint> [options] [path...]",
+	"       quality-check migrate [--config <path>] [--write]",
 ].join("\n");
 
 interface Options {
@@ -101,6 +103,9 @@ export async function main(
 	const [subcommand, ...rest] = argv;
 	if (subcommand === "document-style") {
 		return documentStyleMain(rest);
+	}
+	if (subcommand === "migrate") {
+		return migrateMain(rest, cwd);
 	}
 	if (wantsHelp(argv)) {
 		console.log(USAGE);

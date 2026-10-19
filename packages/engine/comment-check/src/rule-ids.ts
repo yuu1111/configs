@@ -11,6 +11,20 @@ export const RULE_IDS = [
 ] as const;
 
 /**
+ * comment-checkが検査するfileの拡張子
+ */
+export const FILE_EXTENSIONS = [
+	".cjs",
+	".cts",
+	".js",
+	".jsx",
+	".mjs",
+	".mts",
+	".ts",
+	".tsx",
+] as const;
+
+/**
  * RULE_IDSが定義するrule識別子のunion型
  */
 export type RuleId = (typeof RULE_IDS)[number];

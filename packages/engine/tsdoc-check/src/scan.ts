@@ -4,24 +4,19 @@ import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { collectSource } from "./parse";
 import {
-	DEFAULT_DOC_SCOPE,
-	DEFAULT_STYLE_SCOPE,
-	type DocScope,
+	FILE_EXTENSIONS,
 	type OptInRuleId,
 	type RuleId,
-	type StyleScope,
+	type RuleScopes,
 } from "./rule-ids";
 import { classifyDeclaration, type Finding, orphanFinding } from "./rules";
 
 /**
  * 検査するTypeScriptの拡張子
  */
-export const TYPESCRIPT_EXTENSIONS: ReadonlySet<string> = new Set([
-	".cts",
-	".mts",
-	".ts",
-	".tsx",
-]);
+export const TYPESCRIPT_EXTENSIONS: ReadonlySet<string> = new Set(
+	FILE_EXTENSIONS,
+);
 
 /**
  * source文字列の宣言を解析してTSDoc違反を検出する
@@ -30,8 +25,7 @@ export const TYPESCRIPT_EXTENSIONS: ReadonlySet<string> = new Set([
  * @param file - 指摘に載せるfileのpath
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
- * @param docScope - 文書の不足を検査する宣言をどこまで広げるか
- * @param styleScope - 書いたTSDocの体裁を検査する宣言をどこまで広げるか
+ * @param scopes - ruleごとの検査する宣言の広さ
  * @returns 検出したTSDoc違反
  */
 export function scanSource(
@@ -39,21 +33,13 @@ export function scanSource(
 	file: string,
 	enabled: readonly OptInRuleId[] = [],
 	disabled: readonly RuleId[] = [],
-	docScope: DocScope = DEFAULT_DOC_SCOPE,
-	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
+	scopes: RuleScopes = {},
 ): Finding[] {
 	try {
 		const { declarations, orphans } = collectSource(source, file);
 		return [
 			...declarations.flatMap((declaration) =>
-				classifyDeclaration(
-					declaration,
-					file,
-					source,
-					enabled,
-					docScope,
-					styleScope,
-				),
+				classifyDeclaration(declaration, file, source, enabled, scopes),
 			),
 			...orphans.map((comment) => orphanFinding(comment, file)),
 		].filter((finding) => !disabled.includes(finding.rule));
@@ -70,8 +56,7 @@ export function scanSource(
  * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
- * @param docScope - 文書の不足を検査する宣言をどこまで広げるか
- * @param styleScope - 書いたTSDocの体裁を検査する宣言をどこまで広げるか
+ * @param scopes - ruleごとの検査する宣言の広さ
  * @returns 検出したTSDoc違反
  */
 export function scanFile(
@@ -79,16 +64,14 @@ export function scanFile(
 	cwd = process.cwd(),
 	enabled: readonly OptInRuleId[] = [],
 	disabled: readonly RuleId[] = [],
-	docScope: DocScope = DEFAULT_DOC_SCOPE,
-	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
+	scopes: RuleScopes = {},
 ): Finding[] {
 	return scanSource(
 		readFileSync(file, "utf8"),
 		normalizePath(relative(cwd, file)),
 		enabled,
 		disabled,
-		docScope,
-		styleScope,
+		scopes,
 	);
 }
 
@@ -99,8 +82,7 @@ export function scanFile(
  * @param cwd - 指摘に載せる相対pathの基準ディレクトリ
  * @param enabled - 実行するopt-in ruleの識別子一覧
  * @param disabled - 追加で無効にするruleの一覧
- * @param docScope - 文書の不足を検査する宣言をどこまで広げるか
- * @param styleScope - 書いたTSDocの体裁を検査する宣言をどこまで広げるか
+ * @param scopes - ruleごとの検査する宣言の広さ
  * @returns 位置順に並べたTSDoc違反
  */
 export function scanFiles(
@@ -108,14 +90,11 @@ export function scanFiles(
 	cwd = process.cwd(),
 	enabled: readonly OptInRuleId[] = [],
 	disabled: readonly RuleId[] = [],
-	docScope: DocScope = DEFAULT_DOC_SCOPE,
-	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
+	scopes: RuleScopes = {},
 ): Finding[] {
 	const findings: Finding[] = [];
 	for (const file of files) {
-		findings.push(
-			...scanFile(file, cwd, enabled, disabled, docScope, styleScope),
-		);
+		findings.push(...scanFile(file, cwd, enabled, disabled, scopes));
 	}
 	return findings.sort(compareFindings);
 }

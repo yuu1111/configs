@@ -1,16 +1,22 @@
+import { relative } from "node:path";
 import {
 	type BaselineEntry,
 	type BaselineFile,
 	compareWithBaseline,
 } from "@yuu1111/shared/baseline";
-import { normalizePath } from "@yuu1111/shared/files";
+import type { FindingEngineContext } from "@yuu1111/shared/engines";
+import { collectFiles, isIncluded, normalizePath } from "@yuu1111/shared/files";
+import { compareFindings } from "@yuu1111/shared/findings";
+import type { EngineReport } from "@yuu1111/shared/report";
 import {
 	type EngineName,
 	enabledEngines,
 	type FindingEngineName,
 	type ProcessEngineName,
 	type QualityConfig,
+	RULE_VOCABULARY,
 	type RuleEngineOptions,
+	selectionFor,
 } from "./config";
 import {
 	FINDING_ENGINES,
@@ -226,7 +232,8 @@ async function runProcessEngine(
 function defaultRuleOptions(): RuleEngineOptions {
 	return {
 		includes: ["**"],
-		options: {},
+		ops: [],
+		overrides: [],
 		rules: { disable: [], enable: [], error: [], warn: [] },
 	};
 }
@@ -236,6 +243,75 @@ function exclusionPatterns(paths: readonly string[]): string[] {
 		const normalized = normalizePath(path);
 		return [`!${normalized}`, `!${normalized}/**`];
 	});
+}
+
+/**
+ * 上書きがあるときfileごとのrule選択でfileを分けて検出engineを起動し 報告をまとめる
+ *
+ * 上書きが無ければ全fileを1回で検査する 同じrule選択になるfileは1回の起動にまとめる
+ *
+ * @param name - 起動する検出engine名
+ * @param engine - 検出engineの実装
+ * @param configured - engineのsectionが持つ起動条件
+ * @param options - 実行条件
+ * @returns 上書きを適用した報告
+ */
+function runWithOverrides(
+	name: FindingEngineName,
+	engine: (context: FindingEngineContext) => EngineReport,
+	configured: RuleEngineOptions,
+	options: RunOptions,
+): EngineReport {
+	const includes = [
+		...configured.includes,
+		...exclusionPatterns(options.overrides.ignore),
+	];
+	const targets = resolveTargets(options.overrides.targets, []);
+	if (configured.overrides.length === 0) {
+		return engine({
+			cwd: options.cwd,
+			includes,
+			rules: configured.rules,
+			targets,
+		});
+	}
+	const files = collectFiles(targets, {
+		cwd: options.cwd,
+		extensions: new Set(RULE_VOCABULARY[name].extensions),
+		includes,
+	});
+	const groups = new Map<
+		string,
+		{ files: string[]; rules: RuleEngineOptions["rules"] }
+	>();
+	for (const file of files) {
+		const path = normalizePath(relative(options.cwd, file));
+		const matching = configured.overrides.filter((entry) =>
+			isIncluded(path, entry.files),
+		);
+		const rules = selectionFor(name, [
+			configured.ops,
+			...matching.map((entry) => entry.ops),
+		]);
+		const key = JSON.stringify(rules);
+		const group = groups.get(key) ?? { files: [], rules };
+		group.files.push(file);
+		groups.set(key, group);
+	}
+	const reports = [...groups.values()].map((group) =>
+		engine({
+			cwd: options.cwd,
+			includes: ["**"],
+			rules: group.rules,
+			targets: group.files,
+		}),
+	);
+	return {
+		errors: reports.flatMap((report) => report.errors).sort(compareFindings),
+		warnings: reports
+			.flatMap((report) => report.warnings)
+			.sort(compareFindings),
+	};
 }
 
 /**
@@ -249,16 +325,7 @@ function runFindingEngine(
 	const configured = options.config.config[name] ?? defaultRuleOptions();
 	const startedAt = performance.now();
 	try {
-		const report = engine({
-			cwd: options.cwd,
-			includes: [
-				...configured.includes,
-				...exclusionPatterns(options.overrides.ignore),
-			],
-			options: configured.options,
-			rules: configured.rules,
-			targets: resolveTargets(options.overrides.targets, []),
-		});
+		const report = runWithOverrides(name, engine, configured, options);
 		const parsed = normalizeReport(name, report);
 		const promoted = options.config.failOnWarnings
 			? parsed.warnings.map(

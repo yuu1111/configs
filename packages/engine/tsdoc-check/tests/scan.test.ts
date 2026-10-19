@@ -62,14 +62,9 @@ describe("tsdoc checks", () => {
 				"function shutdown(reason: string): void {}",
 			];
 			const scan = (source: string) =>
-				scanSource(
-					source,
-					"src/sample.ts",
-					["blank-line-before-tags"],
-					[],
-					"exported",
-					"documented",
-				);
+				scanSource(source, "src/sample.ts", ["blank-line-before-tags"], [], {
+					"blank-line-before-tags": "documented",
+				});
 			expect(scan(lines.join(newline))).toMatchObject([
 				{ rule: "blank-line-before-tags", line: 3, column: 4 },
 			]);
@@ -290,7 +285,9 @@ describe("tsdoc checks", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", ["param-untagged"], [], "documented")
+			scanSource(source, "src/sample.ts", ["param-untagged"], [], {
+				"param-untagged": "documented",
+			})
 				.map((finding) => finding.rule)
 				.sort(),
 		).toEqual(["param-mismatch", "param-untagged"]);
@@ -325,7 +322,7 @@ describe("tsdoc checks", () => {
 		expect(rulesOf(source)).toEqual([]);
 	});
 
-	test("checks a single-line doc on a member under styleScope documented", () => {
+	test("checks a single-line doc on a member under the documented scope", () => {
 		const source = [
 			"/** Runs the task",
 			" * and waits",
@@ -336,28 +333,18 @@ describe("tsdoc checks", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(
-				source,
-				"src/sample.ts",
-				["single-line-doc"],
-				[],
-				"exported",
-				"documented",
-			).map((finding) => finding.rule),
+			scanSource(source, "src/sample.ts", ["single-line-doc"], [], {
+				"single-line-doc": "documented",
+			}).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
-	test("checks a single-line doc on an unexported declaration under styleScope documented", () => {
+	test("checks a single-line doc on an unexported declaration under the documented scope", () => {
 		const source = "/** Runs the task */\nfunction run(): void {}\n";
 		expect(
-			scanSource(
-				source,
-				"src/sample.ts",
-				["single-line-doc"],
-				[],
-				"exported",
-				"documented",
-			).map((finding) => finding.rule),
+			scanSource(source, "src/sample.ts", ["single-line-doc"], [], {
+				"single-line-doc": "documented",
+			}).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
@@ -370,22 +357,12 @@ describe("tsdoc checks", () => {
 			"function run(value: number): void {}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", ["param-untagged"], [], "documented")
+			scanSource(source, "src/sample.ts", ["param-untagged"], [], {
+				"param-untagged": "documented",
+			})
 				.map((finding) => finding.rule)
 				.sort(),
 		).toEqual(["param-mismatch", "param-untagged"]);
-	});
-
-	test("keeps missing-doc on the public surface under documented", () => {
-		expect(
-			scanSource(
-				"function run(): void {}\n",
-				"src/sample.ts",
-				["missing-doc"],
-				[],
-				"documented",
-			),
-		).toEqual([]);
 	});
 
 	test("requires a comment on every declaration outside a function body under all", () => {
@@ -395,7 +372,7 @@ describe("tsdoc checks", () => {
 				"src/sample.ts",
 				["missing-doc"],
 				[],
-				"all",
+				{ "missing-doc": "all" },
 			).map((finding) => finding.rule),
 		).toEqual(["missing-doc"]);
 	});
@@ -409,7 +386,9 @@ describe("tsdoc checks", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", ["missing-doc"], [], "all"),
+			scanSource(source, "src/sample.ts", ["missing-doc"], [], {
+				"missing-doc": "all",
+			}),
 		).toEqual([]);
 	});
 
@@ -775,14 +754,7 @@ describe("orphan TSDoc", () => {
 			"\tintervalMs: number;",
 			"}",
 		].join("\n");
-		const findings = scanSource(
-			source,
-			"src/sample.ts",
-			[],
-			[],
-			"documented",
-			"documented",
-		);
+		const findings = scanSource(source, "src/sample.ts");
 		expect(findings.map((finding) => finding.rule)).toEqual(["orphan-doc"]);
 		expect(findings[0]?.line).toBe(9);
 		expect(findings[0]?.severity).toBe("warning");
@@ -849,7 +821,7 @@ describe("orphan TSDoc", () => {
 });
 
 describe("object literal members", () => {
-	test("checks a single-line doc on a property under styleScope documented", () => {
+	test("checks a single-line doc on a property under the documented scope", () => {
 		const source = [
 			"/** Builds the schema",
 			" */",
@@ -859,14 +831,9 @@ describe("object literal members", () => {
 			"})",
 		].join("\n");
 		expect(
-			scanSource(
-				source,
-				"src/sample.ts",
-				["single-line-doc"],
-				[],
-				"exported",
-				"documented",
-			).map((finding) => finding.rule),
+			scanSource(source, "src/sample.ts", ["single-line-doc"], [], {
+				"single-line-doc": "documented",
+			}).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
@@ -896,14 +863,9 @@ describe("object literal members", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(
-				source,
-				"src/sample.ts",
-				["single-line-doc"],
-				[],
-				"exported",
-				"documented",
-			).map((finding) => finding.rule),
+			scanSource(source, "src/sample.ts", ["single-line-doc"], [], {
+				"single-line-doc": "documented",
+			}).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
@@ -917,14 +879,9 @@ describe("object literal members", () => {
 			"}] as const",
 		].join("\n");
 		expect(
-			scanSource(
-				source,
-				"src/sample.ts",
-				["single-line-doc"],
-				[],
-				"exported",
-				"documented",
-			).map((finding) => finding.rule),
+			scanSource(source, "src/sample.ts", ["single-line-doc"], [], {
+				"single-line-doc": "documented",
+			}).map((finding) => finding.rule),
 		).toEqual(["single-line-doc"]);
 	});
 
@@ -943,7 +900,9 @@ describe("object literal members", () => {
 			"}",
 		].join("\n");
 		expect(
-			scanSource(source, "src/sample.ts", ["param-untagged"], [], "documented")
+			scanSource(source, "src/sample.ts", ["param-untagged"], [], {
+				"param-untagged": "documented",
+			})
 				.map((finding) => finding.rule)
 				.sort(),
 		).toEqual(["param-mismatch", "param-untagged"]);

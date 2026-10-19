@@ -26,34 +26,34 @@ Declare the engines to run in `quality.json`, then call the CLI from a script:
 }
 ```
 
-```ts
+```json
 {
   "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
   "failOnWarnings": true,
-  "biome": {
-    "enabled": true
-  },
+  "biome": true,
   "comment-check": {
-    "enabled": true,
     "includes": ["**", "!another-project/**"],
     "rules": {
-      "preset": "recommended",
-      "content": {
-        "japanese-period": "on"
-      }
+      "japanese-period": "on"
     }
   },
   "document-style-check": {
-    "enabled": true,
     "rules": {
       "preset": "all"
     }
   },
   "tsdoc-check": {
-    "enabled": true,
     "rules": {
       "preset": "all"
-    }
+    },
+    "overrides": [
+      {
+        "files": ["tests/**"],
+        "rules": {
+          "missing-doc": "off"
+        }
+      }
+    ]
   }
 }
 ```
@@ -91,15 +91,18 @@ A path that matches an engine name needs a `./` prefix, as in `quality-check ./b
 
 | Field | Description |
 |-------|-------------|
-| `<engine>` | One section per engine; `enabled` starts it |
+| `<engine>` | One section per engine; writing `true` or a section starts it, and `false` or `enabled: false` stops it |
 | `<engine>.includes` | Globs inspected by the four built-in finding engines |
 | `<engine>.rules` | Rule selection of the four built-in finding engines |
+| `<engine>.overrides` | Rule selection layered onto the files its globs select |
 | `failOnWarnings` | Treat warnings as blocking findings and apply the same policy to Biome |
 | `baseline` | Baseline file path; `false` disables the diff |
 
 Engines run in the order `biome`, `typecheck`, `knip`, `code-style-check`, `comment-check`, `document-style-check`, `tsdoc-check`.
 
-Each engine owns a top-level section that holds `enabled` and the conditions that engine takes.
+Each engine owns a top-level section that holds the conditions that engine takes.
+A section that is present starts the engine, and an engine without conditions can be written as just `true`, as in `"biome": true`.
+`false` or `enabled: false` stops it.
 A condition an engine does not take is rejected, so a typo fails at start-up instead of being ignored.
 `biome`, `typecheck`, and `knip` run as child processes, and the four finding engines run in-process.
 
@@ -108,10 +111,10 @@ A condition an engine does not take is rejected, so a typo fails at start-up ins
 | `biome` | `biome check` | `args`; `biome.json` selects the files |
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
-| `code-style-check` | in-process | `includes`, `rules` |
-| `comment-check` | in-process | `includes`, `rules` |
-| `document-style-check` | in-process | `includes`, `rules` |
-| `tsdoc-check` | in-process | `includes`, `rules` |
+| `code-style-check` | in-process | `includes`, `rules`, `overrides` |
+| `comment-check` | in-process | `includes`, `rules`, `overrides` |
+| `document-style-check` | in-process | `includes`, `rules`, `overrides` |
+| `tsdoc-check` | in-process | `includes`, `rules`, `overrides` |
 
 `args` applies only to the child-process engines and is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
 When `failOnWarnings` is true, the runner passes `--error-on-warnings` to Biome automatically and uses the exit codes of the other child-process engines as-is.
@@ -129,13 +132,36 @@ biome: ignore skipped (biome.json holds its settings)
 
 `rules` selects which rules of the built-in engines run and how they are reported.
 `rules.preset` selects in bulk: `recommended` is the engine default, `all` turns every rule on, and `none` turns every rule off.
-A group key names one of the rule groups the engine publishes and takes `off`, `on`, `warn`, or `error` for every rule in that group.
-An object under a group key names single rules.
-The most specific setting wins, so a preset, a group, and a rule may be written in that order.
+Rule names and group names sit side by side directly under `rules`.
+A rule key applies to that rule alone, and a group key names one of the rule groups the engine publishes and applies to every rule in that group, each taking `off`, `on`, `warn`, or `error`.
+A per-rule option travels in an object, as in `{ "level": "on", "options": { "scope": "documented" } }`.
+Leaving `level` out keeps the state of the rule and only layers the option, and an option given to a group reaches only the rules that take it.
+The most specific setting wins whatever order the keys are written in, so a preset, a group, and a rule layer in that order.
 `off` also works for a rule that is on by default, and `on` keeps the engine default severity.
 `warn` and `error` change the severity in every finding engine and turn an opt-in rule on first.
-A group or rule name that the engine does not know is a configuration error, and the published `schema.json` teaches an editor the same names.
+A group or rule name that the engine does not know, or an option that the rule does not take, is a configuration error, and the published `schema.json` teaches an editor the same vocabulary.
 The selection is handed to the built-in engines directly, so the CLI no longer turns it into `--enable`, `--disable`, or `--error` arguments.
+
+### overrides
+
+`overrides` layers `rules` onto the files its globs select.
+`files` takes the same globs as `includes`, negative globs included.
+`rules` has the same shape as the top-level `rules`; entries apply in the order written, and a later one wins.
+
+```json
+{
+  "tsdoc-check": {
+    "rules": { "preset": "all" },
+    "overrides": [
+      { "files": ["tests/**"], "rules": { "missing-doc": "off" } },
+      { "files": ["src/legacy/**"], "rules": { "completeness": "warn" } }
+    ]
+  }
+}
+```
+
+Only the files `includes` selects are inspected, and `overrides` adds none.
+The overrides fold into a rule selection per file before a finding engine starts, and files that end up with the same selection share one run.
 
 No check engine keeps a baseline of its own, so the new-and-resolved diff is done by this CLI from a single baseline file.
 
@@ -149,8 +175,8 @@ Each built-in engine publishes its own rule vocabulary, and one document holds t
 |--------|--------|-----------|
 | `code-style-check` | `spacing` | [`docs/engines/code-style-check.md`](../../../docs/engines/code-style-check.md) |
 | `comment-check` | `suppression`, `shape`, `content` | [`docs/engines/comment-check.md`](../../../docs/engines/comment-check.md) |
-| `document-style-check` | `whitespace`, `typography`, `structure`, `content` | [`docs/engines/document-style-check.md`](../../../docs/engines/document-style-check.md) |
-| `tsdoc-check` | `syntax`, `documentation`, `contract`, `suppression` | [`docs/engines/tsdoc-check.md`](../../../docs/engines/tsdoc-check.md) |
+| `document-style-check` | `whitespace`, `layout`, `consistency`, `japanese`, `content` | [`docs/engines/document-style-check.md`](../../../docs/engines/document-style-check.md) |
+| `tsdoc-check` | `correctness`, `suppression`, `completeness`, `style` | [`docs/engines/tsdoc-check.md`](../../../docs/engines/tsdoc-check.md) |
 
 ## Baseline
 
@@ -167,6 +193,15 @@ An entry is identified by its engine, rule, file, and message, so a change to a 
 Set `baseline` to `false` in `quality.json` to diff nothing and report every finding.
 
 ## Commands
+
+`quality-check migrate` rewrites a `quality.json` in the old format into the current one.
+It previews by default and writes only with `--write`.
+A setting it cannot convert is left alone, and the command prints what to fix by hand and exits with 1.
+
+```bash
+quality-check migrate
+quality-check migrate --write
+```
 
 `quality-check document-style` runs the review ledger of the built-in `document-style-check` engine:
 
@@ -197,6 +232,7 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 | `--update-baseline` | Replace the baseline with the current findings |
 | `--json` | Print the per-engine results as JSON |
 | `document-style <command>` | Run the review ledger (`scan`, `check`, or `lint`) |
+| `migrate` | Rewrite an old `quality.json` (`--config <path>`, `--write`) |
 
 `--ignore` and the positional targets reach only the engines that take them.
 

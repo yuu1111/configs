@@ -3,7 +3,7 @@ import { relative } from "node:path";
 import { normalizePath } from "@yuu1111/shared/files";
 import { compareFindings } from "@yuu1111/shared/findings";
 import { extractComments } from "./comments";
-import type { OptInRuleId, RuleId } from "./rule-ids";
+import { FILE_EXTENSIONS, type OptInRuleId, type RuleId } from "./rule-ids";
 import {
 	classifyComment,
 	type Finding,
@@ -15,16 +15,9 @@ import {
 /**
  * commentを検査する拡張子
  */
-export const SUPPORTED_EXTENSIONS: ReadonlySet<string> = new Set([
-	".cjs",
-	".cts",
-	".js",
-	".jsx",
-	".mjs",
-	".mts",
-	".ts",
-	".tsx",
-]);
+export const SUPPORTED_EXTENSIONS: ReadonlySet<string> = new Set(
+	FILE_EXTENSIONS,
+);
 
 function positionAt(
 	source: string,

@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createBaseline } from "@yuu1111/shared/baseline";
 import type { FindingEngine } from "@yuu1111/shared/engines";
 import type { Severity } from "@yuu1111/shared/findings";
@@ -127,6 +130,106 @@ function createOptions(overrides: Partial<RunOptions>): RunOptions {
 		...overrides,
 	};
 }
+
+describe("rule overrides", () => {
+	// 検査対象ごとにengineが受け取ったrule選択と対象fileを記録する実装を返す
+	function recordingEngine(calls: { files: string[]; disable: string[] }[]) {
+		const registry = emptyRegistry();
+		registry["comment-check"] = (context) => {
+			calls.push({
+				disable: [...context.rules.disable].sort(),
+				files: [...context.targets].map((file) => file.replaceAll("\\", "/")),
+			});
+			return { errors: [], warnings: [] };
+		};
+		return registry;
+	}
+
+	test("runs the engine once when no override exists", async () => {
+		const calls: { files: string[]; disable: string[] }[] = [];
+		await runEngines(
+			createOptions({
+				config: parseConfig({ "comment-check": true }, "test"),
+				findingEngines: recordingEngine(calls),
+			}),
+		);
+		expect(calls).toHaveLength(1);
+	});
+
+	test("splits the files an override selects from the others", async () => {
+		const directory = mkdtempSync(join(tmpdir(), "quality-overrides-"));
+		try {
+			mkdirSync(join(directory, "src"));
+			mkdirSync(join(directory, "tests"));
+			writeFileSync(join(directory, "src", "a.ts"), "export {}\n");
+			writeFileSync(join(directory, "tests", "b.ts"), "export {}\n");
+			const calls: { files: string[]; disable: string[] }[] = [];
+			await runEngines(
+				createOptions({
+					config: parseConfig(
+						{
+							"comment-check": {
+								overrides: [
+									{
+										files: ["tests/**"],
+										rules: { "placeholder-comment": "off" },
+									},
+								],
+							},
+						},
+						"test",
+					),
+					cwd: directory,
+					findingEngines: recordingEngine(calls),
+				}),
+			);
+			expect(calls).toHaveLength(2);
+			const withTests = calls.find((call) =>
+				call.disable.includes("placeholder-comment"),
+			);
+			const rest = calls.find(
+				(call) => !call.disable.includes("placeholder-comment"),
+			);
+			expect(withTests?.files.map((file) => file.split("/").at(-1))).toEqual([
+				"b.ts",
+			]);
+			expect(rest?.files.map((file) => file.split("/").at(-1))).toEqual([
+				"a.ts",
+			]);
+		} finally {
+			rmSync(directory, { force: true, recursive: true });
+		}
+	});
+
+	test("lets a later override win over an earlier one", async () => {
+		const directory = mkdtempSync(join(tmpdir(), "quality-overrides-"));
+		try {
+			writeFileSync(join(directory, "a.ts"), "export {}\n");
+			const calls: { files: string[]; disable: string[] }[] = [];
+			await runEngines(
+				createOptions({
+					config: parseConfig(
+						{
+							"comment-check": {
+								overrides: [
+									{ files: ["**"], rules: { "placeholder-comment": "off" } },
+									{ files: ["**"], rules: { "placeholder-comment": "on" } },
+								],
+							},
+						},
+						"test",
+					),
+					cwd: directory,
+					findingEngines: recordingEngine(calls),
+				}),
+			);
+			expect(calls).toHaveLength(1);
+			expect(calls[0]?.disable).not.toContain("placeholder-comment");
+		} finally {
+			rmSync(directory, { force: true, recursive: true });
+		}
+	});
+});
 
 describe("engine orchestration", () => {
 	test("passes the color capability to the engine command", async () => {

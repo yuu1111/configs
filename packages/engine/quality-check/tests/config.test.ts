@@ -8,6 +8,7 @@ import {
 	loadConfig,
 	parseConfig,
 	RULE_VOCABULARY,
+	selectionFor,
 } from "../src/config";
 
 describe("quality config", () => {
@@ -37,50 +38,56 @@ describe("quality config", () => {
 		const config = parseConfig(
 			{
 				"tsdoc-check": {
-					enabled: true,
 					includes: ["src/**", "!src/generated/**"],
-					rules: { documentation: { "missing-doc": "on" } },
+					rules: { "missing-doc": "on" },
 				},
 			},
 			"test",
 		);
-		expect(engineConfig(config, "tsdoc-check")).toEqual({
-			includes: ["src/**", "!src/generated/**"],
-			options: { docScope: "exported", styleScope: "exported" },
-			rules: { disable: [], enable: ["missing-doc"], error: [], warn: [] },
+		expect(engineConfig(config, "tsdoc-check")?.includes).toEqual([
+			"src/**",
+			"!src/generated/**",
+		]);
+		expect(engineConfig(config, "tsdoc-check")?.rules).toEqual({
+			disable: [],
+			enable: ["missing-doc"],
+			error: [],
+			warn: [],
 		});
 	});
 
-	test("reads docScope from the TSDoc section", () => {
+	test("reads a scope as an option of the rule", () => {
 		const config = parseConfig(
 			{
 				"tsdoc-check": {
-					docScope: "documented",
-					enabled: true,
+					rules: {
+						"param-untagged": { level: "on", options: { scope: "documented" } },
+					},
 				},
 			},
 			"test",
 		);
-		expect(engineConfig(config, "tsdoc-check")?.options).toEqual({
-			docScope: "documented",
-			styleScope: "exported",
+		expect(engineConfig(config, "tsdoc-check")?.rules).toEqual({
+			disable: [],
+			enable: ["param-untagged"],
+			error: [],
+			options: { "param-untagged": { scope: "documented" } },
+			warn: [],
 		});
 	});
 
-	test("reads styleScope from the TSDoc section", () => {
+	test("gives a scope to every rule of a group that takes it", () => {
 		const config = parseConfig(
 			{
 				"tsdoc-check": {
-					enabled: true,
-					styleScope: "documented",
+					rules: { completeness: { options: { scope: "documented" } } },
 				},
 			},
 			"test",
 		);
-		expect(engineConfig(config, "tsdoc-check")?.options).toEqual({
-			docScope: "exported",
-			styleScope: "documented",
-		});
+		const options = engineConfig(config, "tsdoc-check")?.rules.options;
+		expect(options?.["param-untagged"]).toEqual({ scope: "documented" });
+		expect(options?.["missing-doc"]).toBeUndefined();
 	});
 
 	test("reads the tsconfig paths of the type checker", () => {
@@ -122,7 +129,7 @@ describe("quality config", () => {
 			{
 				"comment-check": {
 					enabled: true,
-					rules: { shape: { "separator-comment": "off" } },
+					rules: { "separator-comment": "off" },
 				},
 			},
 			"test",
@@ -164,7 +171,7 @@ describe("quality config", () => {
 				"comment-check": {
 					enabled: true,
 					rules: {
-						content: { "japanese-period": "off" },
+						"japanese-period": "off",
 						preset: "all",
 					},
 				},
@@ -201,7 +208,7 @@ describe("quality config", () => {
 			{
 				"comment-check": {
 					enabled: true,
-					rules: { shape: { "separator-comment": "warn" } },
+					rules: { "separator-comment": "warn" },
 				},
 			},
 			"test",
@@ -217,7 +224,7 @@ describe("quality config", () => {
 				"tsdoc-check": {
 					enabled: true,
 					rules: {
-						documentation: { "missing-returns": "error" },
+						"missing-returns": "error",
 					},
 				},
 			},
@@ -236,24 +243,62 @@ describe("quality config", () => {
 			{
 				"tsdoc-check": {
 					enabled: true,
-					rules: { contract: "error" },
+					rules: { completeness: "error" },
 				},
 			},
 			"test",
 		);
 		const options = engineConfig(config, "tsdoc-check");
 		expect(options?.rules.enable).toEqual([
+			"deprecated-without-guidance",
+			"missing-doc",
+			"missing-returns",
 			"param-order",
 			"param-untagged",
 			"type-param-untagged",
 		]);
-		expect(options?.rules.error).toEqual([
-			"param-mismatch",
-			"param-order",
-			"param-untagged",
-			"type-param-mismatch",
-			"type-param-untagged",
-		]);
+		expect(options?.rules.error).toEqual(options?.rules.enable);
+	});
+
+	test("runs an engine written as true", () => {
+		const config = parseConfig({ biome: true, knip: false }, "test");
+		expect(enabledEngines(config)).toEqual(["biome"]);
+	});
+
+	test("runs a section that leaves enabled out", () => {
+		const config = parseConfig({ "comment-check": {} }, "test");
+		expect(enabledEngines(config)).toEqual(["comment-check"]);
+	});
+
+	test("does not run a section that is switched off", () => {
+		const config = parseConfig(
+			{ biome: true, "comment-check": { enabled: false } },
+			"test",
+		);
+		expect(enabledEngines(config)).toEqual(["biome"]);
+	});
+
+	test("reads an override with the files it applies to", () => {
+		const config = parseConfig(
+			{
+				"comment-check": {
+					overrides: [
+						{ files: ["tests/**"], rules: { "placeholder-comment": "off" } },
+					],
+				},
+			},
+			"test",
+		);
+		const section = engineConfig(config, "comment-check");
+		expect(section?.overrides).toHaveLength(1);
+		expect(section?.overrides[0]?.files).toEqual(["tests/**"]);
+		expect(section?.rules.disable).toEqual([]);
+		expect(
+			selectionFor("comment-check", [
+				section?.ops ?? [],
+				section?.overrides[0]?.ops ?? [],
+			]).disable,
+		).toEqual(["placeholder-comment"]);
 	});
 
 	test("defaults the baseline to the conventional file", () => {
@@ -297,9 +342,41 @@ describe("quality config errors", () => {
 		).toThrow("test: biome has an unknown option: ignore");
 	});
 
+	test("rejects an override without files", () => {
+		expect(() =>
+			parseConfig(
+				{ "comment-check": { overrides: [{ rules: { preset: "all" } }] } },
+				"test",
+			),
+		).toThrow(
+			"test: comment-check.overrides[0].files must be a non-empty array of globs",
+		);
+	});
+
+	test("rejects an override that names an unknown rule", () => {
+		expect(() =>
+			parseConfig(
+				{
+					"comment-check": {
+						overrides: [{ files: ["a/**"], rules: { nope: "off" } }],
+					},
+				},
+				"test",
+			),
+		).toThrow(
+			"test: comment-check.overrides[0].rules has an unknown rule or group: nope",
+		);
+	});
+
 	test("rejects a config without an enabled engine", () => {
 		expect(() => parseConfig({ biome: { enabled: false } }, "test")).toThrow(
 			"test must enable at least one engine",
+		);
+	});
+
+	test("rejects an engine written as something else", () => {
+		expect(() => parseConfig({ biome: "yes" }, "test")).toThrow(
+			"test: biome must be an object or a boolean",
 		);
 	});
 
@@ -315,10 +392,10 @@ describe("quality config errors", () => {
 				{ "comment-check": { enabled: true, rules: { style: {} } } },
 				"test",
 			),
-		).toThrow("test: comment-check.rules has an unknown rule group: style");
+		).toThrow("test: comment-check.rules has an unknown rule or group: style");
 	});
 
-	test("rejects a rule that belongs to another group", () => {
+	test("rejects rules listed under a group", () => {
 		expect(() =>
 			parseConfig(
 				{
@@ -329,9 +406,7 @@ describe("quality config errors", () => {
 				},
 				"test",
 			),
-		).toThrow(
-			"test: comment-check.rules.shape has an unknown rule: japanese-period",
-		);
+		).toThrow("test: comment-check.rules.shape lists rules under a group");
 	});
 
 	test("rejects an unknown rule state", () => {
@@ -356,44 +431,43 @@ describe("quality config errors", () => {
 		]);
 	});
 
-	test("rejects an unknown docScope", () => {
+	test("rejects a scope the rule does not accept", () => {
 		expect(() =>
 			parseConfig(
-				{ "tsdoc-check": { docScope: "public", enabled: true } },
+				{
+					"tsdoc-check": {
+						rules: { "missing-doc": { options: { scope: "documented" } } },
+					},
+				},
 				"test",
 			),
 		).toThrow(
-			"test: tsdoc-check.docScope must be one of exported, documented, all",
+			"test: tsdoc-check.rules.missing-doc.options.scope is not accepted: documented",
 		);
 	});
 
-	test("rejects docScope in an engine that does not take it", () => {
+	test("rejects an option that no rule of the group takes", () => {
 		expect(() =>
 			parseConfig(
-				{ "comment-check": { docScope: "all", enabled: true } },
-				"test",
-			),
-		).toThrow("test: comment-check has an unknown option: docScope");
-	});
-
-	test("rejects an unknown styleScope", () => {
-		expect(() =>
-			parseConfig(
-				{ "tsdoc-check": { enabled: true, styleScope: "all" } },
+				{
+					"comment-check": {
+						rules: { shape: { options: { scope: "all" } } },
+					},
+				},
 				"test",
 			),
 		).toThrow(
-			"test: tsdoc-check.styleScope must be one of exported, documented",
+			"test: comment-check.rules.shape.options.scope is not accepted: all",
 		);
 	});
 
-	test("rejects styleScope in an engine that does not take it", () => {
+	test("rejects the removed docScope and styleScope sections", () => {
 		expect(() =>
-			parseConfig(
-				{ "comment-check": { enabled: true, styleScope: "documented" } },
-				"test",
-			),
-		).toThrow("test: comment-check has an unknown option: styleScope");
+			parseConfig({ "tsdoc-check": { docScope: "all" } }, "test"),
+		).toThrow("test: tsdoc-check has an unknown option: docScope");
+		expect(() =>
+			parseConfig({ "tsdoc-check": { styleScope: "all" } }, "test"),
+		).toThrow("test: tsdoc-check has an unknown option: styleScope");
 	});
 
 	test("rejects a preset that is not a known preset", () => {

@@ -1,12 +1,11 @@
 import {
-	docScopesOf,
 	ENGINE_CAPABILITIES,
 	ENGINE_NAMES,
 	type EngineName,
 	isRuleEngine,
 	RULE_VOCABULARY,
 	type RuleEngineName,
-	styleScopesOf,
+	ruleOptionsOf,
 } from "./config";
 
 type JsonSchema = Record<string, unknown>;
@@ -31,7 +30,62 @@ function ruleStateSchema(): JsonSchema {
 }
 
 /**
- * engine1つ分のrulesを許すschemaを返す
+ * ruleまたはgroupが受け取る値のschemaを返す 状態だけの文字列かlevelとoptionsを持つobject
+ *
+ * @param options - 受け取るoptionとその選択肢
+ * @returns ruleまたはgroupの値のschema
+ */
+function ruleEntrySchema(
+	options: Record<string, readonly string[]>,
+): JsonSchema {
+	const object: JsonSchema = {
+		additionalProperties: false,
+		properties: {
+			level: ruleStateSchema(),
+			...(Object.keys(options).length === 0
+				? {}
+				: {
+						options: {
+							additionalProperties: false,
+							properties: Object.fromEntries(
+								Object.entries(options).map(([key, values]) => [
+									key,
+									{ enum: [...values], type: "string" },
+								]),
+							),
+							type: "object",
+						},
+					}),
+		},
+		type: "object",
+	};
+	return { anyOf: [ruleStateSchema(), object] };
+}
+
+/**
+ * groupのrulesが受け取るoptionの和集合を返す
+ *
+ * @param name - 語彙を引くengine名
+ * @param rules - groupに属するrule
+ * @returns optionごとの選択肢の和集合
+ */
+function mergedOptions(
+	name: RuleEngineName,
+	rules: readonly string[],
+): Record<string, readonly string[]> {
+	const merged: Record<string, string[]> = {};
+	for (const rule of rules) {
+		for (const [key, values] of Object.entries(
+			ruleOptionsOf(name)[rule] ?? {},
+		)) {
+			merged[key] = [...new Set([...(merged[key] ?? []), ...values])];
+		}
+	}
+	return merged;
+}
+
+/**
+ * engine1つ分のrulesを許すschemaを返す rule名とgroup名を並べて書ける
  *
  * @param name - rulesを組み立てるengine名
  * @returns rulesのschema
@@ -48,19 +102,13 @@ function rulesSchema(name: RuleEngineName): JsonSchema {
 		},
 	};
 	for (const [group, rules] of Object.entries(vocabulary.groups)) {
-		const members: readonly string[] = rules;
 		properties[group] = {
-			anyOf: [
-				ruleStateSchema(),
-				{
-					additionalProperties: false,
-					properties: Object.fromEntries(
-						members.map((rule) => [rule, ruleStateSchema()]),
-					),
-					type: "object",
-				},
-			],
+			description: `Applies to every rule of the ${group} group.`,
+			...ruleEntrySchema(mergedOptions(name, rules)),
 		};
+	}
+	for (const rule of vocabulary.all) {
+		properties[rule] = ruleEntrySchema(mergedOptions(name, [rule]));
 	}
 	return {
 		additionalProperties: false,
@@ -79,8 +127,9 @@ function engineSchema(name: EngineName): JsonSchema {
 	const capabilities = ENGINE_CAPABILITIES[name];
 	const properties: Record<string, unknown> = {
 		enabled: {
-			default: false,
-			description: "Whether quality-check runs this engine.",
+			default: true,
+			description:
+				"Whether quality-check runs this engine. A section that is present runs unless this is false.",
 			type: "boolean",
 		},
 	};
@@ -98,19 +147,31 @@ function engineSchema(name: EngineName): JsonSchema {
 				"Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again.",
 		};
 		properties.rules = rulesSchema(name);
-		const docScopes = docScopesOf(name);
-		if (docScopes !== undefined) {
-			properties.docScope = { enum: [...docScopes], type: "string" };
-		}
-		const styleScopes = styleScopesOf(name);
-		if (styleScopes !== undefined) {
-			properties.styleScope = { enum: [...styleScopes], type: "string" };
-		}
+		properties.overrides = {
+			description:
+				"Applied in order to the files their globs select; later entries win.",
+			items: {
+				additionalProperties: false,
+				properties: {
+					files: {
+						...STRING_ARRAY,
+						description:
+							"Ordered globs relative to the project root, with the same negation rule as includes.",
+						minItems: 1,
+					},
+					rules: rulesSchema(name),
+				},
+				required: ["files", "rules"],
+				type: "object",
+			},
+			type: "array",
+		};
 	}
 	return {
-		additionalProperties: false,
-		properties,
-		type: "object",
+		anyOf: [
+			{ type: "boolean" },
+			{ additionalProperties: false, properties, type: "object" },
+		],
 	};
 }
 

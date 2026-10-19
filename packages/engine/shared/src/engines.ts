@@ -23,6 +23,11 @@ export interface RuleSelection {
 	 * warningへ変更するrule名
 	 */
 	warn: string[];
+
+	/**
+	 * ruleごとに指定したoption 指定の無いoptionはengineの既定値を使う
+	 */
+	options?: Record<string, Record<string, string>>;
 }
 
 /**
@@ -60,11 +65,6 @@ export interface FindingEngineContext {
 	 * 検査対象を選ぶglob 否定globは先に選んだ対象を除外する
 	 */
 	includes: string[];
-
-	/**
-	 * engineごとの追加option 検証は統合runnerが持ち engineは既定値へ倒して読む
-	 */
-	options?: Readonly<Record<string, unknown>>;
 
 	/**
 	 * 渡すrule選択

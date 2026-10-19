@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { RULE_GROUPS, RULE_IDS, SCOPED_RULE_IDS } from "../src/rule-ids";
+import { RULE_GROUPS, RULE_IDS, RULE_OPTIONS } from "../src/rule-ids";
 import { promoteFindings, returnsValue } from "../src/rules";
 import { scanSource } from "../src/scan";
 
@@ -59,9 +59,8 @@ describe("rule groups", () => {
 	});
 
 	test("names only rules that the vocabulary defines", () => {
-		for (const rule of SCOPED_RULE_IDS) {
-			expect(RULE_IDS).toContain(rule);
+		for (const rule of Object.keys(RULE_OPTIONS)) {
+			expect(RULE_IDS).toContain(rule as (typeof RULE_IDS)[number]);
 		}
-		expect(new Set(SCOPED_RULE_IDS).size).toBe(SCOPED_RULE_IDS.length);
 	});
 });

@@ -1,29 +1,30 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+	FILE_EXTENSIONS as CODE_STYLE_CHECK_FILE_EXTENSIONS,
 	OPT_IN_RULE_IDS as CODE_STYLE_CHECK_OPT_IN_RULE_IDS,
 	RULE_GROUPS as CODE_STYLE_CHECK_RULE_GROUPS,
 	RULE_IDS as CODE_STYLE_CHECK_RULE_IDS,
 } from "@yuu1111/code-style-check/rule-ids";
 import {
+	FILE_EXTENSIONS as COMMENT_CHECK_FILE_EXTENSIONS,
 	OPT_IN_RULE_IDS as COMMENT_CHECK_OPT_IN_RULE_IDS,
 	RULE_GROUPS as COMMENT_CHECK_RULE_GROUPS,
 	RULE_IDS as COMMENT_CHECK_RULE_IDS,
 } from "@yuu1111/comment-check/rule-ids";
 import {
+	FILE_EXTENSIONS as DOCUMENT_STYLE_CHECK_FILE_EXTENSIONS,
 	OPT_IN_RULE_IDS as DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
 	RULE_GROUPS as DOCUMENT_STYLE_CHECK_RULE_GROUPS,
 	RULE_IDS as DOCUMENT_STYLE_CHECK_RULE_IDS,
 } from "@yuu1111/document-style-check/rule-ids";
 import type { RuleSelection } from "@yuu1111/shared/engines";
 import {
-	DEFAULT_DOC_SCOPE as TSDOC_CHECK_DEFAULT_DOC_SCOPE,
-	DEFAULT_STYLE_SCOPE as TSDOC_CHECK_DEFAULT_STYLE_SCOPE,
-	DOC_SCOPES as TSDOC_CHECK_DOC_SCOPES,
+	FILE_EXTENSIONS as TSDOC_CHECK_FILE_EXTENSIONS,
 	OPT_IN_RULE_IDS as TSDOC_CHECK_OPT_IN_RULE_IDS,
 	RULE_GROUPS as TSDOC_CHECK_RULE_GROUPS,
 	RULE_IDS as TSDOC_CHECK_RULE_IDS,
-	STYLE_SCOPES as TSDOC_CHECK_STYLE_SCOPES,
+	RULE_OPTIONS as TSDOC_CHECK_RULE_OPTIONS,
 } from "@yuu1111/tsdoc-check/rule-ids";
 
 /**
@@ -90,6 +91,29 @@ export interface TypecheckOptions extends EngineOptions {
 }
 
 /**
+ * ruleへの操作 presetは全ruleを一括で設定し stateは指定したruleの状態を変え optionsはruleごとのoptionを重ねる
+ */
+export type RuleOp =
+	| { kind: "preset"; value: "all" | "none" | "recommended" }
+	| { kind: "state"; rules: string[]; state: RuleState }
+	| { kind: "options"; options: Record<string, string>; rule: string };
+
+/**
+ * file globで選んだfileだけへ重ねるrule設定
+ */
+export interface RuleOverride {
+	/**
+	 * 対象fileを選ぶ順序付きglob 否定globは先に選んだ対象を除外する
+	 */
+	files: string[];
+
+	/**
+	 * この上書きが重ねるruleへの操作
+	 */
+	ops: RuleOp[];
+}
+
+/**
  * 検出engineへ渡す起動条件 検出engineはin-processで走るため追加の引数は持たない
  */
 export interface RuleEngineOptions {
@@ -99,12 +123,17 @@ export interface RuleEngineOptions {
 	includes: string[];
 
 	/**
-	 * engineごとの追加option 統合runnerが検証して渡す
+	 * 上書きを重ねる前のruleへの操作
 	 */
-	options: Record<string, unknown>;
+	ops: RuleOp[];
 
 	/**
-	 * 展開済みのrule選択
+	 * fileごとにrule設定を重ねる上書き 書いた順に適用する
+	 */
+	overrides: RuleOverride[];
+
+	/**
+	 * 上書きを重ねる前に展開したrule選択
 	 */
 	rules: RuleSelection;
 }
@@ -157,6 +186,11 @@ interface EngineVocabulary {
 	all: readonly string[];
 
 	/**
+	 * engineが検査するfileの拡張子
+	 */
+	extensions: readonly string[];
+
+	/**
 	 * ruleをまとめたgroup
 	 */
 	groups: Record<string, readonly string[]>;
@@ -167,14 +201,9 @@ interface EngineVocabulary {
 	optIn: readonly string[];
 
 	/**
-	 * 検査する宣言を文書の広さで選ぶengineが受け取るdocScopeの一覧 受け取らなければundefined
+	 * ruleごとに受け取るoptionとその選択肢 受け取るruleが無ければundefined
 	 */
-	docScopes?: readonly string[];
-
-	/**
-	 * 書いたTSDocの体裁を検査する宣言を選ぶengineが受け取るstyleScopeの一覧 受け取らなければundefined
-	 */
-	styleScopes?: readonly string[];
+	ruleOptions?: Partial<Record<string, Record<string, readonly string[]>>>;
 }
 
 /**
@@ -183,25 +212,28 @@ interface EngineVocabulary {
 export const RULE_VOCABULARY = {
 	"code-style-check": {
 		all: CODE_STYLE_CHECK_RULE_IDS,
+		extensions: CODE_STYLE_CHECK_FILE_EXTENSIONS,
 		groups: CODE_STYLE_CHECK_RULE_GROUPS,
 		optIn: CODE_STYLE_CHECK_OPT_IN_RULE_IDS,
 	},
 	"comment-check": {
 		all: COMMENT_CHECK_RULE_IDS,
+		extensions: COMMENT_CHECK_FILE_EXTENSIONS,
 		groups: COMMENT_CHECK_RULE_GROUPS,
 		optIn: COMMENT_CHECK_OPT_IN_RULE_IDS,
 	},
 	"document-style-check": {
 		all: DOCUMENT_STYLE_CHECK_RULE_IDS,
+		extensions: DOCUMENT_STYLE_CHECK_FILE_EXTENSIONS,
 		groups: DOCUMENT_STYLE_CHECK_RULE_GROUPS,
 		optIn: DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
 	},
 	"tsdoc-check": {
 		all: TSDOC_CHECK_RULE_IDS,
-		docScopes: TSDOC_CHECK_DOC_SCOPES,
+		extensions: TSDOC_CHECK_FILE_EXTENSIONS,
 		groups: TSDOC_CHECK_RULE_GROUPS,
 		optIn: TSDOC_CHECK_OPT_IN_RULE_IDS,
-		styleScopes: TSDOC_CHECK_STYLE_SCOPES,
+		ruleOptions: TSDOC_CHECK_RULE_OPTIONS,
 	},
 } satisfies Record<string, EngineVocabulary>;
 
@@ -221,27 +253,15 @@ export function isRuleEngine(name: EngineName): name is RuleEngineName {
 }
 
 /**
- * engineが受け取るdocScopeの一覧を返す
+ * engineが受け取るruleごとのoptionとその選択肢を返す
  *
  * @param name - 語彙を引くengine名
- * @returns 受け取るdocScopeの一覧 受け取らなければundefined
+ * @returns rule名ごとのoptionとその選択肢 受け取るruleが無ければ空
  */
-export function docScopesOf(
+export function ruleOptionsOf(
 	name: RuleEngineName,
-): readonly string[] | undefined {
-	return (RULE_VOCABULARY[name] as EngineVocabulary).docScopes;
-}
-
-/**
- * engineが受け取るstyleScopeの一覧を返す
- *
- * @param name - 語彙を引くengine名
- * @returns 受け取るstyleScopeの一覧 受け取らなければundefined
- */
-export function styleScopesOf(
-	name: RuleEngineName,
-): readonly string[] | undefined {
-	return (RULE_VOCABULARY[name] as EngineVocabulary).styleScopes;
+): Partial<Record<string, Record<string, readonly string[]>>> {
+	return (RULE_VOCABULARY[name] as EngineVocabulary).ruleOptions ?? {};
 }
 
 /**
@@ -322,14 +342,7 @@ function engineOptionKeys(name: EngineName): readonly string[] {
 		keys.push("projects");
 	}
 	if (isRuleEngine(name)) {
-		keys.push("includes");
-		keys.push("rules");
-		if (docScopesOf(name) !== undefined) {
-			keys.push("docScope");
-		}
-		if (styleScopesOf(name) !== undefined) {
-			keys.push("styleScope");
-		}
+		keys.push("includes", "overrides", "rules");
 	}
 	return keys;
 }
@@ -353,60 +366,6 @@ function readStringArray(value: unknown, field: string): string[] | undefined {
 		throw new Error(`${field} must be an array of non-empty strings`);
 	}
 	return [...value] as string[];
-}
-
-/**
- * scopeの指定を読み取る
- *
- * @param value - sectionが持つscopeの値
- * @param field - errorメッセージへ載せる位置
- * @param scopes - engineが受け取るscopeの一覧
- * @returns 読み取ったscope 指定が無ければundefined
- */
-function readScope(
-	value: unknown,
-	field: string,
-	scopes: readonly string[],
-): string | undefined {
-	if (value === undefined) {
-		return undefined;
-	}
-	if (typeof value !== "string" || !scopes.includes(value)) {
-		throw new Error(`${field} must be one of ${scopes.join(", ")}`);
-	}
-	return value;
-}
-
-/**
- * engineごとの追加optionを読み取る
- *
- * @param value - engineのsection
- * @param name - optionを読み取るengine名
- * @param source - errorメッセージへ載せるconfig fileのpath
- * @returns 検証して既定値を補った追加option
- */
-function readEngineOptions(
-	value: JsonObject,
-	name: RuleEngineName,
-	source: string,
-): Record<string, unknown> {
-	const options: Record<string, unknown> = {};
-	const docScopes = docScopesOf(name);
-	if (docScopes !== undefined) {
-		options.docScope =
-			readScope(value.docScope, `${source}: ${name}.docScope`, docScopes) ??
-			TSDOC_CHECK_DEFAULT_DOC_SCOPE;
-	}
-	const styleScopes = styleScopesOf(name);
-	if (styleScopes !== undefined) {
-		options.styleScope =
-			readScope(
-				value.styleScope,
-				`${source}: ${name}.styleScope`,
-				styleScopes,
-			) ?? TSDOC_CHECK_DEFAULT_STYLE_SCOPE;
-	}
-	return options;
 }
 
 function readBoolean(value: unknown, field: string): boolean | undefined {
@@ -448,77 +407,114 @@ function readRuleState(value: unknown, field: string): RuleState {
 }
 
 /**
- * presetの指定をruleの状態へ反映する
- *
- * @param states - 反映先のrule名ごとの状態
- * @param value - presetの値
- * @param field - errorメッセージへ載せる位置
- * @param vocabulary - 反映先engineの語彙
+ * ruleの状態とoptionを実行前に解決した結果
  */
-function applyRulePreset(
-	states: Map<string, RuleState>,
-	value: unknown,
-	field: string,
+interface ResolvedRules {
+	/**
+	 * ruleごとのoption
+	 */
+	options: Map<string, Record<string, string>>;
+
+	/**
+	 * ruleごとの状態
+	 */
+	states: Map<string, RuleState>;
+}
+
+/**
+ * presetが選ぶruleの状態を返す
+ *
+ * @param preset - presetの値
+ * @param optIn - ruleがopt-inか
+ * @returns presetが選ぶ状態
+ */
+function presetState(
+	preset: "all" | "none" | "recommended",
+	optIn: boolean,
+): RuleState {
+	if (preset === "all") {
+		return "on";
+	}
+	if (preset === "none") {
+		return "off";
+	}
+	return optIn ? "off" : "on";
+}
+
+/**
+ * ruleへの操作を解決中の状態へ重ねる
+ *
+ * @param resolved - 重ねる先の状態
+ * @param op - 重ねる操作
+ * @param vocabulary - 重ねるengineの語彙
+ */
+function applyRuleOp(
+	resolved: ResolvedRules,
+	op: RuleOp,
 	vocabulary: EngineVocabulary,
 ): void {
-	if (value === undefined || value === "recommended") {
+	if (op.kind === "preset") {
+		resolved.options.clear();
+		for (const rule of vocabulary.all) {
+			resolved.states.set(
+				rule,
+				presetState(op.value, vocabulary.optIn.includes(rule)),
+			);
+		}
 		return;
 	}
-	if (value !== "all" && value !== "none") {
-		throw new Error(`${field} must be "recommended", "all" or "none"`);
+	if (op.kind === "state") {
+		for (const rule of op.rules) {
+			resolved.states.set(rule, op.state);
+		}
+		return;
 	}
-	for (const rule of vocabulary.all) {
-		states.set(rule, value === "all" ? "on" : "off");
+	resolved.options.set(op.rule, {
+		...resolved.options.get(op.rule),
+		...op.options,
+	});
+}
+
+/**
+ * rule1つの状態をrule選択の該当する一覧へ振り分ける
+ *
+ * @param selection - 振り分け先のrule選択
+ * @param rule - 振り分けるrule名
+ * @param state - ruleの状態
+ * @param optIn - ruleがopt-inか
+ */
+function placeRule(
+	selection: RuleSelection,
+	rule: string,
+	state: RuleState,
+	optIn: boolean,
+): void {
+	if (state === "off") {
+		if (!optIn) {
+			selection.disable.push(rule);
+		}
+		return;
+	}
+	if (optIn) {
+		selection.enable.push(rule);
+	}
+	if (state === "error") {
+		selection.error.push(rule);
+	}
+	if (state === "warn") {
+		selection.warn.push(rule);
 	}
 }
 
 /**
- * group単位の指定をruleの状態へ反映する 文字列はgroup全体  objectはrule名ごとの状態
+ * 解決したruleの状態をengineへ渡すrule選択へ展開する
  *
- * @param states - 反映先のrule名ごとの状態
- * @param group - 反映するgroup名
- * @param entry - groupに渡された値
- * @param field - errorメッセージへ載せる位置
- * @param vocabulary - 反映先engineの語彙
- */
-function applyRuleGroup(
-	states: Map<string, RuleState>,
-	group: string,
-	entry: unknown,
-	field: string,
-	vocabulary: EngineVocabulary,
-): void {
-	const members = vocabulary.groups[group];
-	if (members === undefined) {
-		throw new Error(`${field} has an unknown rule group: ${group}`);
-	}
-	if (typeof entry === "string") {
-		const state = readRuleState(entry, `${field}.${group}`);
-		for (const rule of members) {
-			states.set(rule, state);
-		}
-		return;
-	}
-	if (!isJsonObject(entry)) {
-		throw new Error(`${field}.${group} must be a state or an object`);
-	}
-	for (const [rule, state] of Object.entries(entry)) {
-		if (!members.includes(rule)) {
-			throw new Error(`${field}.${group} has an unknown rule: ${rule}`);
-		}
-		states.set(rule, readRuleState(state, `${field}.${group}.${rule}`));
-	}
-}
-
-/**
- * ruleの状態をengineへ渡すrule名の一覧へ展開する
- *
- * @param states - rule名ごとの状態
+ * @param resolved - 解決したruleの状態
  * @param vocabulary - 展開するengineの語彙
- * @returns engineへ渡すrule名の一覧
+ * @returns engineへ渡すrule選択
  */
 function toRuleSelection(
-	states: Map<string, RuleState>,
+	resolved: ResolvedRules,
 	vocabulary: EngineVocabulary,
 ): RuleSelection {
 	const selection: RuleSelection = {
@@ -527,60 +523,274 @@ function toRuleSelection(
 		error: [],
 		warn: [],
 	};
-	for (const [rule, state] of states) {
-		if (state === "off") {
-			if (!vocabulary.optIn.includes(rule)) {
-				selection.disable.push(rule);
-			}
-			continue;
+	for (const [rule, state] of resolved.states) {
+		placeRule(selection, rule, state, vocabulary.optIn.includes(rule));
+	}
+	const options: Record<string, Record<string, string>> = {};
+	for (const [rule, entry] of resolved.options) {
+		if (Object.keys(entry).length > 0) {
+			options[rule] = entry;
 		}
-		if (vocabulary.optIn.includes(rule)) {
-			selection.enable.push(rule);
-		}
-		if (state === "error") {
-			selection.error.push(rule);
-		}
-		if (state === "warn") {
-			selection.warn.push(rule);
-		}
+	}
+	if (Object.keys(options).length > 0) {
+		selection.options = options;
 	}
 	return selection;
 }
 
 /**
- * ruleの指定をengineへ渡す引数へ展開する
+ * ruleへの操作を順に重ねてengineへ渡すrule選択を作る
  *
- * presetで全体を選び groupでまとめて上書きし rule名で1つだけ上書きする 具体的な指定が勝つ
+ * @param name - 語彙を引くengine名
+ * @param opsLists - 先に重ねる順に並べた操作の列
+ * @returns engineへ渡すrule選択
+ */
+export function selectionFor(
+	name: RuleEngineName,
+	opsLists: readonly (readonly RuleOp[])[],
+): RuleSelection {
+	const vocabulary: EngineVocabulary = RULE_VOCABULARY[name];
+	const states = new Map<string, RuleState>();
+	for (const rule of vocabulary.all) {
+		states.set(rule, vocabulary.optIn.includes(rule) ? "off" : "on");
+	}
+	const resolved: ResolvedRules = { options: new Map(), states };
+	for (const ops of opsLists) {
+		for (const op of ops) {
+			applyRuleOp(resolved, op, vocabulary);
+		}
+	}
+	return toRuleSelection(resolved, vocabulary);
+}
+
+const RULE_ENTRY_KEYS = ["level", "options"];
+
+/**
+ * ruleまたはgroupに渡された値を読み取る 文字列は状態 objectはlevelとoptions
+ *
+ * @param entry - ruleまたはgroupに渡された値
+ * @param field - errorメッセージへ載せる位置
+ * @returns 読み取った状態とoption
+ */
+function readRuleEntry(
+	entry: unknown,
+	field: string,
+): { level?: RuleState; options?: JsonObject } {
+	if (typeof entry === "string") {
+		return { level: readRuleState(entry, field) };
+	}
+	if (!isJsonObject(entry)) {
+		throw new Error(`${field} must be a state or an object`);
+	}
+	const unknown = Object.keys(entry).find(
+		(key) => !RULE_ENTRY_KEYS.includes(key),
+	);
+	if (unknown !== undefined) {
+		throw new Error(`${field} has an unknown option: ${unknown}`);
+	}
+	const result: { level?: RuleState; options?: JsonObject } = {};
+	if (entry.level !== undefined) {
+		result.level = readRuleState(entry.level, `${field}.level`);
+	}
+	if (entry.options !== undefined) {
+		if (!isJsonObject(entry.options)) {
+			throw new Error(`${field}.options must be an object`);
+		}
+		result.options = entry.options;
+	}
+	return result;
+}
+
+/**
+ * optionをruleへ渡す操作へ展開する groupではそのoptionを受け取るruleだけへ渡す
+ *
+ * @param rules - optionを渡す先のrule
+ * @param options - 渡すoption
+ * @param field - errorメッセージへ載せる位置
+ * @param vocabulary - 展開するengineの語彙
+ * @returns ruleごとのoptionの操作
+ */
+function readOptionOps(
+	rules: readonly string[],
+	options: JsonObject,
+	field: string,
+	vocabulary: EngineVocabulary,
+): RuleOp[] {
+	const ops: RuleOp[] = [];
+	for (const [key, value] of Object.entries(options)) {
+		if (typeof value !== "string") {
+			throw new Error(`${field}.options.${key} must be a string`);
+		}
+		const accepting = rules.filter(
+			(rule) => vocabulary.ruleOptions?.[rule]?.[key]?.includes(value) === true,
+		);
+		if (accepting.length === 0) {
+			throw new Error(`${field}.options.${key} is not accepted: ${value}`);
+		}
+		for (const rule of accepting) {
+			ops.push({ kind: "options", options: { [key]: value }, rule });
+		}
+	}
+	return ops;
+}
+
+/**
+ * groupの下にrule名を並べた旧書式か level と options 以外のkeyを持つobjectを指す
+ *
+ * @param entry - groupに渡された値
+ * @returns groupの下にrule名を並べた旧書式ならtrue
+ */
+function isRuleMapEntry(entry: unknown): entry is JsonObject {
+	return (
+		isJsonObject(entry) &&
+		Object.keys(entry).some((key) => !RULE_ENTRY_KEYS.includes(key))
+	);
+}
+
+/**
+ * presetの値を操作へ読み取る
+ *
+ * @param value - rulesの値
+ * @param field - errorメッセージへ載せる位置
+ * @returns presetの操作 指定が無ければ空
+ */
+function readPresetOps(value: JsonObject, field: string): RuleOp[] {
+	const preset = value.preset;
+	if (preset === undefined) {
+		return [];
+	}
+	if (preset !== "recommended" && preset !== "all" && preset !== "none") {
+		throw new Error(`${field}.preset must be "recommended", "all" or "none"`);
+	}
+	return [{ kind: "preset", value: preset }];
+}
+
+/**
+ * groupまたはruleの1件を操作へ読み取る
+ *
+ * @param key - groupまたはruleの名前
+ * @param entry - 渡された値
+ * @param field - errorメッセージへ載せる位置
+ * @param vocabulary - 語彙を持つengineの語彙
+ * @returns 読み取った操作とgroupの指定か
+ */
+function readTargetOps(
+	key: string,
+	entry: unknown,
+	field: string,
+	vocabulary: EngineVocabulary,
+): { group: boolean; ops: RuleOp[] } {
+	const members = vocabulary.groups[key];
+	if (members === undefined && !vocabulary.all.includes(key)) {
+		throw new Error(`${field} has an unknown rule or group: ${key}`);
+	}
+	if (members !== undefined && isRuleMapEntry(entry)) {
+		throw new Error(
+			`${field}.${key} lists rules under a group; write the rules directly under rules (quality-check migrate rewrites this)`,
+		);
+	}
+	const targets = members === undefined ? [key] : [...members];
+	const parsed = readRuleEntry(entry, `${field}.${key}`);
+	const ops: RuleOp[] = [];
+	if (parsed.level !== undefined) {
+		ops.push({ kind: "state", rules: targets, state: parsed.level });
+	}
+	if (parsed.options !== undefined) {
+		ops.push(
+			...readOptionOps(targets, parsed.options, `${field}.${key}`, vocabulary),
+		);
+	}
+	return { group: members !== undefined, ops };
+}
+
+/**
+ * rulesの値をruleへの操作の列へ読み取る
+ *
+ * presetで全体を選び groupでまとめて重ね rule名で1つだけ重ねる 具体的な指定が勝つ
+ *
+ * @param value - rulesの値
+ * @param field - errorメッセージへ載せる位置
+ * @param name - 語彙を引くengine名
+ * @returns ruleへの操作の列
+ */
+export function readRuleOps(
+	value: unknown,
+	field: string,
+	name: RuleEngineName,
+): RuleOp[] {
+	if (value === undefined) {
+		return [];
+	}
+	if (!isJsonObject(value)) {
+		throw new Error(`${field} must be an object`);
+	}
+	const vocabulary: EngineVocabulary = RULE_VOCABULARY[name];
+	const groupOps: RuleOp[] = [];
+	const ruleOps: RuleOp[] = [];
+	for (const [key, entry] of Object.entries(value)) {
+		if (key !== "preset") {
+			const target = readTargetOps(key, entry, field, vocabulary);
+			(target.group ? groupOps : ruleOps).push(...target.ops);
+		}
+	}
+	return [...readPresetOps(value, field), ...groupOps, ...ruleOps];
+}
+
+/**
+ * ruleの指定をengineへ渡すrule選択へ展開する
  *
  * @param value - quality.jsonが持つrulesの値
  * @param field - errorメッセージへ載せる位置
  * @param name - 語彙を引くengine名
- * @returns engineへ渡すrule名の一覧
+ * @returns engineへ渡すrule選択
  */
 export function readRuleSelection(
 	value: unknown,
 	field: string,
 	name: RuleEngineName,
 ): RuleSelection {
-	let entries: JsonObject = {};
-	if (value !== undefined) {
-		if (!isJsonObject(value)) {
-			throw new Error(`${field} must be an object`);
+	return selectionFor(name, [readRuleOps(value, field, name)]);
+}
+
+/**
+ * overridesの値を読み取る
+ *
+ * @param value - overridesの値
+ * @param field - errorメッセージへ載せる位置
+ * @param name - 語彙を引くengine名
+ * @returns 書いた順に並べた上書き
+ */
+function readOverrides(
+	value: unknown,
+	field: string,
+	name: RuleEngineName,
+): RuleOverride[] {
+	if (value === undefined) {
+		return [];
+	}
+	if (!Array.isArray(value)) {
+		throw new Error(`${field} must be an array`);
+	}
+	return value.map((entry: unknown, index) => {
+		const path = `${field}[${index}]`;
+		if (!isJsonObject(entry)) {
+			throw new Error(`${path} must be an object`);
 		}
-		entries = value;
-	}
-	const vocabulary: EngineVocabulary = RULE_VOCABULARY[name];
-	const states = new Map<string, RuleState>();
-	for (const rule of vocabulary.all) {
-		states.set(rule, vocabulary.optIn.includes(rule) ? "off" : "on");
-	}
-	applyRulePreset(states, entries.preset, `${field}.preset`, vocabulary);
-	for (const [group, entry] of Object.entries(entries)) {
-		if (group !== "preset") {
-			applyRuleGroup(states, group, entry, field, vocabulary);
+		const unknown = Object.keys(entry).find(
+			(key) => key !== "files" && key !== "rules",
+		);
+		if (unknown !== undefined) {
+			throw new Error(`${path} has an unknown option: ${unknown}`);
 		}
-	}
-	return toRuleSelection(states, vocabulary);
+		const files = readStringArray(entry.files, `${path}.files`);
+		if (files === undefined || files.length === 0) {
+			throw new Error(`${path}.files must be a non-empty array of globs`);
+		}
+		if (entry.rules === undefined) {
+			throw new Error(`${path}.rules is required`);
+		}
+		return { files, ops: readRuleOps(entry.rules, `${path}.rules`, name) };
+	});
 }
 
 /**
@@ -595,7 +805,13 @@ function parseEngineOptions(
 		(key) => !engineOptionKeys(name).includes(key),
 	);
 	if (unknown !== undefined) {
-		throw new Error(`${source}: ${name} has an unknown option: ${unknown}`);
+		const moved =
+			unknown === "docScope" || unknown === "styleScope"
+				? "; it became a scope option of the rule (quality-check migrate rewrites this)"
+				: "";
+		throw new Error(
+			`${source}: ${name} has an unknown option: ${unknown}${moved}`,
+		);
 	}
 	const options: Record<string, unknown> = {};
 	if (ENGINE_CAPABILITIES[name].args) {
@@ -606,18 +822,48 @@ function parseEngineOptions(
 			readStringArray(value.projects, `${source}: ${name}.projects`) ?? [];
 	}
 	if (isRuleEngine(name)) {
+		const ops = readRuleOps(value.rules, `${source}: ${name}.rules`, name);
 		options.includes = readStringArray(
 			value.includes,
 			`${source}: ${name}.includes`,
 		) ?? ["**"];
-		options.options = readEngineOptions(value, name, source);
-		options.rules = readRuleSelection(
-			value.rules,
-			`${source}: ${name}.rules`,
+		options.ops = ops;
+		options.overrides = readOverrides(
+			value.overrides,
+			`${source}: ${name}.overrides`,
 			name,
 		);
+		options.rules = selectionFor(name, [ops]);
 	}
 	return options;
+}
+
+/**
+ * engineのsection1つを読み取る 真偽値だけの短い書き方も受け付ける
+ *
+ * @param section - sectionの値
+ * @param source - errorメッセージへ載せるconfig fileのpath
+ * @param name - 読み取るengine名
+ * @returns 有効かどうかと起動条件 sectionが無ければundefined
+ */
+function parseSection(
+	section: unknown,
+	source: string,
+	name: EngineName,
+): { enabled: boolean; options: Record<string, unknown> } | undefined {
+	if (section === undefined) {
+		return undefined;
+	}
+	if (typeof section === "boolean") {
+		return { enabled: section, options: parseEngineOptions({}, source, name) };
+	}
+	if (!isJsonObject(section)) {
+		throw new Error(`${source}: ${name} must be an object or a boolean`);
+	}
+	return {
+		enabled: readBoolean(section.enabled, `${source}: ${name}.enabled`) ?? true,
+		options: parseEngineOptions(section, source, name),
+	};
 }
 
 /**
@@ -644,17 +890,11 @@ export function parseConfig(value: unknown, source: string): QualityConfig {
 	const engines: Partial<Record<EngineName, boolean>> = {};
 	const options: Partial<Record<EngineName, unknown>> = {};
 	for (const name of ENGINE_NAMES) {
-		const section = value[name];
-		if (section === undefined) {
-			engines[name] = false;
-			continue;
+		const section = parseSection(value[name], source, name);
+		engines[name] = section?.enabled ?? false;
+		if (section !== undefined) {
+			options[name] = section.options;
 		}
-		if (!isJsonObject(section)) {
-			throw new Error(`${source}: ${name} must be an object`);
-		}
-		engines[name] =
-			readBoolean(section.enabled, `${source}: ${name}.enabled`) ?? false;
-		options[name] = parseEngineOptions(section, source, name);
 	}
 	if (ENGINE_NAMES.every((name) => engines[name] !== true)) {
 		throw new Error(`${source} must enable at least one engine`);

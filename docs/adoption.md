@@ -54,42 +54,52 @@ export default {
 ```json
 {
   "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
-  "biome": {
-    "enabled": true
-  },
-  "typecheck": {
-    "enabled": true
-  },
-  "knip": {
-    "enabled": true
-  },
+  "biome": true,
+  "typecheck": true,
+  "knip": true,
   "document-style-check": {
-    "enabled": true,
-    "includes": ["docs/**"],
-    "rules": {
-      "preset": "recommended"
-    }
+    "includes": ["docs/**"]
   },
   "failOnWarnings": true
 }
 ```
 
 engine ごとの設定とruleは [`docs/engines/`](engines/index.md) を正本にする
-導入時は `preset` の `recommended` で始め、opt-inのruleを `on` で1つずつ足す
+導入時は既定の `recommended` で始め、opt-inのruleを `on` で1つずつ足す
+ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替えたいときは group 名を書く
 
 ```json
 {
   "document-style-check": {
-    "enabled": true,
     "rules": {
-      "preset": "recommended",
-      "typography": {
-        "japanese-period": "on"
-      }
+      "japanese-period": "on"
     }
   }
 }
 ```
+
+ディレクトリごとに rule を変えたいときは `overrides` を使う
+
+```json
+{
+  "document-style-check": {
+    "rules": {
+      "japanese": "on"
+    },
+    "overrides": [
+      {
+        "files": ["docs/en/**"],
+        "rules": {
+          "japanese": "off"
+        }
+      }
+    ]
+  }
+}
+```
+
+旧書式の `quality.json` は `quality-check migrate` で現在の書式へ移せる
+既定はpreviewで、`--write` を付けたときだけ書き換える
 
 ## scriptへ登録する
 

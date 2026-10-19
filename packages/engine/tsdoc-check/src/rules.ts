@@ -7,15 +7,12 @@ import {
 	type Suppression,
 } from "./parse";
 import {
-	DEFAULT_DOC_SCOPE,
-	DEFAULT_STYLE_SCOPE,
-	type DocScope,
+	DEFAULT_SCOPE,
 	type OptInRuleId,
 	RULE_IDS,
+	RULE_OPTIONS,
 	type RuleId,
-	SCOPED_RULE_IDS,
-	STYLE_RULE_IDS,
-	type StyleScope,
+	type RuleScopes,
 } from "./rule-ids";
 import { parseTsdoc, type TsdocResult } from "./tsdoc";
 
@@ -532,15 +529,14 @@ export function promoteFindings(
 /**
  * 宣言の指摘へ抑制commentとscopeを適用する
  *
- * docScopeは文書の不足を、styleScopeは書いたTSDocの体裁を検査する宣言を選ぶ
- * どちらもexportedのときは公開surfaceの宣言だけが対象になる
+ * ruleごとのscopeが検査する宣言を選ぶ exportedのときは公開surfaceの宣言だけが対象になる
+ * scopeを取らないruleは書かれたTSDocが正しいかだけを見て docがある宣言すべてを対象にする
  *
  * @param declaration - 検査する宣言
  * @param file - 指摘に載せるfileのpath
  * @param source - 宣言を切り出したsource文字列
  * @param enabled - 実行するopt-in ruleの識別子一覧
- * @param docScope - 文書の不足を検査する宣言をどこまで広げるか
- * @param styleScope - 書いたTSDocの体裁を検査する宣言をどこまで広げるか
+ * @param scopes - ruleごとの検査する宣言の広さ
  * @returns 抑制とscopeを適用した後の指摘一覧
  */
 export function classifyDeclaration(
@@ -548,23 +544,19 @@ export function classifyDeclaration(
 	file: string,
 	source: string,
 	enabled: readonly OptInRuleId[] = [],
-	docScope: DocScope = DEFAULT_DOC_SCOPE,
-	styleScope: StyleScope = DEFAULT_STYLE_SCOPE,
+	scopes: RuleScopes = {},
 ): Finding[] {
 	const requiresDoc =
-		docScope === "all" ? !declaration.local : declaration.exported;
+		scopes["missing-doc"] === "all" ? !declaration.local : declaration.exported;
 	if (declaration.comment === null && !requiresDoc) {
 		return [];
 	}
 	const inScope = (finding: Finding) => {
-		if (STYLE_RULE_IDS.includes(finding.rule)) {
-			return styleScope !== "exported" || declaration.exported;
+		if (!(finding.rule in RULE_OPTIONS)) {
+			return true;
 		}
-		return (
-			docScope !== "exported" ||
-			declaration.exported ||
-			!SCOPED_RULE_IDS.includes(finding.rule)
-		);
+		const scope = scopes[finding.rule] ?? DEFAULT_SCOPE;
+		return scope !== "exported" || declaration.exported;
 	};
 	const findings = checkDeclaration(declaration, file, source, enabled);
 	if (declaration.suppressions.length === 0) {

@@ -23,114 +23,128 @@
 			"type": "boolean"
 		},
 		"biome": {
-			"additionalProperties": false,
-			"properties": {
-				"enabled": {
-					"default": false,
-					"description": "Whether quality-check runs this engine.",
+			"anyOf": [
+				{
 					"type": "boolean"
 				},
-				"args": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
+				{
+					"additionalProperties": false,
+					"properties": {
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
+						},
+						"args": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array"
+						}
 					},
-					"type": "array"
+					"type": "object"
 				}
-			},
-			"type": "object"
+			]
 		},
 		"typecheck": {
-			"additionalProperties": false,
-			"properties": {
-				"enabled": {
-					"default": false,
-					"description": "Whether quality-check runs this engine.",
+			"anyOf": [
+				{
 					"type": "boolean"
 				},
-				"args": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
+				{
+					"additionalProperties": false,
+					"properties": {
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
+						},
+						"args": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array"
+						},
+						"projects": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array"
+						}
 					},
-					"type": "array"
-				},
-				"projects": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array"
+					"type": "object"
 				}
-			},
-			"type": "object"
+			]
 		},
 		"knip": {
-			"additionalProperties": false,
-			"properties": {
-				"enabled": {
-					"default": false,
-					"description": "Whether quality-check runs this engine.",
+			"anyOf": [
+				{
 					"type": "boolean"
 				},
-				"args": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
+				{
+					"additionalProperties": false,
+					"properties": {
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
+						},
+						"args": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array"
+						}
 					},
-					"type": "array"
+					"type": "object"
 				}
-			},
-			"type": "object"
+			]
 		},
 		"code-style-check": {
-			"additionalProperties": false,
-			"properties": {
-				"enabled": {
-					"default": false,
-					"description": "Whether quality-check runs this engine.",
+			"anyOf": [
+				{
 					"type": "boolean"
 				},
-				"includes": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array",
-					"default": [
-						"**"
-					],
-					"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
-				},
-				"rules": {
+				{
 					"additionalProperties": false,
 					"properties": {
-						"preset": {
-							"default": "recommended",
-							"description": "Selects the initial rule set before group and rule overrides.",
-							"enum": [
-								"recommended",
-								"all",
-								"none"
-							],
-							"type": "string"
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
 						},
-						"spacing": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+						"includes": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array",
+							"default": [
+								"**"
+							],
+							"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
+						},
+						"rules": {
+							"additionalProperties": false,
+							"properties": {
+								"preset": {
+									"default": "recommended",
+									"description": "Selects the initial rule set before group and rule overrides.",
 									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
+										"recommended",
+										"all",
+										"none"
 									],
 									"type": "string"
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"blank-line-between-class-members": {
+								"spacing": {
+									"description": "Applies to every rule of the spacing group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -140,7 +154,27 @@
 											],
 											"type": "string"
 										},
-										"blank-line-between-definitions": {
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"blank-line-between-class-members": {
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -149,66 +183,234 @@
 												"error"
 											],
 											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
+									]
+								},
+								"blank-line-between-definitions": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
 								}
-							]
+							},
+							"type": "object"
+						},
+						"overrides": {
+							"description": "Applied in order to the files their globs select; later entries win.",
+							"items": {
+								"additionalProperties": false,
+								"properties": {
+									"files": {
+										"items": {
+											"minLength": 1,
+											"type": "string"
+										},
+										"type": "array",
+										"description": "Ordered globs relative to the project root, with the same negation rule as includes.",
+										"minItems": 1
+									},
+									"rules": {
+										"additionalProperties": false,
+										"properties": {
+											"preset": {
+												"default": "recommended",
+												"description": "Selects the initial rule set before group and rule overrides.",
+												"enum": [
+													"recommended",
+													"all",
+													"none"
+												],
+												"type": "string"
+											},
+											"spacing": {
+												"description": "Applies to every rule of the spacing group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"blank-line-between-class-members": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"blank-line-between-definitions": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											}
+										},
+										"type": "object"
+									}
+								},
+								"required": [
+									"files",
+									"rules"
+								],
+								"type": "object"
+							},
+							"type": "array"
 						}
 					},
 					"type": "object"
 				}
-			},
-			"type": "object"
+			]
 		},
 		"comment-check": {
-			"additionalProperties": false,
-			"properties": {
-				"enabled": {
-					"default": false,
-					"description": "Whether quality-check runs this engine.",
+			"anyOf": [
+				{
 					"type": "boolean"
 				},
-				"includes": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array",
-					"default": [
-						"**"
-					],
-					"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
-				},
-				"rules": {
+				{
 					"additionalProperties": false,
 					"properties": {
-						"preset": {
-							"default": "recommended",
-							"description": "Selects the initial rule set before group and rule overrides.",
-							"enum": [
-								"recommended",
-								"all",
-								"none"
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
+						},
+						"includes": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array",
+							"default": [
+								"**"
 							],
-							"type": "string"
+							"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
 						},
-						"suppression": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+						"rules": {
+							"additionalProperties": false,
+							"properties": {
+								"preset": {
+									"default": "recommended",
+									"description": "Selects the initial rule set before group and rule overrides.",
 									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
+										"recommended",
+										"all",
+										"none"
 									],
 									"type": "string"
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"broad-suppression": {
+								"suppression": {
+									"description": "Applies to every rule of the suppression group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -218,37 +420,28 @@
 											],
 											"type": "string"
 										},
-										"undocumented-directive": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
-								}
-							]
-						},
-						"shape": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
-									],
-									"type": "string"
+									]
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"cramped-comment": {
+								"shape": {
+									"description": "Applies to every rule of the shape group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -258,37 +451,28 @@
 											],
 											"type": "string"
 										},
-										"separator-comment": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
-								}
-							]
-						},
-						"content": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
-									],
-									"type": "string"
+									]
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"placeholder-comment": {
+								"content": {
+									"description": "Applies to every rule of the content group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -298,7 +482,27 @@
 											],
 											"type": "string"
 										},
-										"japanese-period": {
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"broad-suppression": {
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -307,66 +511,536 @@
 												"error"
 											],
 											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
+									]
+								},
+								"cramped-comment": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"undocumented-directive": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"placeholder-comment": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"separator-comment": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"japanese-period": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
 								}
-							]
+							},
+							"type": "object"
+						},
+						"overrides": {
+							"description": "Applied in order to the files their globs select; later entries win.",
+							"items": {
+								"additionalProperties": false,
+								"properties": {
+									"files": {
+										"items": {
+											"minLength": 1,
+											"type": "string"
+										},
+										"type": "array",
+										"description": "Ordered globs relative to the project root, with the same negation rule as includes.",
+										"minItems": 1
+									},
+									"rules": {
+										"additionalProperties": false,
+										"properties": {
+											"preset": {
+												"default": "recommended",
+												"description": "Selects the initial rule set before group and rule overrides.",
+												"enum": [
+													"recommended",
+													"all",
+													"none"
+												],
+												"type": "string"
+											},
+											"suppression": {
+												"description": "Applies to every rule of the suppression group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"shape": {
+												"description": "Applies to every rule of the shape group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"content": {
+												"description": "Applies to every rule of the content group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"broad-suppression": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"cramped-comment": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"undocumented-directive": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"placeholder-comment": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"separator-comment": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"japanese-period": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											}
+										},
+										"type": "object"
+									}
+								},
+								"required": [
+									"files",
+									"rules"
+								],
+								"type": "object"
+							},
+							"type": "array"
 						}
 					},
 					"type": "object"
 				}
-			},
-			"type": "object"
+			]
 		},
 		"document-style-check": {
-			"additionalProperties": false,
-			"properties": {
-				"enabled": {
-					"default": false,
-					"description": "Whether quality-check runs this engine.",
+			"anyOf": [
+				{
 					"type": "boolean"
 				},
-				"includes": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array",
-					"default": [
-						"**"
-					],
-					"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
-				},
-				"rules": {
+				{
 					"additionalProperties": false,
 					"properties": {
-						"preset": {
-							"default": "recommended",
-							"description": "Selects the initial rule set before group and rule overrides.",
-							"enum": [
-								"recommended",
-								"all",
-								"none"
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
+						},
+						"includes": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array",
+							"default": [
+								"**"
 							],
-							"type": "string"
+							"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
 						},
-						"whitespace": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+						"rules": {
+							"additionalProperties": false,
+							"properties": {
+								"preset": {
+									"default": "recommended",
+									"description": "Selects the initial rule set before group and rule overrides.",
 									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
+										"recommended",
+										"all",
+										"none"
 									],
 									"type": "string"
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"blockquote-space": {
+								"whitespace": {
+									"description": "Applies to every rule of the whitespace group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -376,117 +1050,28 @@
 											],
 											"type": "string"
 										},
-										"code-span-padding": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"consecutive-blank-lines": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"emphasis-padding": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"hard-break-html": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"hard-tabs": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"link-label-padding": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"single-trailing-newline": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"trailing-backslash": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"trailing-whitespace": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
-								}
-							]
-						},
-						"typography": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
-									],
-									"type": "string"
+									]
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"emphasis-marker": {
+								"layout": {
+									"description": "Applies to every rule of the layout group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -496,57 +1081,28 @@
 											],
 											"type": "string"
 										},
-										"full-width-alphanumeric": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"japanese-comma": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"japanese-period": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
-								}
-							]
-						},
-						"structure": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
-									],
-									"type": "string"
+									]
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"blockquote-blank": {
+								"consistency": {
+									"description": "Applies to every rule of the consistency group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -556,267 +1112,28 @@
 											],
 											"type": "string"
 										},
-										"code-fence-language": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"command-prompt": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"duplicate-heading": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"emphasis-as-heading": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"fence-blank-lines": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"fence-style": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"first-line-heading": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"heading-blank-lines": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"heading-indent": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"heading-level-jump": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"heading-space": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"heading-trailing-punctuation": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"indented-code-block": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"list-blank-lines": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"list-indent": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"list-marker-consistency": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"list-marker-space": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"ordered-list-marker": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"setext-heading": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"single-top-level-heading": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"table-blank-lines": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"table-column-count": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"table-style": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"thematic-break-style": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
-								}
-							]
-						},
-						"content": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
-									],
-									"type": "string"
+									]
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"bare-url": {
+								"japanese": {
+									"description": "Applies to every rule of the japanese group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -826,105 +1143,2938 @@
 											],
 											"type": "string"
 										},
-										"date-anchored-statement": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"descriptive-link-text": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"empty-link": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"reversed-link": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
+									]
+								},
+								"content": {
+									"description": "Applies to every rule of the content group.",
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"bare-url": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"blockquote-blank": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"blockquote-space": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"code-fence-language": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"code-span-padding": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"command-prompt": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"consecutive-blank-lines": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"date-anchored-statement": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"descriptive-link-text": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"duplicate-heading": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"emphasis-as-heading": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"emphasis-marker": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"emphasis-padding": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"empty-link": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"fence-blank-lines": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"fence-style": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"first-line-heading": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"full-width-alphanumeric": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"hard-break-html": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"hard-tabs": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"heading-blank-lines": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"heading-indent": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"heading-level-jump": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"heading-space": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"heading-trailing-punctuation": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"indented-code-block": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"japanese-comma": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"japanese-period": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"link-label-padding": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"list-blank-lines": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"list-indent": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"list-marker-consistency": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"list-marker-space": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"ordered-list-marker": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"reversed-link": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"setext-heading": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"single-top-level-heading": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"single-trailing-newline": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"table-blank-lines": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"table-column-count": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"table-style": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"thematic-break-style": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"trailing-backslash": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"trailing-whitespace": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
 								}
-							]
+							},
+							"type": "object"
+						},
+						"overrides": {
+							"description": "Applied in order to the files their globs select; later entries win.",
+							"items": {
+								"additionalProperties": false,
+								"properties": {
+									"files": {
+										"items": {
+											"minLength": 1,
+											"type": "string"
+										},
+										"type": "array",
+										"description": "Ordered globs relative to the project root, with the same negation rule as includes.",
+										"minItems": 1
+									},
+									"rules": {
+										"additionalProperties": false,
+										"properties": {
+											"preset": {
+												"default": "recommended",
+												"description": "Selects the initial rule set before group and rule overrides.",
+												"enum": [
+													"recommended",
+													"all",
+													"none"
+												],
+												"type": "string"
+											},
+											"whitespace": {
+												"description": "Applies to every rule of the whitespace group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"layout": {
+												"description": "Applies to every rule of the layout group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"consistency": {
+												"description": "Applies to every rule of the consistency group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"japanese": {
+												"description": "Applies to every rule of the japanese group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"content": {
+												"description": "Applies to every rule of the content group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"bare-url": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"blockquote-blank": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"blockquote-space": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"code-fence-language": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"code-span-padding": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"command-prompt": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"consecutive-blank-lines": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"date-anchored-statement": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"descriptive-link-text": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"duplicate-heading": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"emphasis-as-heading": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"emphasis-marker": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"emphasis-padding": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"empty-link": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"fence-blank-lines": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"fence-style": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"first-line-heading": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"full-width-alphanumeric": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"hard-break-html": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"hard-tabs": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"heading-blank-lines": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"heading-indent": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"heading-level-jump": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"heading-space": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"heading-trailing-punctuation": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"indented-code-block": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"japanese-comma": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"japanese-period": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"link-label-padding": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"list-blank-lines": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"list-indent": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"list-marker-consistency": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"list-marker-space": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"ordered-list-marker": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"reversed-link": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"setext-heading": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"single-top-level-heading": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"single-trailing-newline": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"table-blank-lines": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"table-column-count": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"table-style": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"thematic-break-style": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"trailing-backslash": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"trailing-whitespace": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											}
+										},
+										"type": "object"
+									}
+								},
+								"required": [
+									"files",
+									"rules"
+								],
+								"type": "object"
+							},
+							"type": "array"
 						}
 					},
 					"type": "object"
 				}
-			},
-			"type": "object"
+			]
 		},
 		"tsdoc-check": {
-			"additionalProperties": false,
-			"properties": {
-				"enabled": {
-					"default": false,
-					"description": "Whether quality-check runs this engine.",
+			"anyOf": [
+				{
 					"type": "boolean"
 				},
-				"includes": {
-					"items": {
-						"minLength": 1,
-						"type": "string"
-					},
-					"type": "array",
-					"default": [
-						"**"
-					],
-					"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
-				},
-				"rules": {
+				{
 					"additionalProperties": false,
 					"properties": {
-						"preset": {
-							"default": "recommended",
-							"description": "Selects the initial rule set before group and rule overrides.",
-							"enum": [
-								"recommended",
-								"all",
-								"none"
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
+						},
+						"includes": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array",
+							"default": [
+								"**"
 							],
-							"type": "string"
+							"description": "Ordered globs relative to the project root. Negative globs exclude earlier matches; later positive globs can include them again."
 						},
-						"syntax": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+						"rules": {
+							"additionalProperties": false,
+							"properties": {
+								"preset": {
+									"default": "recommended",
+									"description": "Selects the initial rule set before group and rule overrides.",
 									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
+										"recommended",
+										"all",
+										"none"
 									],
 									"type": "string"
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"blank-line-before-tags": {
+								"correctness": {
+									"description": "Applies to every rule of the correctness group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -934,67 +4084,27 @@
 											],
 											"type": "string"
 										},
-										"orphan-doc": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"single-line-doc": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"tsdoc-syntax": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"tsdoc-tag": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
-								}
-							]
-						},
-						"documentation": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
-									],
-									"type": "string"
+									]
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"deprecated-without-guidance": {
+								"suppression": {
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -1004,47 +4114,28 @@
 											],
 											"type": "string"
 										},
-										"missing-doc": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"missing-returns": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
-								}
-							]
-						},
-						"contract": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
-									],
-									"type": "string"
+									]
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"param-mismatch": {
+								"completeness": {
+									"description": "Applies to every rule of the completeness group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -1054,67 +4145,42 @@
 											],
 											"type": "string"
 										},
-										"param-order": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"param-untagged": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"type-param-mismatch": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
-										},
-										"type-param-untagged": {
-											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-											"enum": [
-												"off",
-												"on",
-												"warn",
-												"error"
-											],
-											"type": "string"
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
-								}
-							]
-						},
-						"suppression": {
-							"anyOf": [
-								{
-									"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
-									"enum": [
-										"off",
-										"on",
-										"warn",
-										"error"
-									],
-									"type": "string"
+									]
 								},
-								{
-									"additionalProperties": false,
-									"properties": {
-										"suppression": {
+								"style": {
+									"description": "Applies to every rule of the style group.",
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -1124,7 +4190,41 @@
 											],
 											"type": "string"
 										},
-										"suppression-unused": {
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"blank-line-before-tags": {
+									"anyOf": [
+										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
 											"enum": [
 												"off",
@@ -1133,32 +4233,1254 @@
 												"error"
 											],
 											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
 										}
-									},
-									"type": "object"
+									]
+								},
+								"deprecated-without-guidance": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"missing-doc": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"missing-returns": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"orphan-doc": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"param-mismatch": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"param-order": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"param-untagged": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"single-line-doc": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"suppression-unused": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"tsdoc-syntax": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"tsdoc-tag": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"type-param-mismatch": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
+								"type-param-untagged": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												},
+												"options": {
+													"additionalProperties": false,
+													"properties": {
+														"scope": {
+															"enum": [
+																"exported",
+																"documented",
+																"all"
+															],
+															"type": "string"
+														}
+													},
+													"type": "object"
+												}
+											},
+											"type": "object"
+										}
+									]
 								}
-							]
+							},
+							"type": "object"
+						},
+						"overrides": {
+							"description": "Applied in order to the files their globs select; later entries win.",
+							"items": {
+								"additionalProperties": false,
+								"properties": {
+									"files": {
+										"items": {
+											"minLength": 1,
+											"type": "string"
+										},
+										"type": "array",
+										"description": "Ordered globs relative to the project root, with the same negation rule as includes.",
+										"minItems": 1
+									},
+									"rules": {
+										"additionalProperties": false,
+										"properties": {
+											"preset": {
+												"default": "recommended",
+												"description": "Selects the initial rule set before group and rule overrides.",
+												"enum": [
+													"recommended",
+													"all",
+													"none"
+												],
+												"type": "string"
+											},
+											"correctness": {
+												"description": "Applies to every rule of the correctness group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"suppression": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"completeness": {
+												"description": "Applies to every rule of the completeness group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"style": {
+												"description": "Applies to every rule of the style group.",
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"blank-line-before-tags": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"deprecated-without-guidance": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"missing-doc": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"missing-returns": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"orphan-doc": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"param-mismatch": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"param-order": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"param-untagged": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"single-line-doc": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"suppression-unused": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"tsdoc-syntax": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"tsdoc-tag": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"type-param-mismatch": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"type-param-untagged": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
+															},
+															"options": {
+																"additionalProperties": false,
+																"properties": {
+																	"scope": {
+																		"enum": [
+																			"exported",
+																			"documented",
+																			"all"
+																		],
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											}
+										},
+										"type": "object"
+									}
+								},
+								"required": [
+									"files",
+									"rules"
+								],
+								"type": "object"
+							},
+							"type": "array"
 						}
 					},
 					"type": "object"
-				},
-				"docScope": {
-					"enum": [
-						"exported",
-						"documented",
-						"all"
-					],
-					"type": "string"
-				},
-				"styleScope": {
-					"enum": [
-						"exported",
-						"documented"
-					],
-					"type": "string"
 				}
-			},
-			"type": "object"
+			]
 		}
 	},
 	"title": "quality.json",

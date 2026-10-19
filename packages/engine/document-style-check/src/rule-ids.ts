@@ -49,6 +49,11 @@ export const RULE_IDS = [
 ] as const;
 
 /**
+ * document-style-checkが検査するfileの拡張子
+ */
+export const FILE_EXTENSIONS = [".markdown", ".md"] as const;
+
+/**
  * RULE_IDSが定義するrule識別子のunion型
  */
 export type RuleId = (typeof RULE_IDS)[number];
@@ -91,21 +96,13 @@ export const RULE_GROUPS = {
 		"trailing-backslash",
 		"trailing-whitespace",
 	],
-	typography: [
-		"emphasis-marker",
-		"full-width-alphanumeric",
-		"japanese-comma",
-		"japanese-period",
-	],
-	structure: [
+	layout: [
 		"blockquote-blank",
 		"code-fence-language",
 		"command-prompt",
 		"duplicate-heading",
 		"emphasis-as-heading",
 		"fence-blank-lines",
-		"fence-style",
-		"first-line-heading",
 		"heading-blank-lines",
 		"heading-indent",
 		"heading-level-jump",
@@ -114,16 +111,22 @@ export const RULE_GROUPS = {
 		"indented-code-block",
 		"list-blank-lines",
 		"list-indent",
-		"list-marker-consistency",
 		"list-marker-space",
-		"ordered-list-marker",
 		"setext-heading",
-		"single-top-level-heading",
 		"table-blank-lines",
 		"table-column-count",
+	],
+	consistency: [
+		"emphasis-marker",
+		"fence-style",
+		"first-line-heading",
+		"list-marker-consistency",
+		"ordered-list-marker",
+		"single-top-level-heading",
 		"table-style",
 		"thematic-break-style",
 	],
+	japanese: ["full-width-alphanumeric", "japanese-comma", "japanese-period"],
 	content: [
 		"bare-url",
 		"date-anchored-statement",

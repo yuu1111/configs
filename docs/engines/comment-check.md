@@ -7,22 +7,16 @@
 ```json
 {
   "comment-check": {
-    "enabled": true,
     "includes": ["src/**", "!src/generated/**"],
     "rules": {
-      "preset": "recommended",
-      "shape": {
-        "cramped-comment": "on"
-      },
-      "content": {
-        "japanese-period": "on"
-      }
+      "cramped-comment": "on",
+      "japanese-period": "on"
     }
   }
 }
 ```
 
-`enabled`、`includes`、`rules` と `preset`、group、rule の指定は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
+`includes`、`rules`、`overrides` と `preset`、group、rule の指定は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
 このengineはin-processで起動し `args` を取らない
 
 ## rule 一覧

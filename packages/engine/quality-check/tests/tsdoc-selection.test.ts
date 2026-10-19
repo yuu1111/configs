@@ -24,10 +24,7 @@ function rulesWith(rules: Record<string, unknown>): string[] {
 	const cwd = mkdtempSync(join(tmpdir(), "quality-tsdoc-"));
 	try {
 		writeFileSync(join(cwd, "sample.ts"), SOURCE);
-		const config = parseConfig(
-			{ "tsdoc-check": { enabled: true, rules } },
-			"test",
-		);
+		const config = parseConfig({ "tsdoc-check": { rules } }, "test");
 		const section = engineConfig(config, "tsdoc-check");
 		if (section === null) {
 			throw new Error("tsdoc-check is disabled");
@@ -35,7 +32,6 @@ function rulesWith(rules: Record<string, unknown>): string[] {
 		const report = runTsdoc({
 			cwd,
 			includes: section.includes,
-			options: section.options,
 			rules: section.rules,
 			targets: ["sample.ts"],
 		});
@@ -53,11 +49,11 @@ describe("tsdoc-check rule selection", () => {
 	});
 
 	test("keeps a doc-scoped rule quiet when the rule turns it off", () => {
-		expect(rulesWith({ documentation: { "missing-doc": "off" } })).toEqual([]);
+		expect(rulesWith({ "missing-doc": "off" })).toEqual([]);
 	});
 
 	test("reports a doc-scoped rule when the rule turns it on", () => {
-		expect(rulesWith({ documentation: { "missing-doc": "on" } })).toEqual([
+		expect(rulesWith({ "missing-doc": "on" })).toEqual([
 			"missing-doc",
 			"missing-doc",
 		]);
