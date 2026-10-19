@@ -16,7 +16,7 @@ Extend `biome` and add the rule layers the project needs:
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "extends": [
     "@yuu1111/biome-config/biome",
     "@yuu1111/biome-config/plugins/core"
@@ -58,7 +58,7 @@ The `plugins/*` presets only add rules, so list them after `biome` or `react`; t
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "extends": ["@yuu1111/biome-config/biome"]
 }
 ```
@@ -69,7 +69,7 @@ Adds the CSS formatter and linter, with the Tailwind directives enabled.
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "extends": ["@yuu1111/biome-config/react"]
 }
 ```
