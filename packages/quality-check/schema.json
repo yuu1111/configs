@@ -154,7 +154,7 @@
 				}
 			]
 		},
-		"code-style-check": {
+		"code": {
 			"anyOf": [
 				{
 					"type": "boolean"
@@ -420,7 +420,7 @@
 				}
 			]
 		},
-		"comment-check": {
+		"comment": {
 			"anyOf": [
 				{
 					"type": "boolean"
@@ -1050,7 +1050,7 @@
 				}
 			]
 		},
-		"document-style-check": {
+		"markdown": {
 			"anyOf": [
 				{
 					"type": "boolean"
@@ -4084,7 +4084,7 @@
 				}
 			]
 		},
-		"tsdoc-check": {
+		"tsdoc": {
 			"anyOf": [
 				{
 					"type": "boolean"

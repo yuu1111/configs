@@ -10,7 +10,7 @@
 bun add -D @yuu1111/quality-check
 ```
 
-4つの検出engine `code-style-check`、`comment-check`、`document-style-check`、`tsdoc-check` はこのpackageへ同梱する
+4つの検出engine `code`、`comment`、`markdown`、`tsdoc` はこのpackageへ同梱する
 `bun build` が内部engine、共通処理とその依存を `dist/cli.js` へbundleし、公開packageはruntime dependencyを持たない
 engine packageの追加導入も実行時の解決も要らない
 Biome、Oxlint、Oxfmt、`tsc`、Knipは子プロセスで起動し、利用Projectの `node_modules/.bin` から解決する
@@ -35,18 +35,18 @@ Biome、Oxlint、Oxfmt、`tsc`、Knipは子プロセスで起動し、利用Proj
   "biome": true,
   "oxlint": true,
   "oxfmt": true,
-  "comment-check": {
+  "comment": {
     "includes": ["**", "!another-project/**"],
     "rules": {
       "japanese-period": "on"
     }
   },
-  "document-style-check": {
+  "markdown": {
     "rules": {
       "preset": "all"
     }
   },
-  "tsdoc-check": {
+  "tsdoc": {
     "rules": {
       "preset": "all"
     },
@@ -69,13 +69,13 @@ engineごとの出力と所要時間、集約summaryを並べて出し、どのe
 Checked 128 files in 260ms. No fixes applied.
 biome: passed (exit 0, 296ms)
 
-== comment-check ==
+== comment ==
 src/queue.ts:18:2 placeholder-comment placeholder comment should be resolved or tracked
-comment-check: failed (1 new, 0 resolved, 0 warnings, 118ms)
+comment: failed (1 new, 0 resolved, 0 warnings, 118ms)
 
 quality-check: 1 of 3 engines failed (1250ms)
-  failed: comment-check
-  passed: biome, tsdoc-check
+  failed: comment
+  passed: biome, tsdoc
 ```
 
 終了codeは0が全engine成功、1が失敗したengineあり、2が設定またはengine起動の失敗
@@ -84,7 +84,9 @@ engine名を渡すとそのengineだけを実行する
 
 ```bash
 quality-check biome knip
-quality-check comment-check docs
+quality-check comment docs
+quality-check markdown
+quality-check markdown docs
 ```
 
 位置引数のうちengine名と一致するものはengine選択になり、残りは対象pathになる
@@ -102,7 +104,7 @@ engine名と一致するpathは `quality-check ./biome` のように `./` を付
 | `failOnWarnings` | warningを阻害する検出として扱い、BiomeとOxlintにも同じ方針を渡す |
 | `baseline` | baseline fileのpath `false` なら差分判定を行わない |
 
-engineは `biome` → `oxlint` → `oxfmt` → `typecheck` → `knip` → `code-style-check` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
+engineは `biome` → `oxlint` → `oxfmt` → `typecheck` → `knip` → `code` → `comment` → `markdown` → `tsdoc` の順に実行する
 
 engineごとのsectionがそのengineが受け取る条件を持つ
 sectionを書けばそのengineは起動し、条件が無ければ `"biome": true` のように `true` だけで書ける
@@ -117,10 +119,10 @@ engineが受け取らない条件は設定errorにし、打ち間違いが黙っ
 | `oxfmt` | `oxfmt --check` | `args` 対象pathを受け取り `--ignore` はskipする |
 | `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
 | `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
-| `code-style-check` | in-process | `includes`、`rules`、`overrides` |
-| `comment-check` | in-process | `includes`、`rules`、`overrides` |
-| `document-style-check` | in-process | `includes`、`rules`、`overrides` |
-| `tsdoc-check` | in-process | `includes`、`rules`、`overrides` |
+| `code` | in-process | `includes`、`rules`、`overrides` |
+| `comment` | in-process | `includes`、`rules`、`overrides` |
+| `markdown` | in-process | `includes`、`rules`、`overrides` |
+| `tsdoc` | in-process | `includes`、`rules`、`overrides` |
 
 `args` は子プロセスengineだけが受け取り、engineの既定引数の後ろへ足す
 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
@@ -162,7 +164,7 @@ engineが知らないgroup名やrule名、ruleが受け取らないoptionは設�
 
 ```json
 {
-  "tsdoc-check": {
+  "tsdoc": {
     "rules": { "preset": "all" },
     "overrides": [
       { "files": ["tests/**"], "rules": { "missing-doc": "off" } },
@@ -190,10 +192,10 @@ engineが知らないgroup名やrule名、ruleが受け取らないoptionは設�
 
 | Engine | Group | 設定とrule |
 |--------|-------|-----------|
-| `code-style-check` | `spacing` | [`docs/engines/code-style-check.md`](../../docs/engines/code-style-check.md) |
-| `comment-check` | `suppression`、`shape`、`content` | [`docs/engines/comment-check.md`](../../docs/engines/comment-check.md) |
-| `document-style-check` | `whitespace`、`layout`、`consistency`、`japanese`、`content` | [`docs/engines/document-style-check.md`](../../docs/engines/document-style-check.md) |
-| `tsdoc-check` | `correctness`、`suppressions`、`completeness`、`style` | [`docs/engines/tsdoc-check.md`](../../docs/engines/tsdoc-check.md) |
+| `code` | `spacing` | [`docs/engines/code.md`](../../docs/engines/code.md) |
+| `comment` | `suppression`、`shape`、`content` | [`docs/engines/comment.md`](../../docs/engines/comment.md) |
+| `markdown` | `whitespace`、`layout`、`consistency`、`japanese`、`content` | [`docs/engines/markdown.md`](../../docs/engines/markdown.md) |
+| `tsdoc` | `correctness`、`suppressions`、`completeness`、`style` | [`docs/engines/tsdoc.md`](../../docs/engines/tsdoc.md) |
 
 ## Baseline
 
@@ -214,10 +216,7 @@ entryの同一性はengineとruleとfileと検出messageで決まるため、mes
 `quality-check migrate` は旧書式の `quality.json` を現在の書式へ移す
 既定はpreviewで、`--write` を付けたときだけ書き換える
 自動で直せない設定が1つでもあれば、`--write` を付けてもfileを書き換えず、手で直す箇所を出力して終了code 1にする
-移行はengineの有効状態を保ち、旧TSDocの `suppression` groupは `suppressions` へ移して `suppression` ruleと区別する
-旧書式か新書式か判別できない設定は書き換えず、手作業を案内する
-旧v5形式と分かっている場合は `--from-v5` を付け、`enabled` 省略時の無効状態と旧TSDocの `suppression` groupとして解釈させる
-手で直す場合は、意図するengineの有効状態と個別のruleを明示する
+設定、baseline、抑制と検証記録の互換性は [engine名の移行と互換性](../../docs/engine-contract.md#engine名の移行と互換性) にある
 
 ```bash
 quality-check migrate
@@ -225,14 +224,15 @@ quality-check migrate --write
 quality-check migrate --from-v5 --write
 ```
 
-`quality-check document-style` は同梱する `document-style-check` の検証記録を実行する
+`quality-check markdown <scan|check|lint>` は文書向けの個別コマンドを実行する
+これらのactionが無ければ `markdown` はengine選択になり、`quality-check markdown` と `quality-check markdown docs` は統合runnerで実行する
 
 ```bash
-quality-check document-style lint .
-quality-check document-style lint --write .
-quality-check document-style lint --preset all .
-quality-check document-style scan doc.md --rules SKILL.md --review review.json
-quality-check document-style check doc.md --rules SKILL.md --review review.json
+quality-check markdown lint .
+quality-check markdown lint --write .
+quality-check markdown lint --preset all .
+quality-check markdown scan doc.md --rules SKILL.md --review review.json
+quality-check markdown check doc.md --rules SKILL.md --review review.json
 ```
 
 | Command | 説明 |
@@ -252,12 +252,12 @@ quality-check document-style check doc.md --rules SKILL.md --review review.json
 | `--ignore <path>` | 除外pathを追加する、複数指定できる |
 | `--update-baseline` | 現在の検出でbaselineを置き換える |
 | `--json` | engineごとの結果をJSONで出力する |
-| `document-style <command>` | 検証記録を実行する（`scan`、`check`、`lint`） |
+| `markdown <command>` | 検証記録を実行する（`scan`、`check`、`lint`） |
 | `migrate` | 旧書式の `quality.json` を移す（`--config <path>`、`--write`、`--from-v5`） |
 
 `--ignore` と位置引数の対象pathは、その条件を受け取るengineへだけ渡す
 
-### document-style
+### markdown
 
 | Option | 説明 |
 |--------|-------------|

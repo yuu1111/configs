@@ -1,5 +1,5 @@
 /**
- * tsdoc-checkが報告するruleの識別子一覧
+ * tsdocが報告するruleの識別子一覧
  */
 export const RULE_IDS = [
 	"blank-line-before-tags",
@@ -44,7 +44,7 @@ export const OPT_IN_RULE_IDS = [
 export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
 
 /**
- * tsdoc-checkが検査するfileの拡張子
+ * tsdocが検査するfileの拡張子
  */
 export const FILE_EXTENSIONS = [".cts", ".mts", ".ts", ".tsx"] as const;
 

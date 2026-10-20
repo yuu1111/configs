@@ -1,18 +1,18 @@
 import type { EngineName, FindingEngineName } from "../config";
 import type { FindingEngine } from "../shared/engines";
-import { run as runCodeStyle } from "./code-style/run";
+import { run as runCode } from "./code/run";
 import { run as runComment } from "./comment/run";
-import { run as runDocumentStyle } from "./document-style/run";
+import { run as runMarkdown } from "./markdown/run";
 import { run as runTsdoc } from "./tsdoc/run";
 
 /**
  * in-processで起動するengineの実装 並び順ではなくengine名で引く
  */
 export const FINDING_ENGINES = {
-	"code-style-check": runCodeStyle,
-	"comment-check": runComment,
-	"document-style-check": runDocumentStyle,
-	"tsdoc-check": runTsdoc,
+	code: runCode,
+	comment: runComment,
+	markdown: runMarkdown,
+	tsdoc: runTsdoc,
 } satisfies Record<FindingEngineName, FindingEngine>;
 
 /**

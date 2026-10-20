@@ -13,7 +13,7 @@ import {
 } from "./rules";
 
 /**
- * code-style-checkが検査する拡張子
+ * codeが検査する拡張子
  */
 export const SUPPORTED_EXTENSIONS: ReadonlySet<string> = new Set(
 	FILE_EXTENSIONS,

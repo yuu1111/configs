@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { canonicalEngineName } from "./engine-names";
 import { isJsonObject } from "./json";
 
 /**
@@ -51,9 +52,12 @@ export interface BaselineKey {
  * @returns engine、rule、file、textをNUL文字で連結した識別key
  */
 export function entryKey(entry: BaselineKey): string {
-	return [entry.engine ?? "", entry.rule, entry.file, entry.text].join(
-		"\u0000",
-	);
+	return [
+		entry.engine === undefined ? "" : canonicalEngineName(entry.engine),
+		entry.rule,
+		entry.file,
+		entry.text,
+	].join("\u0000");
 }
 
 function compareEntries(left: BaselineEntry, right: BaselineEntry): number {
@@ -73,7 +77,7 @@ function toEntry(finding: BaselineKey): BaselineEntry {
 		text: finding.text,
 	};
 	if (finding.engine !== undefined) {
-		entry.engine = finding.engine;
+		entry.engine = canonicalEngineName(finding.engine);
 	}
 	return entry;
 }
@@ -110,24 +114,27 @@ export function compareWithBaseline<TFinding extends BaselineKey>(
 	findings: readonly TFinding[],
 	baseline: BaselineFile,
 ): BaselineComparison<TFinding> {
-	const remaining = new Map<string, number>();
+	const remaining = new Map<string, BaselineEntry>();
 	for (const entry of baseline.entries) {
 		const key = entryKey(entry);
-		remaining.set(key, (remaining.get(key) ?? 0) + entry.count);
+		const existing = remaining.get(key);
+		if (existing) {
+			existing.count += entry.count;
+		} else {
+			remaining.set(key, { ...toEntry(entry), count: entry.count });
+		}
 	}
 	const added: TFinding[] = [];
 	for (const finding of findings) {
 		const key = entryKey(finding);
-		const count = remaining.get(key) ?? 0;
-		if (count > 0) {
-			remaining.set(key, count - 1);
+		const entry = remaining.get(key);
+		if (entry && entry.count > 0) {
+			entry.count -= 1;
 			continue;
 		}
 		added.push(finding);
 	}
-	const resolved = baseline.entries.filter(
-		(entry) => (remaining.get(entryKey(entry)) ?? 0) > 0,
-	);
+	const resolved = [...remaining.values()].filter((entry) => entry.count > 0);
 	return { added, resolved };
 }
 
@@ -165,7 +172,13 @@ export function readBaseline(path: string): BaselineFile {
 	if (value.version !== 1) {
 		throw new Error(`${path} is not a version 1 baseline`);
 	}
-	return { entries: value.entries, version: 1 };
+	return {
+		entries: value.entries.map((entry) => ({
+			...toEntry(entry),
+			count: entry.count,
+		})),
+		version: 1,
+	};
 }
 
 /**

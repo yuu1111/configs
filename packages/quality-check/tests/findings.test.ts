@@ -3,7 +3,7 @@ import { normalizeReport } from "../src/findings";
 
 describe("engine findings", () => {
 	test("names the engine and turns a message into text", () => {
-		const parsed = normalizeReport("comment-check", {
+		const parsed = normalizeReport("comment", {
 			errors: [
 				{
 					column: 3,
@@ -19,7 +19,7 @@ describe("engine findings", () => {
 		expect(parsed.errors).toEqual([
 			{
 				column: 3,
-				engine: "comment-check",
+				engine: "comment",
 				file: "src/a.ts",
 				line: 2,
 				rule: "placeholder-comment",
@@ -31,7 +31,7 @@ describe("engine findings", () => {
 	});
 
 	test("separates the errors and the warnings", () => {
-		const parsed = normalizeReport("tsdoc-check", {
+		const parsed = normalizeReport("tsdoc", {
 			errors: [
 				{
 					column: 1,
@@ -59,6 +59,6 @@ describe("engine findings", () => {
 		expect(parsed.warnings.map((finding) => finding.rule)).toEqual([
 			"missing-doc",
 		]);
-		expect(parsed.warnings[0]?.engine).toBe("tsdoc-check");
+		expect(parsed.warnings[0]?.engine).toBe("tsdoc");
 	});
 });

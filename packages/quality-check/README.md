@@ -10,7 +10,7 @@ Integrated CLI that runs the configured engines and owns the baseline diff.
 bun add -D @yuu1111/quality-check
 ```
 
-The four finding engines `code-style-check`, `comment-check`, `document-style-check`, and `tsdoc-check` are built into this package.
+The four finding engines `code`, `comment`, `markdown`, and `tsdoc` are built into this package.
 `bun build` bundles the internal engine modules, shared code, and their dependencies into `dist/cli.js`, leaving the published package without runtime dependencies. No separate engine package has to be installed or resolved at run time.
 Biome, Oxlint, Oxfmt, `tsc`, and Knip run as child processes and resolve from the project's `node_modules/.bin`.
 Install the tools you enable as devDependencies of the consuming project; they are not bundled.
@@ -34,18 +34,18 @@ Declare the engines to run in `quality.json`, then call the CLI from a script:
   "biome": true,
   "oxlint": true,
   "oxfmt": true,
-  "comment-check": {
+  "comment": {
     "includes": ["**", "!another-project/**"],
     "rules": {
       "japanese-period": "on"
     }
   },
-  "document-style-check": {
+  "markdown": {
     "rules": {
       "preset": "all"
     }
   },
-  "tsdoc-check": {
+  "tsdoc": {
     "rules": {
       "preset": "all"
     },
@@ -68,13 +68,13 @@ Each engine prints its own section with its own time, and the summary names the 
 Checked 128 files in 260ms. No fixes applied.
 biome: passed (exit 0, 296ms)
 
-== comment-check ==
+== comment ==
 src/queue.ts:18:2 placeholder-comment placeholder comment should be resolved or tracked
-comment-check: failed (1 new, 0 resolved, 0 warnings, 118ms)
+comment: failed (1 new, 0 resolved, 0 warnings, 118ms)
 
 quality-check: 1 of 3 engines failed (1250ms)
-  failed: comment-check
-  passed: biome, tsdoc-check
+  failed: comment
+  passed: biome, tsdoc
 ```
 
 Exit code 0 means every engine passed, 1 that at least one failed, and 2 that the configuration or an engine could not start.
@@ -83,7 +83,9 @@ Pass engine names to run only those engines:
 
 ```bash
 quality-check biome knip
-quality-check comment-check docs
+quality-check comment docs
+quality-check markdown
+quality-check markdown docs
 ```
 
 Positional arguments that match an engine name select engines and the rest are target paths.
@@ -101,7 +103,7 @@ A path that matches an engine name needs a `./` prefix, as in `quality-check ./b
 | `failOnWarnings` | Treat warnings as blocking findings and apply the same policy to Biome and Oxlint |
 | `baseline` | Baseline file path; `false` disables the diff |
 
-Engines run in the order `biome`, `oxlint`, `oxfmt`, `typecheck`, `knip`, `code-style-check`, `comment-check`, `document-style-check`, `tsdoc-check`.
+Engines run in the order `biome`, `oxlint`, `oxfmt`, `typecheck`, `knip`, `code`, `comment`, `markdown`, `tsdoc`.
 
 Each engine owns a top-level section that holds the conditions that engine takes.
 A section that is present starts the engine, and an engine without conditions can be written as just `true`, as in `"biome": true`.
@@ -116,10 +118,10 @@ A condition an engine does not take is rejected, so a typo fails at start-up ins
 | `oxfmt` | `oxfmt --check` | `args`; accepts targets, skips `--ignore` |
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
-| `code-style-check` | in-process | `includes`, `rules`, `overrides` |
-| `comment-check` | in-process | `includes`, `rules`, `overrides` |
-| `document-style-check` | in-process | `includes`, `rules`, `overrides` |
-| `tsdoc-check` | in-process | `includes`, `rules`, `overrides` |
+| `code` | in-process | `includes`, `rules`, `overrides` |
+| `comment` | in-process | `includes`, `rules`, `overrides` |
+| `markdown` | in-process | `includes`, `rules`, `overrides` |
+| `tsdoc` | in-process | `includes`, `rules`, `overrides` |
 
 `args` applies only to the child-process engines and is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
 When `failOnWarnings` is true, the runner passes `--error-on-warnings` to Biome and `--deny-warnings` to Oxlint automatically.
@@ -160,7 +162,7 @@ The selection is handed to the built-in engines directly, so the CLI no longer t
 
 ```json
 {
-  "tsdoc-check": {
+  "tsdoc": {
     "rules": { "preset": "all" },
     "overrides": [
       { "files": ["tests/**"], "rules": { "missing-doc": "off" } },
@@ -186,10 +188,10 @@ Each built-in engine defines its rule vocabulary in an import-free internal `rul
 
 | Engine | Groups | Reference |
 |--------|--------|-----------|
-| `code-style-check` | `spacing` | [`docs/engines/code-style-check.md`](../../docs/engines/code-style-check.md) |
-| `comment-check` | `suppression`, `shape`, `content` | [`docs/engines/comment-check.md`](../../docs/engines/comment-check.md) |
-| `document-style-check` | `whitespace`, `layout`, `consistency`, `japanese`, `content` | [`docs/engines/document-style-check.md`](../../docs/engines/document-style-check.md) |
-| `tsdoc-check` | `correctness`, `suppressions`, `completeness`, `style` | [`docs/engines/tsdoc-check.md`](../../docs/engines/tsdoc-check.md) |
+| `code` | `spacing` | [`docs/engines/code.md`](../../docs/engines/code.md) |
+| `comment` | `suppression`, `shape`, `content` | [`docs/engines/comment.md`](../../docs/engines/comment.md) |
+| `markdown` | `whitespace`, `layout`, `consistency`, `japanese`, `content` | [`docs/engines/markdown.md`](../../docs/engines/markdown.md) |
+| `tsdoc` | `correctness`, `suppressions`, `completeness`, `style` | [`docs/engines/tsdoc.md`](../../docs/engines/tsdoc.md) |
 
 ## Baseline
 
@@ -210,10 +212,7 @@ Set `baseline` to `false` in `quality.json` to diff nothing and report every fin
 `quality-check migrate` rewrites a `quality.json` in the old format into the current one.
 It previews by default and writes only with `--write`.
 If any setting cannot be converted, the file is left unchanged even with `--write`; the command prints what to fix by hand and exits with 1.
-Migration preserves which engines were enabled and moves the old TSDoc `suppression` group to `suppressions`, distinct from the `suppression` rule.
-If the format is ambiguous, the command leaves the file unchanged and asks for manual input.
-Use `--from-v5` only when the input is known to use v5 semantics, including disabled engines when `enabled` is omitted and the old TSDoc `suppression` group.
-Otherwise, make the intended engine states and individual rules explicit by hand.
+See [engine-name migration and compatibility](../../docs/engine-contract.md#engine名の移行と互換性) for configuration, baseline, suppression, and review-ledger compatibility.
 
 ```bash
 quality-check migrate
@@ -221,14 +220,14 @@ quality-check migrate --write
 quality-check migrate --from-v5 --write
 ```
 
-`quality-check document-style` runs the review ledger of the built-in `document-style-check` engine:
+`quality-check markdown <scan|check|lint>` runs a document command. Without one of these actions, `markdown` selects the finding engine, so `quality-check markdown` and `quality-check markdown docs` use the integrated runner:
 
 ```bash
-quality-check document-style lint .
-quality-check document-style lint --write .
-quality-check document-style lint --preset all .
-quality-check document-style scan doc.md --rules SKILL.md --review review.json
-quality-check document-style check doc.md --rules SKILL.md --review review.json
+quality-check markdown lint .
+quality-check markdown lint --write .
+quality-check markdown lint --preset all .
+quality-check markdown scan doc.md --rules SKILL.md --review review.json
+quality-check markdown check doc.md --rules SKILL.md --review review.json
 ```
 
 | Command | Description |
@@ -249,12 +248,12 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 | `--ignore <path>` | Add an excluded path, repeatable |
 | `--update-baseline` | Replace the baseline with the current findings |
 | `--json` | Print the per-engine results as JSON |
-| `document-style <command>` | Run the review ledger (`scan`, `check`, or `lint`) |
+| `markdown <command>` | Run the review ledger (`scan`, `check`, or `lint`) |
 | `migrate` | Rewrite an old `quality.json` (`--config <path>`, `--write`, `--from-v5`) |
 
 `--ignore` and the positional targets reach only the engines that take them.
 
-### document-style
+### markdown
 
 | Option | Description |
 |--------|-------------|

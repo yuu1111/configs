@@ -28,6 +28,69 @@ const LEGACY = {
 };
 
 describe("quality config migration", () => {
+	test("renames flat v6 engine keys without changing defaults, rules, options or overrides", () => {
+		const input = {
+			"code-style-check": { rules: { spacing: "off" } },
+			"comment-check": { enabled: true, rules: { content: "on" } },
+			"document-style-check": false,
+			"tsdoc-check": {
+				rules: {
+					suppression: "off",
+					completeness: { options: { scope: "documented" } },
+				},
+				overrides: [{ files: ["test/**"], rules: { "missing-doc": "off" } }],
+			},
+		};
+		const expected = {
+			code: input["code-style-check"],
+			comment: input["comment-check"],
+			markdown: false,
+			tsdoc: input["tsdoc-check"],
+		};
+		expect(migrateConfig(input)).toEqual({ config: expected, manual: [] });
+		expect(() => parseConfig(expected, "migrated")).not.toThrow();
+		expect(migrateConfig(expected)).toEqual({ config: expected, manual: [] });
+	});
+
+	test("does not reinterpret clearly flat suppression as a historical group", () => {
+		const section = { rules: { suppression: "off", "missing-doc": "on" } };
+		expect(migrateConfig({ "tsdoc-check": section })).toEqual({
+			config: { tsdoc: section },
+			manual: [],
+		});
+	});
+
+	test("keeps canonical empty sections idempotent with current enabled defaults", () => {
+		const config = { code: {}, comment: {}, markdown: {}, tsdoc: {} };
+		expect(migrateConfig(config)).toEqual({ config, manual: [] });
+		expect(parseConfig(config, "current").engines.tsdoc).toBe(true);
+	});
+
+	test.each([false, { rules: { suppression: "off" } }])(
+		"rejects old/new key collisions without writing even when values equal %j",
+		(section) => {
+			const directory = mkdtempSync(
+				join(tmpdir(), "quality-migrate-collision-"),
+			);
+			try {
+				const config = { "tsdoc-check": section, tsdoc: section };
+				const result = migrateConfig(config);
+				expect(result.config).toEqual(config);
+				expect(result.manual.join("\n")).toMatch(
+					/tsdoc-check.*tsdoc.*(collision|both|conflict)/,
+				);
+				const path = join(directory, "quality.json");
+				const before = JSON.stringify(config);
+				writeFileSync(path, before, "utf8");
+				expect(main(["--write"], directory)).toBe(1);
+				expect(main(["--from-v5", "--write"], directory)).toBe(1);
+				expect(readFileSync(path, "utf8")).toBe(before);
+			} finally {
+				rmSync(directory, { force: true, recursive: true });
+			}
+		},
+	);
+
 	test("rewrites an old config into one the current parser accepts", () => {
 		const { config, manual } = migrateConfig(LEGACY);
 		expect(manual).toEqual([]);
@@ -39,14 +102,14 @@ describe("quality config migration", () => {
 	});
 
 	test("moves rules out of their group", () => {
-		const section = migrateConfig(LEGACY).config["comment-check"];
+		const section = migrateConfig(LEGACY).config.comment;
 		expect(section).toEqual({
 			rules: { "cramped-comment": "on", "japanese-period": "on" },
 		});
 	});
 
 	test("expands a renamed group to its rules", () => {
-		const section = migrateConfig(LEGACY).config["tsdoc-check"] as {
+		const section = migrateConfig(LEGACY).config.tsdoc as {
 			rules: Record<string, unknown>;
 		};
 		expect(section.rules["param-untagged"]).toMatchObject({
@@ -56,7 +119,7 @@ describe("quality config migration", () => {
 	});
 
 	test("turns docScope and styleScope into scopes of the rules", () => {
-		const section = migrateConfig(LEGACY).config["tsdoc-check"] as {
+		const section = migrateConfig(LEGACY).config.tsdoc as {
 			rules: Record<string, unknown>;
 		};
 		expect(section.rules["missing-doc"]).toEqual({
@@ -96,14 +159,14 @@ describe("quality config migration", () => {
 		expect(parseConfig(config, "migrated").engines).toMatchObject({
 			biome: true,
 			knip: false,
-			"tsdoc-check": false,
+			tsdoc: false,
 		});
 		expect(migrateConfig(config)).toEqual({ config, manual: [] });
 	});
 
 	test("keeps current group options and rule-only suppression on repeated migration", () => {
 		const current = {
-			"tsdoc-check": {
+			tsdoc: {
 				rules: {
 					completeness: { options: { scope: "documented" } },
 					suppression: "off",
@@ -127,7 +190,7 @@ describe("quality config migration", () => {
 			);
 			expect(manual).toEqual([]);
 			expect(
-				parseConfig(config, "migrated").config["tsdoc-check"]?.rules.disable,
+				parseConfig(config, "migrated").config.tsdoc?.rules.disable,
 			).toEqual(disabled);
 			expect(migrateConfig(config)).toEqual({ config, manual: [] });
 		},
@@ -161,9 +224,9 @@ describe("quality config migration", () => {
 					"migrated",
 				);
 				if ("biome" in config) {
-					expect(migrated.engines["comment-check"]).toBe(false);
+					expect(migrated.engines.comment).toBe(false);
 				} else {
-					expect(migrated.config["tsdoc-check"]?.rules.disable).toEqual([
+					expect(migrated.config.tsdoc?.rules.disable).toEqual([
 						"suppression",
 						"suppression-unused",
 					]);

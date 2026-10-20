@@ -1,4 +1,4 @@
-# document-style-check
+# markdown
 
 `@yuu1111/quality-check` に同梱される Markdown 検査の設定とrule
 機械的に決まる違反と、人またはモデルが判断する警告を分けて持つ
@@ -7,7 +7,7 @@
 
 ```json
 {
-  "document-style-check": {
+  "markdown": {
     "includes": ["docs/**", "!docs/CHANGELOG.md"],
     "rules": {
       "japanese": "on",
@@ -80,7 +80,7 @@
 
 ## 整形できるrule
 
-`bare-url`、`blockquote-space`、`code-span-padding`、`command-prompt`、`consecutive-blank-lines`、`emphasis-padding`、`fence-blank-lines`、`hard-break-html`、`hard-tabs`、`heading-blank-lines`、`heading-indent`、`heading-space`、`link-label-padding`、`list-blank-lines`、`list-indent`、`list-marker-space`、`single-trailing-newline`、`table-blank-lines`、`trailing-backslash`、`trailing-whitespace` は整形できるため `quality-check document-style lint --write` で解消する
+`bare-url`、`blockquote-space`、`code-span-padding`、`command-prompt`、`consecutive-blank-lines`、`emphasis-padding`、`fence-blank-lines`、`hard-break-html`、`hard-tabs`、`heading-blank-lines`、`heading-indent`、`heading-space`、`link-label-padding`、`list-blank-lines`、`list-indent`、`list-marker-space`、`single-trailing-newline`、`table-blank-lines`、`trailing-backslash`、`trailing-whitespace` は整形できるため `quality-check markdown lint --write` で解消する
 
 `emphasis-marker`、`fence-style`、`list-marker-consistency`、`table-style`、`thematic-break-style` も整形できるが、有効にしたときだけ最初に見つけた流儀へ揃える
 

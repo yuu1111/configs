@@ -15,14 +15,14 @@ npm パッケージとして publish する
 
 検査engineのpackageは `packages/quality-check` (@yuu1111/quality-check) だけにし、4つのengineと共通処理を内部moduleとして置く
 
-- `packages/quality-check/src/engines/code-style/` - 関数定義の間隔の検査 (`code-style-check`)
-- `packages/quality-check/src/engines/comment/` - comment と抑制の検査 (`comment-check`)
-- `packages/quality-check/src/engines/document-style/` - Markdownの機械的違反の検査と文体判断の検証記録 (`document-style-check`)
-- `packages/quality-check/src/engines/tsdoc/` - TSDoc の構文と公開契約の検査 (`tsdoc-check`)
+- `packages/quality-check/src/engines/code/` - 関数定義の間隔の検査 (`code`)
+- `packages/quality-check/src/engines/comment/` - comment と抑制の検査 (`comment`)
+- `packages/quality-check/src/engines/markdown/` - Markdownの機械的違反の検査と文体判断の検証記録 (`markdown`)
+- `packages/quality-check/src/engines/tsdoc/` - TSDoc の構文と公開契約の検査 (`tsdoc`)
 - `packages/quality-check/src/shared/` - 検査engineの共通処理とengine契約の型
 
 engineごとのdirectoryには実装を直接置き、さらに `src/` を挟まない
-対応するtestsは `packages/quality-check/tests/engines/{code-style,comment,document-style,tsdoc}/` と `packages/quality-check/tests/shared/` に置く
+対応するtestsは `packages/quality-check/tests/engines/{code,comment,markdown,tsdoc}/` と `packages/quality-check/tests/shared/` に置く
 
 ## パッケージと公開
 
@@ -41,13 +41,13 @@ engineごとのdirectoryには実装を直接置き、さらに `src/` を挟ま
 - `quality-check` は検出engineの内部 `run` module を in-process で呼び、`src/engines/index.ts` の `FINDING_ENGINES` に登録する
 - 外部engineの `biome`、`oxlint`、`oxfmt`、`typecheck`、`knip` は利用projectの `node_modules/.bin` から解決し、同梱せずbaselineの対象にしない
 - 検出engineは baseline を持たず、新規と解消済みの判定は統合CLIが1つの baseline file で行う
-- `document-style-check` の review ledger は `quality-check document-style <scan|check|lint>` として公開する
+- `markdown` の review ledger は `quality-check markdown <scan|check|lint>` として公開する
 - `.grit` を追加したら `plugins-<layer>.json` へ列挙する (`custom-rules.test.ts` が一覧の一致を検査している)
 
 ## quality-check の設定
 
 - 設定は `quality.json` だけにし、`$schema` が指す JSON Schema を `schema.json` として commit する (統合CLIは起動時に engine の内部 `rule-ids.ts` から同じ語彙を読む)
-- `rules` は `preset`、group単位、rule単位の3段で書き、具体的な指定が勝つ rule名と group名は `rules` の直下へ並べる (group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所)
+- engineごとのsectionに `rules` と `overrides` を置く `rules` は `preset`、group単位、rule単位の3段で書き、具体的な指定が勝つ rule名と group名は `rules` の直下へ並べる (group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所)
 - `overrides` は統合CLIが解き、fileごとの rule 選択を畳んでから engine を起動する (engine は `overrides` を知らない)
 - `quality.json` の書式を破壊的に変えたら、`quality-check migrate` が旧書式を移せるようにする
 - このリポジトリ自身を最厳格な利用例にするため、全 engine を有効にし、全 opt-in rule を有効にして warning は `error` へ上げる

@@ -5,7 +5,7 @@ import {
 	describeDefinition,
 	requiresBlankLine,
 	ruleFor,
-} from "../../../src/engines/code-style/rules";
+} from "../../../src/engines/code/rules";
 
 describe("countBlankLines", () => {
 	test("counts the empty lines between two definitions", () => {

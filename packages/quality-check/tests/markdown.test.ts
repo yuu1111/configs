@@ -2,7 +2,7 @@ import { expect, spyOn, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { main, parseArguments } from "../src/document";
+import { main, parseArguments } from "../src/markdown";
 
 /**
  * mainの出力を集めて終了codeと一緒に返す

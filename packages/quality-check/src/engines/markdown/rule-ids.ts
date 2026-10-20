@@ -1,5 +1,5 @@
 /**
- * document-style-checkが報告するruleの識別子一覧
+ * markdownが報告するruleの識別子一覧
  */
 export const RULE_IDS = [
 	"bare-url",
@@ -49,7 +49,7 @@ export const RULE_IDS = [
 ] as const;
 
 /**
- * document-style-checkが検査するfileの拡張子
+ * markdownが検査するfileの拡張子
  */
 export const FILE_EXTENSIONS = [".markdown", ".md"] as const;
 

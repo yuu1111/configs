@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { scanSource } from "../../../src/engines/code-style/scan";
+import { scanSource } from "../../../src/engines/code/scan";
 
 function scan(source: string, file = "sample.ts") {
 	return scanSource(source, file);

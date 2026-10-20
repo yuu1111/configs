@@ -1,4 +1,4 @@
-# code-style-check
+# code
 
 `@yuu1111/quality-check` に同梱される TypeScript と JavaScript の source style 検査の設定とrule
 
@@ -6,7 +6,7 @@
 
 ```json
 {
-  "code-style-check": {
+  "code": {
     "includes": ["src/**", "!src/generated/**"],
     "rules": {
       "spacing": "on"

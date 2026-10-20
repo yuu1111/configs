@@ -60,7 +60,7 @@ export default {
   "oxfmt": true,
   "typecheck": true,
   "knip": true,
-  "document-style-check": {
+  "markdown": {
     "includes": ["docs/**"]
   },
   "failOnWarnings": true
@@ -78,7 +78,7 @@ ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替�
 
 ```json
 {
-  "document-style-check": {
+  "markdown": {
     "rules": {
       "japanese-period": "on"
     }
@@ -90,7 +90,7 @@ ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替�
 
 ```json
 {
-  "document-style-check": {
+  "markdown": {
     "rules": {
       "japanese": "on"
     },
@@ -106,10 +106,8 @@ ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替�
 }
 ```
 
-旧書式の `quality.json` は `quality-check migrate` で現在の書式へ移せる
-既定はpreviewで、`--write` を付けたときだけ書き換える
-形式を判別できない設定は書き換えず、手作業を案内する
-旧v5形式と分かっている場合は `quality-check migrate --from-v5 --write` を使い、手で直す場合は意図する `enabled` と個別のruleを明示する
+旧書式は `quality-check migrate` でpreviewし、`--write` で適用する
+旧engine名、v5とv6の設定、baselineの扱いは [engine名の移行と互換性](engine-contract.md#engine名の移行と互換性) にある
 
 ## scriptへ登録する
 

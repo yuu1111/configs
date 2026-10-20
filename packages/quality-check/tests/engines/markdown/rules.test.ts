@@ -3,11 +3,8 @@ import {
 	type OptInRuleId,
 	RULE_GROUPS,
 	RULE_IDS,
-} from "../../../src/engines/document-style/rule-ids";
-import {
-	fixSource,
-	lintSource,
-} from "../../../src/engines/document-style/rules";
+} from "../../../src/engines/markdown/rule-ids";
+import { fixSource, lintSource } from "../../../src/engines/markdown/rules";
 
 /**
  * 検出したrule名だけを位置順に返す

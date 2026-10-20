@@ -15,19 +15,19 @@ const SOURCE = [
 ].join("\n");
 
 /**
- * 一時directoryのfileへconfigを適用して起動したtsdoc-checkのrule名を返す
+ * 一時directoryのfileへconfigを適用して起動したtsdocのrule名を返す
  *
- * @param rules - tsdoc-checkのsectionへ渡すrulesの値
+ * @param rules - tsdocのsectionへ渡すrulesの値
  * @returns 検出したrule名を位置順に並べた一覧
  */
 function rulesWith(rules: Record<string, unknown>): string[] {
 	const cwd = mkdtempSync(join(tmpdir(), "quality-tsdoc-"));
 	try {
 		writeFileSync(join(cwd, "sample.ts"), SOURCE);
-		const config = parseConfig({ "tsdoc-check": { rules } }, "test");
-		const section = engineConfig(config, "tsdoc-check");
+		const config = parseConfig({ tsdoc: { rules } }, "test");
+		const section = engineConfig(config, "tsdoc");
 		if (section === null) {
-			throw new Error("tsdoc-check is disabled");
+			throw new Error("tsdoc is disabled");
 		}
 		const report = runTsdoc({
 			cwd,
@@ -43,7 +43,7 @@ function rulesWith(rules: Record<string, unknown>): string[] {
 	}
 }
 
-describe("tsdoc-check rule selection", () => {
+describe("tsdoc rule selection", () => {
 	test("keeps a doc-scoped rule quiet when the preset turns it off", () => {
 		expect(rulesWith({ preset: "none" })).toEqual([]);
 	});

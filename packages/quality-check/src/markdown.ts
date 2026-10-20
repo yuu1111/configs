@@ -1,9 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { RULE_VOCABULARY, readRuleSelection } from "./config";
-import { snapshot, verify } from "./engines/document-style/audit";
-import { fix } from "./engines/document-style/fix";
-import { inspect } from "./engines/document-style/run";
+import { snapshot, verify } from "./engines/markdown/audit";
+import { fix } from "./engines/markdown/fix";
+import { inspect } from "./engines/markdown/run";
 import { parseArgv, wantsHelp } from "./shared/cli";
 import { normalizePath } from "./shared/files";
 import {
@@ -30,7 +30,7 @@ export interface DocumentOptions {
 }
 
 const USAGE = [
-	"使い方: quality-check document-style <scan|check|lint> [options] [path...]",
+	"使い方: quality-check markdown <scan|check|lint> [options] [path...]",
 	"",
 	"  scan  <path...> --rules <file> --review <file>   確認候補と検証記録を作る",
 	"  check <path...> --rules <file> --review <file>   埋めた検証記録を確認する",
@@ -55,8 +55,7 @@ function toAction(argument: string): Action | undefined {
  * @returns 検証を通ったopt-in ruleの識別子
  */
 function parseEnabledRules(values: readonly string[]): string[] {
-	const optIn: readonly string[] =
-		RULE_VOCABULARY["document-style-check"].optIn;
+	const optIn: readonly string[] = RULE_VOCABULARY.markdown.optIn;
 	const enabled: string[] = [];
 	for (const value of values) {
 		if (!optIn.includes(value)) {
@@ -98,11 +97,7 @@ function resolveLintRules(
 	cliEnabled: readonly string[],
 	cliDisabled: readonly string[],
 ): { disable: string[]; enable: string[] } {
-	const base = readRuleSelection(
-		{ preset },
-		"--preset",
-		"document-style-check",
-	);
+	const base = readRuleSelection({ preset }, "--preset", "markdown");
 	const enable = [...base.enable];
 	const disable = [...base.disable];
 	for (const rule of cliEnabled) {
@@ -137,7 +132,7 @@ function parseDisabledRules(
 	values: readonly string[],
 	enabled: readonly string[],
 ): string[] {
-	const all: readonly string[] = RULE_VOCABULARY["document-style-check"].all;
+	const all: readonly string[] = RULE_VOCABULARY.markdown.all;
 	const disabled: string[] = [];
 	for (const value of values) {
 		if (!all.includes(value)) {
@@ -267,9 +262,9 @@ function runCheck(options: DocumentOptions): number {
 /**
  * 機械的な違反を報告し、--writeでは整形する
  */
-function runLint(options: DocumentOptions): number {
+function runLint(options: DocumentOptions, cwd: string): number {
 	const context = {
-		cwd: process.cwd(),
+		cwd,
 		includes: [
 			"**",
 			...options.ignores.flatMap((path) => [`!${path}`, `!${path}/**`]),
@@ -303,19 +298,23 @@ function runLint(options: DocumentOptions): number {
  * 引数に応じた処理を実行し、終了codeを返す
  *
  * @param argv - 起動時に渡されたcommand line引数
+ * @param cwd - 対象と基準と検証記録の相対pathを解決するdirectory
  * @returns 処理結果を表す終了code
  */
-export function main(argv: string[]): number {
+export function main(argv: string[], cwd = process.cwd()): number {
 	if (wantsHelp(argv)) {
 		console.log(USAGE);
 		return 0;
 	}
 	const options = parseArguments(argv);
+	options.targets = options.targets.map((target) => resolve(cwd, target));
+	options.rules = options.rules === "" ? "" : resolve(cwd, options.rules);
+	options.review = options.review === "" ? "" : resolve(cwd, options.review);
 	if (options.action === "scan") {
 		return runScan(options);
 	}
 	if (options.action === "check") {
 		return runCheck(options);
 	}
-	return runLint(options);
+	return runLint(options, cwd);
 }

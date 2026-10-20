@@ -399,53 +399,58 @@ describe("tsdoc checks", () => {
 		expect(rulesOf("export function run( {")).toEqual([]);
 	});
 
-	test("drops a finding that a suppression covers", () => {
-		const source = [
-			"// tsdoc-check-ignore missing-doc: the value is read by the loader",
-			"export const value = 1",
-		].join("\n");
-		expect(rulesOf(source, ["missing-doc"])).toEqual([]);
-	});
+	describe.each(["tsdoc-ignore", "tsdoc-check-ignore"])("%s", (directive) => {
+		test("drops a finding that a suppression covers", () => {
+			const source = [
+				`// ${directive} missing-doc: the value is read by the loader`,
+				"export const value = 1",
+			].join("\n");
+			expect(rulesOf(source, ["missing-doc"])).toEqual([]);
+		});
 
-	test("reports a suppression without a reason", () => {
-		const source = [
-			"// tsdoc-check-ignore missing-doc",
-			"export const value = 1",
-		].join("\n");
-		expect(rulesOf(source)).toEqual(["suppression"]);
-	});
+		test.each(["", ":   "])(
+			"reports a suppression without a reason (%j)",
+			(reason) => {
+				const source = [
+					`// ${directive} missing-doc${reason}`,
+					"export const value = 1",
+				].join("\n");
+				expect(rulesOf(source)).toEqual(["suppression"]);
+			},
+		);
 
-	test("reports a suppression of an unknown rule", () => {
-		const source = [
-			"// tsdoc-check-ignore missing-docs: a typo",
-			"export const value = 1",
-		].join("\n");
-		expect(rulesOf(source, ["missing-doc"]).sort()).toEqual([
-			"missing-doc",
-			"suppression",
-		]);
-	});
+		test("reports a suppression of an unknown rule", () => {
+			const source = [
+				`// ${directive} missing-docs: a typo`,
+				"export const value = 1",
+			].join("\n");
+			expect(rulesOf(source, ["missing-doc"]).sort()).toEqual([
+				"missing-doc",
+				"suppression",
+			]);
+		});
 
-	test("reports a suppression that covers nothing", () => {
-		const source = [
-			"// tsdoc-check-ignore tsdoc-tag: kept for the parser",
-			"/** Runs the task",
-			" *",
-			" * @param value - the value",
-			" */",
-			"export function run(value: number): void {}",
-		].join("\n");
-		expect(rulesOf(source)).toEqual(["suppression-unused"]);
-	});
+		test("reports a suppression that covers nothing", () => {
+			const source = [
+				`// ${directive} tsdoc-tag: kept for the parser`,
+				"/** Runs the task",
+				" *",
+				" * @param value - the value",
+				" */",
+				"export function run(value: number): void {}",
+			].join("\n");
+			expect(rulesOf(source)).toEqual(["suppression-unused"]);
+		});
 
-	test("reads a suppression out of a block comment", () => {
-		const source = [
-			"/*",
-			" * tsdoc-check-ignore missing-doc: declared for the bundle",
-			" */",
-			"export const value = 1",
-		].join("\n");
-		expect(rulesOf(source, ["missing-doc"])).toEqual([]);
+		test("reads a suppression out of a block comment", () => {
+			const source = [
+				"/*",
+				` * ${directive} missing-doc: declared for the bundle`,
+				" */",
+				"export const value = 1",
+			].join("\n");
+			expect(rulesOf(source, ["missing-doc"])).toEqual([]);
+		});
 	});
 
 	test("reports a parameter without a @param tag", () => {

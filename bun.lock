@@ -41,7 +41,7 @@
     },
     "packages/quality-check": {
       "name": "@yuu1111/quality-check",
-      "version": "6.0.0",
+      "version": "7.0.0",
       "bin": {
         "quality-check": "bin/cli.js",
       },

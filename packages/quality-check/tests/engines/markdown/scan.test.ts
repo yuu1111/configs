@@ -12,7 +12,7 @@ import {
 	DOCUMENT_EXTENSIONS,
 	fixFiles,
 	lintFiles,
-} from "../../../src/engines/document-style/scan";
+} from "../../../src/engines/markdown/scan";
 import { collectFiles } from "../../../src/shared/files";
 
 /**
@@ -22,7 +22,7 @@ function withTemporaryTree<T>(
 	files: Record<string, string>,
 	callback: (directory: string) => T,
 ): T {
-	const directory = mkdtempSync(join(tmpdir(), "document-style-scan-"));
+	const directory = mkdtempSync(join(tmpdir(), "markdown-scan-"));
 	try {
 		for (const [name, text] of Object.entries(files)) {
 			const path = join(directory, name);

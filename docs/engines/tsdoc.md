@@ -1,4 +1,4 @@
-# tsdoc-check
+# tsdoc
 
 `@yuu1111/quality-check` に同梱される TSDoc 検査の設定とrule
 
@@ -6,7 +6,7 @@
 
 ```json
 {
-  "tsdoc-check": {
+  "tsdoc": {
     "includes": ["src/**", "!src/generated/**"],
     "rules": {
       "completeness": { "options": { "scope": "documented" } },
@@ -72,7 +72,7 @@ object literal のメンバーは変数の初期化式から辿り、引数、�
 
 `correctness` は書かれたTSDocが正しいかを見る rule、`suppressions` は抑制の理由と使用状況を見る rule で、すべて既定で有効になる
 `suppressions` groupは `suppression` ruleと名前を分け、group全体と個別のruleを別々に指定できる
-旧書式の `suppression` groupは `quality-check migrate` で移行する
+旧設定と抑制directiveの互換性は [engine名の移行と互換性](../engine-contract.md#engine名の移行と互換性) にある
 `completeness` は書き足りないものを咎める rule、`style` は書いたTSDocの体裁を見る rule で、どちらもopt-inのため `rules` が `on` にするまで実行しない
 そのため `preset` の `recommended` は書かれたTSDocの構文と契約の整合だけを検査し、docの有無と体裁を要求しない
 
@@ -103,7 +103,7 @@ parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は�
 例外は宣言の隣に理由を添えて示す
 
 ```ts
-// tsdoc-check-ignore missing-doc: the loader reads this value
+// tsdoc-ignore missing-doc: the loader reads this value
 export const value = 1
 ```
 

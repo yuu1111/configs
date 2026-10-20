@@ -1,30 +1,31 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
-	FILE_EXTENSIONS as CODE_STYLE_CHECK_FILE_EXTENSIONS,
-	OPT_IN_RULE_IDS as CODE_STYLE_CHECK_OPT_IN_RULE_IDS,
-	RULE_GROUPS as CODE_STYLE_CHECK_RULE_GROUPS,
-	RULE_IDS as CODE_STYLE_CHECK_RULE_IDS,
-} from "./engines/code-style/rule-ids";
+	FILE_EXTENSIONS as CODE_FILE_EXTENSIONS,
+	OPT_IN_RULE_IDS as CODE_OPT_IN_RULE_IDS,
+	RULE_GROUPS as CODE_RULE_GROUPS,
+	RULE_IDS as CODE_RULE_IDS,
+} from "./engines/code/rule-ids";
 import {
-	FILE_EXTENSIONS as COMMENT_CHECK_FILE_EXTENSIONS,
-	OPT_IN_RULE_IDS as COMMENT_CHECK_OPT_IN_RULE_IDS,
-	RULE_GROUPS as COMMENT_CHECK_RULE_GROUPS,
-	RULE_IDS as COMMENT_CHECK_RULE_IDS,
+	FILE_EXTENSIONS as COMMENT_FILE_EXTENSIONS,
+	OPT_IN_RULE_IDS as COMMENT_OPT_IN_RULE_IDS,
+	RULE_GROUPS as COMMENT_RULE_GROUPS,
+	RULE_IDS as COMMENT_RULE_IDS,
 } from "./engines/comment/rule-ids";
 import {
-	FILE_EXTENSIONS as DOCUMENT_STYLE_CHECK_FILE_EXTENSIONS,
-	OPT_IN_RULE_IDS as DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
-	RULE_GROUPS as DOCUMENT_STYLE_CHECK_RULE_GROUPS,
-	RULE_IDS as DOCUMENT_STYLE_CHECK_RULE_IDS,
-} from "./engines/document-style/rule-ids";
+	FILE_EXTENSIONS as MARKDOWN_FILE_EXTENSIONS,
+	OPT_IN_RULE_IDS as MARKDOWN_OPT_IN_RULE_IDS,
+	RULE_GROUPS as MARKDOWN_RULE_GROUPS,
+	RULE_IDS as MARKDOWN_RULE_IDS,
+} from "./engines/markdown/rule-ids";
 import {
-	FILE_EXTENSIONS as TSDOC_CHECK_FILE_EXTENSIONS,
-	OPT_IN_RULE_IDS as TSDOC_CHECK_OPT_IN_RULE_IDS,
-	RULE_GROUPS as TSDOC_CHECK_RULE_GROUPS,
-	RULE_IDS as TSDOC_CHECK_RULE_IDS,
-	RULE_OPTIONS as TSDOC_CHECK_RULE_OPTIONS,
+	FILE_EXTENSIONS as TSDOC_FILE_EXTENSIONS,
+	OPT_IN_RULE_IDS as TSDOC_OPT_IN_RULE_IDS,
+	RULE_GROUPS as TSDOC_RULE_GROUPS,
+	RULE_IDS as TSDOC_RULE_IDS,
+	RULE_OPTIONS as TSDOC_RULE_OPTIONS,
 } from "./engines/tsdoc/rule-ids";
+import { canonicalEngineName } from "./shared/engine-names";
 import type { RuleSelection } from "./shared/engines";
 
 /**
@@ -47,10 +48,10 @@ export type ProcessEngineName = (typeof PROCESS_ENGINE_NAMES)[number];
  * in-processで起動するengineの名前
  */
 export const FINDING_ENGINE_NAMES = [
-	"code-style-check",
-	"comment-check",
-	"document-style-check",
-	"tsdoc-check",
+	"code",
+	"comment",
+	"markdown",
+	"tsdoc",
 ] as const;
 
 /**
@@ -153,10 +154,10 @@ export interface EngineConfigMap {
 	oxfmt: EngineOptions;
 	typecheck: TypecheckOptions;
 	knip: EngineOptions;
-	"code-style-check": RuleEngineOptions;
-	"comment-check": RuleEngineOptions;
-	"document-style-check": RuleEngineOptions;
-	"tsdoc-check": RuleEngineOptions;
+	code: RuleEngineOptions;
+	comment: RuleEngineOptions;
+	markdown: RuleEngineOptions;
+	tsdoc: RuleEngineOptions;
 }
 
 /**
@@ -218,30 +219,30 @@ interface EngineVocabulary {
  * engineが公開するrule語彙 engineのrule-idsが唯一の出所になる
  */
 export const RULE_VOCABULARY = {
-	"code-style-check": {
-		all: CODE_STYLE_CHECK_RULE_IDS,
-		extensions: CODE_STYLE_CHECK_FILE_EXTENSIONS,
-		groups: CODE_STYLE_CHECK_RULE_GROUPS,
-		optIn: CODE_STYLE_CHECK_OPT_IN_RULE_IDS,
+	code: {
+		all: CODE_RULE_IDS,
+		extensions: CODE_FILE_EXTENSIONS,
+		groups: CODE_RULE_GROUPS,
+		optIn: CODE_OPT_IN_RULE_IDS,
 	},
-	"comment-check": {
-		all: COMMENT_CHECK_RULE_IDS,
-		extensions: COMMENT_CHECK_FILE_EXTENSIONS,
-		groups: COMMENT_CHECK_RULE_GROUPS,
-		optIn: COMMENT_CHECK_OPT_IN_RULE_IDS,
+	comment: {
+		all: COMMENT_RULE_IDS,
+		extensions: COMMENT_FILE_EXTENSIONS,
+		groups: COMMENT_RULE_GROUPS,
+		optIn: COMMENT_OPT_IN_RULE_IDS,
 	},
-	"document-style-check": {
-		all: DOCUMENT_STYLE_CHECK_RULE_IDS,
-		extensions: DOCUMENT_STYLE_CHECK_FILE_EXTENSIONS,
-		groups: DOCUMENT_STYLE_CHECK_RULE_GROUPS,
-		optIn: DOCUMENT_STYLE_CHECK_OPT_IN_RULE_IDS,
+	markdown: {
+		all: MARKDOWN_RULE_IDS,
+		extensions: MARKDOWN_FILE_EXTENSIONS,
+		groups: MARKDOWN_RULE_GROUPS,
+		optIn: MARKDOWN_OPT_IN_RULE_IDS,
 	},
-	"tsdoc-check": {
-		all: TSDOC_CHECK_RULE_IDS,
-		extensions: TSDOC_CHECK_FILE_EXTENSIONS,
-		groups: TSDOC_CHECK_RULE_GROUPS,
-		optIn: TSDOC_CHECK_OPT_IN_RULE_IDS,
-		ruleOptions: TSDOC_CHECK_RULE_OPTIONS,
+	tsdoc: {
+		all: TSDOC_RULE_IDS,
+		extensions: TSDOC_FILE_EXTENSIONS,
+		groups: TSDOC_RULE_GROUPS,
+		optIn: TSDOC_OPT_IN_RULE_IDS,
+		ruleOptions: TSDOC_RULE_OPTIONS,
 	},
 } satisfies Record<string, EngineVocabulary>;
 
@@ -335,10 +336,10 @@ export const ENGINE_CAPABILITIES: Record<EngineName, EngineCapabilities> = {
 			targets: "knip analyzes the whole project",
 		},
 	},
-	"code-style-check": { args: false, findings: true, skipped: {} },
-	"comment-check": { args: false, findings: true, skipped: {} },
-	"document-style-check": { args: false, findings: true, skipped: {} },
-	"tsdoc-check": { args: false, findings: true, skipped: {} },
+	code: { args: false, findings: true, skipped: {} },
+	comment: { args: false, findings: true, skipped: {} },
+	markdown: { args: false, findings: true, skipped: {} },
+	tsdoc: { args: false, findings: true, skipped: {} },
 };
 
 /**
@@ -899,7 +900,12 @@ export function parseConfig(value: unknown, source: string): QualityConfig {
 			!isEngineName(key),
 	);
 	if (unknown !== undefined) {
-		throw new Error(`${source} has an unknown option: ${unknown}`);
+		const current = canonicalEngineName(unknown);
+		const renamed =
+			current === unknown
+				? ""
+				: `; renamed to ${current}; run quality-check migrate`;
+		throw new Error(`${source} has an unknown option: ${unknown}${renamed}`);
 	}
 	const engines: Partial<Record<EngineName, boolean>> = {};
 	const options: Partial<Record<EngineName, unknown>> = {};

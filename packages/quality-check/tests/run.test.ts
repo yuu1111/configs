@@ -14,7 +14,7 @@ import type { EngineReport, ReportFinding } from "../src/shared/report";
 
 const documentFinding: NormalizedFinding = {
 	column: 12,
-	engine: "document-style-check",
+	engine: "markdown",
 	file: "README.md",
 	line: 18,
 	rule: "hard-break-html",
@@ -24,7 +24,7 @@ const documentFinding: NormalizedFinding = {
 
 const commentFinding: NormalizedFinding = {
 	column: 3,
-	engine: "comment-check",
+	engine: "comment",
 	file: "src/a.ts",
 	line: 2,
 	rule: "placeholder-comment",
@@ -34,7 +34,7 @@ const commentFinding: NormalizedFinding = {
 
 const periodFinding: NormalizedFinding = {
 	column: 5,
-	engine: "comment-check",
+	engine: "comment",
 	file: "src/a.ts",
 	line: 1,
 	rule: "japanese-period",
@@ -82,10 +82,10 @@ function reportOf(
 function emptyRegistry(): FindingEngineRegistry {
 	const empty: FindingEngine = () => ({ errors: [], warnings: [] });
 	return {
-		"code-style-check": empty,
-		"comment-check": empty,
-		"document-style-check": empty,
-		"tsdoc-check": empty,
+		code: empty,
+		comment: empty,
+		markdown: empty,
+		tsdoc: empty,
 	};
 }
 
@@ -135,7 +135,7 @@ describe("rule overrides", () => {
 	// 検査対象ごとにengineが受け取ったrule選択と対象fileを記録する実装を返す
 	function recordingEngine(calls: { files: string[]; disable: string[] }[]) {
 		const registry = emptyRegistry();
-		registry["comment-check"] = (context) => {
+		registry.comment = (context) => {
 			calls.push({
 				disable: [...context.rules.disable].sort(),
 				files: [...context.targets].map((file) => file.replaceAll("\\", "/")),
@@ -149,7 +149,7 @@ describe("rule overrides", () => {
 		const calls: { files: string[]; disable: string[] }[] = [];
 		await runEngines(
 			createOptions({
-				config: parseConfig({ "comment-check": true }, "test"),
+				config: parseConfig({ comment: true }, "test"),
 				findingEngines: recordingEngine(calls),
 			}),
 		);
@@ -168,7 +168,7 @@ describe("rule overrides", () => {
 				createOptions({
 					config: parseConfig(
 						{
-							"comment-check": {
+							comment: {
 								overrides: [
 									{
 										files: ["tests/**"],
@@ -210,7 +210,7 @@ describe("rule overrides", () => {
 				createOptions({
 					config: parseConfig(
 						{
-							"comment-check": {
+							comment: {
 								overrides: [
 									{ files: ["**"], rules: { "placeholder-comment": "off" } },
 									{ files: ["**"], rules: { "placeholder-comment": "on" } },
@@ -357,28 +357,19 @@ describe("engine orchestration", () => {
 	test("reports a new finding from a finding engine", async () => {
 		const results = await runEngines(
 			createOptions({
-				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				findingEngines: registryFor(
-					"comment-check",
-					reportOf([commentFinding]),
-				),
+				config: parseConfig({ comment: { enabled: true } }, "test"),
+				findingEngines: registryFor("comment", reportOf([commentFinding])),
 			}),
 		);
 		expect(results[0]?.status).toBe("failed");
 		expect(results[0]?.reported).toHaveLength(1);
 	});
 
-	test("runs document-style-check as a finding engine", async () => {
+	test("runs markdown as a finding engine", async () => {
 		const results = await runEngines(
 			createOptions({
-				config: parseConfig(
-					{ "document-style-check": { enabled: true } },
-					"test",
-				),
-				findingEngines: registryFor(
-					"document-style-check",
-					reportOf([documentFinding]),
-				),
+				config: parseConfig({ markdown: { enabled: true } }, "test"),
+				findingEngines: registryFor("markdown", reportOf([documentFinding])),
 			}),
 		);
 		expect(results[0]?.status).toBe("failed");
@@ -389,11 +380,8 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				baseline: createBaseline([commentFinding]),
-				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				findingEngines: registryFor(
-					"comment-check",
-					reportOf([commentFinding]),
-				),
+				config: parseConfig({ comment: { enabled: true } }, "test"),
+				findingEngines: registryFor("comment", reportOf([commentFinding])),
 			}),
 		);
 		expect(results[0]?.status).toBe("passed");
@@ -405,9 +393,9 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				baseline: createBaseline([commentFinding]),
-				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
+				config: parseConfig({ comment: { enabled: true } }, "test"),
 				findingEngines: registryFor(
-					"comment-check",
+					"comment",
 					reportOf([commentFinding, periodFinding]),
 				),
 			}),
@@ -421,8 +409,8 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				baseline: createBaseline([periodFinding]),
-				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				findingEngines: registryFor("comment-check", reportOf([periodFinding])),
+				config: parseConfig({ comment: { enabled: true } }, "test"),
+				findingEngines: registryFor("comment", reportOf([periodFinding])),
 			}),
 		);
 		expect(results[0]?.status).toBe("passed");
@@ -434,8 +422,8 @@ describe("engine orchestration", () => {
 		const results = await runEngines(
 			createOptions({
 				baseline: createBaseline([periodFinding]),
-				config: parseConfig({ "comment-check": { enabled: true } }, "test"),
-				findingEngines: registryFor("comment-check", reportOf([])),
+				config: parseConfig({ comment: { enabled: true } }, "test"),
+				findingEngines: registryFor("comment", reportOf([])),
 			}),
 		);
 		expect(results[0]?.status).toBe("passed");
@@ -445,12 +433,9 @@ describe("engine orchestration", () => {
 	test("keeps a warning out of the report by default", async () => {
 		const results = await runEngines(
 			createOptions({
-				config: parseConfig(
-					{ "document-style-check": { enabled: true } },
-					"test",
-				),
+				config: parseConfig({ markdown: { enabled: true } }, "test"),
 				findingEngines: registryFor(
-					"document-style-check",
+					"markdown",
 					reportOf([], [documentFinding]),
 				),
 			}),
@@ -464,13 +449,13 @@ describe("engine orchestration", () => {
 			createOptions({
 				config: parseConfig(
 					{
-						"document-style-check": { enabled: true },
+						markdown: { enabled: true },
 						failOnWarnings: true,
 					},
 					"test",
 				),
 				findingEngines: registryFor(
-					"document-style-check",
+					"markdown",
 					reportOf([], [documentFinding]),
 				),
 			}),
@@ -485,12 +470,12 @@ describe("engine orchestration", () => {
 	test("marks a finding engine that throws as an error", async () => {
 		const results = await runEngines(
 			createOptions({
-				config: parseConfig({ "tsdoc-check": { enabled: true } }, "test"),
-				findingEngines: throwingRegistry("tsdoc-check", "boom"),
+				config: parseConfig({ tsdoc: { enabled: true } }, "test"),
+				findingEngines: throwingRegistry("tsdoc", "boom"),
 			}),
 		);
 		expect(results[0]?.status).toBe("error");
-		expect(results[0]?.message).toBe("tsdoc-check could not finish: boom");
+		expect(results[0]?.message).toBe("tsdoc could not finish: boom");
 	});
 });
 
@@ -498,7 +483,7 @@ describe("engine selection", () => {
 	test("runs only the selected engines", async () => {
 		const started: FindingEngineName[] = [];
 		const registry = emptyRegistry();
-		for (const name of ["comment-check", "document-style-check"] as const) {
+		for (const name of ["comment", "markdown"] as const) {
 			registry[name] = () => {
 				started.push(name);
 				return { errors: [], warnings: [] };
@@ -508,19 +493,17 @@ describe("engine selection", () => {
 			createOptions({
 				config: parseConfig(
 					{
-						"comment-check": { enabled: true },
-						"document-style-check": { enabled: true },
+						comment: { enabled: true },
+						markdown: { enabled: true },
 					},
 					"test",
 				),
 				findingEngines: registry,
-				selected: ["document-style-check"],
+				selected: ["markdown"],
 			}),
 		);
-		expect(started).toEqual(["document-style-check"]);
-		expect(results.map((result) => result.name)).toEqual([
-			"document-style-check",
-		]);
+		expect(started).toEqual(["markdown"]);
+		expect(results.map((result) => result.name)).toEqual(["markdown"]);
 	});
 
 	test("rejects an engine that is not enabled", async () => {
@@ -535,16 +518,13 @@ describe("engine selection", () => {
 				baseline: createBaseline([commentFinding, documentFinding]),
 				config: parseConfig(
 					{
-						"comment-check": { enabled: true },
-						"document-style-check": { enabled: true },
+						comment: { enabled: true },
+						markdown: { enabled: true },
 					},
 					"test",
 				),
-				findingEngines: registryFor(
-					"comment-check",
-					reportOf([commentFinding]),
-				),
-				selected: ["comment-check"],
+				findingEngines: registryFor("comment", reportOf([commentFinding])),
+				selected: ["comment"],
 			}),
 		);
 		expect(results).toHaveLength(1);

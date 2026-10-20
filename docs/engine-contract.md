@@ -5,7 +5,7 @@
 
 ## 用語
 
-- 検出engine — 報告を返しbaselineの対象になるengine 現在は `code-style-check` `comment-check` `document-style-check` `tsdoc-check`
+- 検出engine — 報告を返しbaselineの対象になるengine 現在は `code` `comment` `markdown` `tsdoc`
 - 起動engine — `quality-check` が起動する単位 外部toolの `biome` `oxlint` `oxfmt` `typecheck` `knip` も含む
 - rule語彙 — engineが内部moduleとして提供するrule識別子の一覧
 - baseline — 統合runnerが持つ差分判定の基準file
@@ -15,16 +15,16 @@
 ### 内部moduleの配置と配布
 
 - 統合CLIは `packages/quality-check/` に直接置き、検出engineと共通処理は内部moduleにする
-- engineの実装は `quality-check/src/engines/{code-style,comment,document-style,tsdoc}/` に直接置き、さらに `src/` を挟まない
+- engineの実装は `quality-check/src/engines/{code,comment,markdown,tsdoc}/` に直接置き、さらに `src/` を挟まない
 - 共通処理は `quality-check/src/shared/` に置く
-- testsは `quality-check/tests/engines/{code-style,comment,document-style,tsdoc}/` と `quality-check/tests/shared/` に置く
+- testsは `quality-check/tests/engines/{code,comment,markdown,tsdoc}/` と `quality-check/tests/shared/` に置く
 - 公開する `quality-check` が build 時に内部engine、共通処理とその依存を bundle し、runtime dependency を持たない
 - engineごとの `rule-ids.ts` に `RULE_IDS` `OPT_IN_RULE_IDS` `RULE_GROUPS` を置き import を持たせない
 - 検査するfileの拡張子を `FILE_EXTENSIONS` として `rule-ids.ts` へ置き、統合runnerが上書きでfileを分けるときに使う
-- ruleごとのoptionの語彙も `rule-ids.ts` の `RULE_OPTIONS` へ置く (`tsdoc-check` の `scope` とその選択肢)
+- ruleごとのoptionの語彙も `rule-ids.ts` の `RULE_OPTIONS` へ置く (`tsdoc` の `scope` とその選択肢)
 - 全ruleがいずれかのgroupへ重複なく入ることを tests で検査する
 - rule語彙と、検出の `run`、整形の `fix`、review ledger の `audit` の契約は内部moduleとして保ち、packageの公開subpath exportsにはしない
-- 個別コマンドのargv解析と出力は `quality-check` が持ち、CLI、設定名とrule IDは変えない
+- 個別コマンドのargv解析と出力は `quality-check` が持ち、engine名は `code`、`comment`、`markdown`、`tsdoc` に揃える rule IDは変えない
 
 ### in-process 呼び出し
 
@@ -63,10 +63,10 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 | `oxfmt` | 子プロセス | args |
 | `typecheck` | 子プロセス | args projects |
 | `knip` | 子プロセス | args |
-| `code-style-check` | in-process | includes rules overrides |
-| `comment-check` | in-process | includes rules overrides |
-| `document-style-check` | in-process | includes rules overrides |
-| `tsdoc-check` | in-process | includes rules overrides |
+| `code` | in-process | includes rules overrides |
+| `comment` | in-process | includes rules overrides |
+| `markdown` | in-process | includes rules overrides |
+| `tsdoc` | in-process | includes rules overrides |
 
 `args` は子プロセスengineだけが受け取り 既定引数の後ろへ足す
 外部engineは利用projectのdevDependenciesへ入れ、`node_modules/.bin` から解決する
@@ -78,18 +78,45 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 
 ### 個別コマンド
 
-- `quality-check document-style <scan|check|lint>` が文書向けの個別コマンドになる
+- `quality-check markdown <scan|check|lint>` が文書向けの個別コマンドになる
 - argv解析と出力は quality-check が持ち、engineの `run` `fix` `audit` は内部moduleの関数契約として使う
 - `lint` は統合runが使う内部 `run` moduleと同じ関数を呼ぶ
 
 ### 実行
 
-- 起動順は `biome` → `oxlint` → `oxfmt` → `typecheck` → `knip` → `code-style-check` → `comment-check` → `document-style-check` → `tsdoc-check` で、`ENGINE_NAMES` が正本になる
+- 起動順は `biome` → `oxlint` → `oxfmt` → `typecheck` → `knip` → `code` → `comment` → `markdown` → `tsdoc` で、`ENGINE_NAMES` が正本になる
 - 位置引数のうちengine名と一致するものは起動するengineの選択になり、残りは対象pathになる
 - engine選択時はbaseline差分を起動するengineに絞り、`--update-baseline` との併用は拒否する
 - 検出engineの検出は統合runnerが1つのbaseline fileでまとめて差分し 増えた検出だけを阻害する
 - `failOnWarnings` がtrueなら検出engineのwarningを阻害する検出へ変え、Biomeへ `--error-on-warnings`、Oxlintへ `--deny-warnings` を渡す
 - 終了codeは 0 が全engine成功 1 が阻害する検出またはengineの失敗 2 が設定または起動の失敗
+
+### engine名の移行と互換性
+
+設定のsection名、CLIで選ぶengine名、textとJSONの出力は次の名前へ揃える
+
+| 旧名 | 現在の名前 |
+|------|------------|
+| `code-style-check` | `code` |
+| `comment-check` | `comment` |
+| `document-style-check` | `markdown` |
+| `tsdoc-check` | `tsdoc` |
+
+通常の起動では旧名の設定を拒否し、`quality-check migrate` を案内する
+移行は既定でpreviewし、`--write` のときだけ適用する
+旧v6のflatなrule keyはそのまま保ち、旧v5の解釈が必要な入力は `--from-v5` で明示する
+旧v5では `enabled` 省略時の無効状態を保ち、TSDocの旧 `suppression` groupを `suppressions` へ移す
+旧名と現在の名前が同居するなどの名前衝突は、同じ値でも統合せず拒否する
+変換できない設定や解釈が曖昧な設定があれば、file全体を書き換えず手作業を案内する
+
+設定は引き続きengineごとのsectionに `rules` と `overrides` を置き、`rules` の中に `preset`、group名、rule名を並べる
+名前空間付きruleをトップレベルへ並べる形には変えない
+rule IDと `spacing`、`style` などのgroup名は変えず、外部tool固有の設定も変えない
+
+baselineは読込時に旧engine名を現在の名前として照合し、読込だけではfileを書き換えない
+次に `--update-baseline` を実行したとき、現在の名前で書き出す
+TSDocの抑制は `tsdoc-ignore` を正規のdirectiveにし、既存の `tsdoc-check-ignore` も受け入れる
+review ledgerのschemaとhashの計算方法は変えない
 
 ### 変更の手順
 

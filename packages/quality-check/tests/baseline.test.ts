@@ -6,7 +6,7 @@ import { main } from "../src/cli";
 
 const baselineEntry = {
 	count: 1,
-	engine: "document-style-check",
+	engine: "markdown",
 	file: "doc.md",
 	rule: "trailing-whitespace",
 	text: "trailing whitespace is not part of the content",
@@ -32,7 +32,7 @@ async function withWorkspace(
 function writeWorkspace(directory: string): void {
 	writeFileSync(
 		join(directory, "quality.json"),
-		JSON.stringify({ "document-style-check": { enabled: true } }, null, "\t"),
+		JSON.stringify({ markdown: { enabled: true } }, null, "\t"),
 		"utf8",
 	);
 	writeFileSync(join(directory, "doc.md"), "本文です  \n", "utf8");

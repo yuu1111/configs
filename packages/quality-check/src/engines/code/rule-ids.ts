@@ -1,5 +1,5 @@
 /**
- * code-style-checkが報告するruleの識別子一覧
+ * codeが報告するruleの識別子一覧
  */
 export const RULE_IDS = [
 	"blank-line-between-class-members",
@@ -7,7 +7,7 @@ export const RULE_IDS = [
 ] as const;
 
 /**
- * code-style-checkが検査するfileの拡張子
+ * codeが検査するfileの拡張子
  */
 export const FILE_EXTENSIONS = [
 	".cjs",

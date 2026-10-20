@@ -1,4 +1,4 @@
-# comment-check
+# comment
 
 `@yuu1111/quality-check` に同梱される comment 検査の設定とrule
 
@@ -6,7 +6,7 @@
 
 ```json
 {
-  "comment-check": {
+  "comment": {
     "includes": ["src/**", "!src/generated/**"],
     "rules": {
       "cramped-comment": "on",

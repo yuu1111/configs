@@ -1,5 +1,5 @@
 /**
- * comment-checkが報告するruleの識別子一覧
+ * commentが報告するruleの識別子一覧
  */
 export const RULE_IDS = [
 	"broad-suppression",
@@ -11,7 +11,7 @@ export const RULE_IDS = [
 ] as const;
 
 /**
- * comment-checkが検査するfileの拡張子
+ * commentが検査するfileの拡張子
  */
 export const FILE_EXTENSIONS = [
 	".cjs",

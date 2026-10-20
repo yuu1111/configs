@@ -126,7 +126,7 @@ export default defineConfig({
 			themeConfig: {
 				nav: [
 					{ text: "ガイド", link: "/docs/architecture" },
-					{ text: "engine", link: "/docs/engines/code-style-check" },
+					{ text: "engine", link: "/docs/engines/code" },
 					{ text: "package", link: "/packages/quality-check/" },
 				],
 				sidebar: [
@@ -145,15 +145,15 @@ export default defineConfig({
 							{ text: "oxlint", link: "/docs/engines/oxlint" },
 							{ text: "oxfmt", link: "/docs/engines/oxfmt" },
 							{
-								text: "code-style-check",
-								link: "/docs/engines/code-style-check",
+								text: "code",
+								link: "/docs/engines/code",
 							},
-							{ text: "comment-check", link: "/docs/engines/comment-check" },
+							{ text: "comment", link: "/docs/engines/comment" },
 							{
-								text: "document-style-check",
-								link: "/docs/engines/document-style-check",
+								text: "markdown",
+								link: "/docs/engines/markdown",
 							},
-							{ text: "tsdoc-check", link: "/docs/engines/tsdoc-check" },
+							{ text: "tsdoc", link: "/docs/engines/tsdoc" },
 						],
 					},
 					{

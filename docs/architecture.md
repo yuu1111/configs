@@ -8,10 +8,10 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 - `packages/config/` は他プロジェクトへ配布する共有設定を置く
 - 統合CLI [`@yuu1111/quality-check`](../packages/quality-check/README.ja.md) は `packages/quality-check/` に直接置く
 - 検査engineを1つのpackageへ統合したため、CLIだけを囲む中間directoryは置かない
-- 4つのengineは `quality-check/src/engines/{code-style,comment,document-style,tsdoc}/` に実装を直接置き、さらに `src/` を挟まない
+- 4つのengineは `quality-check/src/engines/{code,comment,markdown,tsdoc}/` に実装を直接置き、さらに `src/` を挟まない
 - engine は共通のengine契約へ依存し、engine 同士は依存しない
 - `quality-check/src/shared/` はengine契約の型と共通処理を持つ
-- 対応するtestsは `quality-check/tests/engines/{code-style,comment,document-style,tsdoc}/` と `quality-check/tests/shared/` に置く
+- 対応するtestsは `quality-check/tests/engines/{code,comment,markdown,tsdoc}/` と `quality-check/tests/shared/` に置く
 
 ## engineを同梱する理由
 
@@ -53,7 +53,7 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 - engineごとの `rule-ids.ts` を import の無い内部moduleにすると、build 前でも語彙だけを読み込める
 - group名とrule名は engine が唯一の出所になり、統合runnerの設定とschemaが同じ語彙を使う
 - rule名とgroup名は `rules` の直下へ並べて書くため、同じengine内で両者の名前を重複させない
-- tsdoc-checkのgroupは `suppressions` とし、ruleの `suppression` と区別する
+- tsdocのgroupは `suppressions` とし、ruleの `suppression` と区別する
 
 ## `overrides` を統合runnerで解く理由
 

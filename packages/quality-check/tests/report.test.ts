@@ -41,9 +41,9 @@ describe("quality report", () => {
 	});
 
 	test("adds the engine time after the counts of a finding engine", () => {
-		expect(
-			formatEngineSection(result("comment-check", "failed", [], 118)),
-		).toContain("comment-check: failed (0 new, 0 resolved, 0 warnings, 118ms)");
+		expect(formatEngineSection(result("comment", "failed", [], 118))).toContain(
+			"comment: failed (0 new, 0 resolved, 0 warnings, 118ms)",
+		);
 	});
 
 	test("adds the engine time to an error status", () => {
@@ -74,12 +74,12 @@ describe("quality report", () => {
 			[
 				result("biome", "passed"),
 				result("knip", "failed"),
-				result("comment-check", "error"),
+				result("comment", "error"),
 			],
 			4210,
 		);
 		expect(summary).toContain("2 of 3 engines failed (4210ms)");
-		expect(summary).toContain("failed: knip, comment-check");
+		expect(summary).toContain("failed: knip, comment");
 		expect(summary).toContain("passed: biome");
 	});
 
@@ -105,11 +105,11 @@ describe("quality report", () => {
 	});
 
 	test("paints a warning apart from an error", () => {
-		const engine = result("comment-check", "failed");
+		const engine = result("comment", "failed");
 		engine.warnings = [
 			{
 				column: 1,
-				engine: "comment-check",
+				engine: "comment",
 				file: "src/a.ts",
 				line: 1,
 				rule: "placeholder-comment",

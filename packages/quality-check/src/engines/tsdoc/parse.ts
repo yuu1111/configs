@@ -198,7 +198,7 @@ function docCommentsOf(
 	return docs;
 }
 
-const DIRECTIVE = "tsdoc-check-ignore";
+const DIRECTIVES = ["tsdoc-ignore", "tsdoc-check-ignore"];
 
 function parseDirective(
 	line: string,
@@ -207,10 +207,11 @@ function parseDirective(
 		.trim()
 		.replace(/^\*+\s*/, "")
 		.trim();
-	if (!text.startsWith(DIRECTIVE)) {
+	const directive = DIRECTIVES.find((candidate) => text.startsWith(candidate));
+	if (directive === undefined) {
 		return null;
 	}
-	const body = text.slice(DIRECTIVE.length);
+	const body = text.slice(directive.length);
 	const separator = body.indexOf(":");
 	const ruleText = separator === -1 ? body : body.slice(0, separator);
 	const reason = separator === -1 ? "" : body.slice(separator + 1).trim();

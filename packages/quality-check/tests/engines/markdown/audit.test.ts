@@ -11,7 +11,7 @@ import {
 	proseLongLines,
 	snapshot,
 	verify,
-} from "../../../src/engines/document-style/audit";
+} from "../../../src/engines/markdown/audit";
 
 type MutableEntry = Record<string, unknown>;
 
@@ -52,7 +52,7 @@ function withTemporaryFiles<T>(
 	rulesText: string,
 	callback: (documentPath: string, rulesPath: string) => T,
 ): T {
-	const directory = mkdtempSync(join(tmpdir(), "document-style-check-"));
+	const directory = mkdtempSync(join(tmpdir(), "markdown-"));
 	const documentPath = join(directory, "document.md");
 	const rulesPath = join(directory, "RULES.md");
 	try {
@@ -72,7 +72,7 @@ function withTemporaryDocuments<T>(
 	rulesText: string,
 	callback: (documentPaths: string[], rulesPath: string) => T,
 ): T {
-	const directory = mkdtempSync(join(tmpdir(), "document-style-check-"));
+	const directory = mkdtempSync(join(tmpdir(), "markdown-"));
 	const documentPaths = texts.map((text, index) => {
 		const path = join(directory, `document-${index}.md`);
 		writeFileSync(path, text, "utf8");

@@ -10,7 +10,7 @@ import { collectFiles } from "../../../src/shared/files";
 
 describe("file collection", () => {
 	test("excludes a path with a negative glob", () => {
-		const root = mkdtempSync(join(tmpdir(), "comment-check-"));
+		const root = mkdtempSync(join(tmpdir(), "comment-"));
 		try {
 			mkdirSync(join(root, "src", "generated"), { recursive: true });
 			writeFileSync(join(root, "src", "a.ts"), "export const a = 1\n");

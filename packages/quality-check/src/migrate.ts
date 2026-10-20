@@ -6,6 +6,7 @@ import {
 	RULE_VOCABULARY,
 } from "./config";
 import { parseArgv } from "./shared/cli";
+import { canonicalEngineName, ENGINE_RENAMES } from "./shared/engine-names";
 
 type JsonObject = Record<string, unknown>;
 
@@ -265,7 +266,10 @@ function migrateRules(
 	const vocabulary: {
 		all: readonly string[];
 		groups: Record<string, readonly string[]>;
-	} = RULE_VOCABULARY[engine as keyof typeof RULE_VOCABULARY];
+	} =
+		RULE_VOCABULARY[
+			canonicalEngineName(engine) as keyof typeof RULE_VOCABULARY
+		];
 	const legacy = LEGACY_GROUPS[engine] ?? {};
 	const kept: JsonObject = {};
 	const moved: JsonObject = {};
@@ -364,9 +368,7 @@ function migrateEngine(
 	if (Object.keys(next).length === 0) {
 		return true;
 	}
-	return enabled === true && !hasCurrentConfig({ [name]: next })
-		? { enabled: true, ...next }
-		: next;
+	return next;
 }
 
 /**
@@ -423,6 +425,11 @@ function hasLegacyConfig(value: JsonObject): boolean {
  * @returns 新書式だけが持つ指定があればtrue
  */
 function hasCurrentConfig(value: JsonObject): boolean {
+	if (
+		Object.values(ENGINE_RENAMES).some((name) => Object.hasOwn(value, name))
+	) {
+		return true;
+	}
 	return LEGACY_ENGINE_NAMES.some((name) => {
 		const section = value[name];
 		if (typeof section === "boolean") {
@@ -437,7 +444,10 @@ function hasCurrentConfig(value: JsonObject): boolean {
 		if (!isObject(section.rules)) {
 			return false;
 		}
-		const vocabulary = RULE_VOCABULARY[name as keyof typeof RULE_VOCABULARY];
+		const vocabulary =
+			RULE_VOCABULARY[
+				canonicalEngineName(name) as keyof typeof RULE_VOCABULARY
+			];
 		return Object.entries(section.rules).some(
 			([key, entry]) =>
 				((vocabulary?.all as readonly string[] | undefined)?.includes(key) &&
@@ -474,7 +484,9 @@ function migrationInputErrors(value: JsonObject): string[] {
 			invalid.push(`${name}.enabled must be a boolean`);
 		}
 		if (
-			(FINDING_ENGINE_NAMES as readonly string[]).includes(name) &&
+			(FINDING_ENGINE_NAMES as readonly string[]).includes(
+				canonicalEngineName(name),
+			) &&
 			section.rules !== undefined &&
 			!isObject(section.rules)
 		) {
@@ -513,12 +525,14 @@ function migrateLegacyConfig(value: JsonObject): MigrationResult {
 	const manual: string[] = [];
 	const config: JsonObject = {};
 	for (const [name, section] of Object.entries(value)) {
-		const engine = (FINDING_ENGINE_NAMES as readonly string[]).includes(name);
+		const engine = (FINDING_ENGINE_NAMES as readonly string[]).includes(
+			canonicalEngineName(name),
+		);
 		if (!LEGACY_ENGINE_NAMES.includes(name)) {
 			config[name] = section;
 			continue;
 		}
-		config[name] =
+		config[canonicalEngineName(name)] =
 			engine && isObject(section)
 				? migrateEngine(name, section, manual)
 				: migrateSimpleSection(section);
@@ -536,6 +550,18 @@ function migrateLegacyConfig(value: JsonObject): MigrationResult {
 export function migrateConfig(value: unknown, fromV5 = false): MigrationResult {
 	if (!isObject(value)) {
 		return { config: {}, manual: ["quality.json must be a JSON object"] };
+	}
+	const collisions = Object.entries(ENGINE_RENAMES)
+		.filter(
+			([oldName, newName]) =>
+				Object.hasOwn(value, oldName) && Object.hasOwn(value, newName),
+		)
+		.map(
+			([oldName, newName]) =>
+				`${oldName} and ${newName}: name collision; merge or remove one section by hand before migrating`,
+		);
+	if (collisions.length > 0) {
+		return { config: value, manual: collisions };
 	}
 	const invalid = migrationInputErrors(value);
 	if (invalid.length > 0) {
@@ -555,10 +581,18 @@ export function migrateConfig(value: unknown, fromV5 = false): MigrationResult {
 	if (!legacy && !fromV5) {
 		const ambiguous = current ? [] : ambiguousEngines(value);
 		return {
-			config: value,
+			config:
+				ambiguous.length > 0
+					? value
+					: Object.fromEntries(
+							Object.entries(value).map(([name, section]) => [
+								canonicalEngineName(name),
+								section,
+							]),
+						),
 			manual: ambiguous.map(
 				(name) =>
-					`${name}: cannot distinguish legacy and current settings; use --from-v5 to preserve v5 semantics, or make enabled and the suppression rule/group explicit`,
+					`${name}: cannot distinguish legacy and current settings; use --from-v5 to preserve v5 semantics, or rename v6 engine keys to current names and make enabled and the suppression rule/group explicit`,
 			),
 		};
 	}
@@ -566,7 +600,7 @@ export function migrateConfig(value: unknown, fromV5 = false): MigrationResult {
 }
 
 const USAGE =
-	"Usage: quality-check migrate [--config <path>] [--from-v5] [--write]\n  Previews the rewrite of an old quality.json; --write applies it.\n  --from-v5 interprets ambiguous enabled defaults and suppression entries as v5 settings.";
+	"Usage: quality-check migrate [--config <path>] [--from-v5] [--write]\n  Previews engine key renames and legacy quality.json conversion; --write applies it.\n  --from-v5 interprets ambiguous enabled defaults and suppression entries as v5 settings.";
 
 /**
  * migrateコマンドの本体 既定はpreviewで --write のときだけ書き換える

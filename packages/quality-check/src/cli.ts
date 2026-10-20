@@ -7,7 +7,7 @@ import {
 	loadConfig,
 	type QualityConfig,
 } from "./config";
-import { main as documentStyleMain } from "./document";
+import { main as markdownMain } from "./markdown";
 import { main as migrateMain } from "./migrate";
 import { splitEngineSelection } from "./options";
 import { formatEngineSection, formatSummary, toJsonReport } from "./report";
@@ -18,7 +18,7 @@ import { ansiPainter, colorEnabled, plainPainter } from "./shared/color";
 
 const USAGE = [
 	"Usage: quality-check [engine...] [--config <path>] [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]",
-	"       quality-check document-style <scan|check|lint> [options] [path...]",
+	"       quality-check markdown <scan|check|lint> [options] [path...]",
 	"       quality-check migrate [--config <path>] [--write] [--from-v5]",
 ].join("\n");
 
@@ -86,6 +86,30 @@ function resolveConfigPath(options: Options, cwd: string): string | null {
 }
 
 /**
+ * 個別commandを起動し、通常のengine選択ならundefinedを返す
+ *
+ * @param argv - CLIの起動引数
+ * @param cwd - fileの相対pathを解決するdirectory
+ * @returns 個別commandの終了code 通常のengine選択ならundefined
+ */
+function runSubcommand(argv: string[], cwd: string): number | undefined {
+	const [subcommand, ...rest] = argv;
+	if (subcommand === "document-style") {
+		throw new Error("document-style has been renamed to markdown");
+	}
+	if (
+		subcommand === "markdown" &&
+		["scan", "check", "lint", "--help", "-h"].includes(rest[0] ?? "")
+	) {
+		return markdownMain(rest, cwd);
+	}
+	if (subcommand === "migrate") {
+		return migrateMain(rest, cwd);
+	}
+	return undefined;
+}
+
+/**
  * CLIの本体を起動して終了codeを返す
  *
  * @param argv - 起動時に渡されたcommand line引数
@@ -96,12 +120,9 @@ export async function main(
 	argv: string[],
 	cwd = process.cwd(),
 ): Promise<number> {
-	const [subcommand, ...rest] = argv;
-	if (subcommand === "document-style") {
-		return documentStyleMain(rest);
-	}
-	if (subcommand === "migrate") {
-		return migrateMain(rest, cwd);
+	const subcommand = runSubcommand(argv, cwd);
+	if (subcommand !== undefined) {
+		return subcommand;
 	}
 	if (wantsHelp(argv)) {
 		console.log(USAGE);

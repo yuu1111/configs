@@ -46,27 +46,25 @@ describe("engine report", () => {
 
 	test("reads back what it serialized", () => {
 		const report = toReport([error, warning]);
-		expect(readReport("code-style-check", serializeReport(report))).toEqual(
-			report,
-		);
+		expect(readReport("code", serializeReport(report))).toEqual(report);
 	});
 
 	test("rejects output that is not JSON", () => {
-		expect(() => readReport("tsdoc-check", "not json")).toThrow(
-			"tsdoc-check did not print JSON",
+		expect(() => readReport("tsdoc", "not json")).toThrow(
+			"tsdoc did not print JSON",
 		);
 	});
 
 	test("rejects output without a warnings array", () => {
-		expect(() =>
-			readReport("tsdoc-check", JSON.stringify({ errors: [] })),
-		).toThrow("without a warnings array");
+		expect(() => readReport("tsdoc", JSON.stringify({ errors: [] }))).toThrow(
+			"without a warnings array",
+		);
 	});
 
 	test("rejects a finding that misses a field", () => {
 		expect(() =>
 			readReport(
-				"tsdoc-check",
+				"tsdoc",
 				JSON.stringify({
 					errors: [{ column: 1, file: "a.ts", line: 1 }],
 					warnings: [],

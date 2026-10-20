@@ -21,3 +21,18 @@ test("重複したengine名をまとめる", () => {
 		targets: [],
 	});
 });
+
+test.each([
+	["code-style-check", "code"],
+	["comment-check", "comment"],
+	["document-style-check", "markdown"],
+	["tsdoc-check", "tsdoc"],
+	["document-style", "markdown"],
+])(
+	"旧engine名を対象pathとして扱わず改名先を案内する: %s",
+	(oldName, currentName) => {
+		expect(() => splitEngineSelection([oldName])).toThrow(
+			`renamed to ${currentName}`,
+		);
+	},
+);

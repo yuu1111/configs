@@ -6,20 +6,20 @@
 	"oxfmt": true,
 	"typecheck": true,
 	"knip": true,
-	"code-style-check": true,
-	"comment-check": {
+	"code": true,
+	"comment": {
 		"rules": {
 			"cramped-comment": "on",
 			"japanese-period": "on"
 		}
 	},
-	"document-style-check": {
+	"markdown": {
 		"rules": {
 			"preset": "all",
 			"first-line-heading": "off"
 		}
 	},
-	"tsdoc-check": {
+	"tsdoc": {
 		"rules": {
 			"preset": "all",
 			"style": {
