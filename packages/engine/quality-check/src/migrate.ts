@@ -9,6 +9,16 @@ import {
 
 type JsonObject = Record<string, unknown>;
 
+const LEGACY_ENGINE_NAMES = [
+	"biome",
+	"typecheck",
+	"knip",
+	"code-style-check",
+	"comment-check",
+	"document-style-check",
+	"tsdoc-check",
+];
+
 /**
  * 移行前のgroupとそのrule group名を変えたengineだけが持つ
  */
@@ -61,6 +71,7 @@ const LEGACY_GROUPS: Record<string, Record<string, readonly string[]>> = {
 			"missing-doc",
 			"missing-returns",
 		],
+		suppression: ["suppression", "suppression-unused"],
 		syntax: [
 			"blank-line-before-tags",
 			"orphan-doc",
@@ -167,7 +178,10 @@ function moveGroup(
 				rules,
 			};
 		}
-		rules[rule] = state;
+		rules[rule] =
+			rule === "suppression" && typeof state === "string"
+				? { level: state }
+				: state;
 	}
 	return { rules };
 }
@@ -336,7 +350,7 @@ function migrateEngine(
 		styleScope: _style,
 		...rest
 	} = section;
-	const next: JsonObject = enabled === false ? { enabled: false } : {};
+	const next: JsonObject = enabled === true ? {} : { enabled: false };
 	Object.assign(next, rest);
 	const rules = isObject(legacyRules)
 		? migrateRules(name, legacyRules, manual)
@@ -347,7 +361,12 @@ function migrateEngine(
 	if (Object.keys(rules).length > 0) {
 		next.rules = rules;
 	}
-	return Object.keys(next).length === 0 ? true : next;
+	if (Object.keys(next).length === 0) {
+		return true;
+	}
+	return enabled === true && !hasCurrentConfig({ [name]: next })
+		? { enabled: true, ...next }
+		: next;
 }
 
 /**
@@ -357,27 +376,148 @@ function migrateEngine(
  * @returns 移行後のsection
  */
 function migrateSimpleSection(section: unknown): unknown {
-	if (!isObject(section) || section.enabled !== true) {
+	if (!isObject(section)) {
 		return section;
 	}
+	if (section.enabled !== true) {
+		return { ...section, enabled: false };
+	}
 	const { enabled: _enabled, ...rest } = section;
-	return Object.keys(rest).length === 0 ? true : rest;
+	return Object.keys(rest).length === 0 ? true : { enabled: true, ...rest };
 }
 
 /**
- * 移行前のquality.jsonを新しい書式へ移す
+ * 旧書式の証拠があるか調べる enabled省略だけのsectionは新旧を区別できないため変更しない
  *
- * @param value - 移行前の設定
+ * @param value - 調べる設定
+ * @returns 旧書式の証拠があればtrue
+ */
+function hasLegacyConfig(value: JsonObject): boolean {
+	return LEGACY_ENGINE_NAMES.some((name) => {
+		const section = value[name];
+		if (!isObject(section)) {
+			return false;
+		}
+		if ("docScope" in section || "styleScope" in section) {
+			return true;
+		}
+		if (!isObject(section.rules)) {
+			return false;
+		}
+		const groups = LEGACY_GROUPS[name] ?? {};
+		return Object.entries(section.rules).some(
+			([key, entry]) =>
+				(key !== "suppression" && Object.hasOwn(groups, key)) ||
+				(isObject(entry) &&
+					Object.keys(entry).some(
+						(field) => field !== "level" && field !== "options",
+					)),
+		);
+	});
+}
+
+/**
+ * 新書式だけが持つ指定があるか調べる
+ *
+ * @param value - 調べる設定
+ * @returns 新書式だけが持つ指定があればtrue
+ */
+function hasCurrentConfig(value: JsonObject): boolean {
+	return LEGACY_ENGINE_NAMES.some((name) => {
+		const section = value[name];
+		if (typeof section === "boolean") {
+			return true;
+		}
+		if (!isObject(section)) {
+			return false;
+		}
+		if ("overrides" in section) {
+			return true;
+		}
+		if (!isObject(section.rules)) {
+			return false;
+		}
+		const vocabulary = RULE_VOCABULARY[name as keyof typeof RULE_VOCABULARY];
+		return Object.entries(section.rules).some(
+			([key, entry]) =>
+				((vocabulary?.all as readonly string[] | undefined)?.includes(key) &&
+					key !== "suppression") ||
+				(key !== "preset" &&
+					Object.hasOwn(vocabulary?.groups ?? {}, key) &&
+					!Object.hasOwn(LEGACY_GROUPS[name] ?? {}, key) &&
+					![
+						"whitespace",
+						"content",
+						"shape",
+						"spacing",
+						"suppression",
+					].includes(key)) ||
+				(isObject(entry) && ("level" in entry || "options" in entry)),
+		);
+	});
+}
+
+/**
+ * 移行が値を失わず扱える型か検証する
+ *
+ * @param value - 検証する設定
+ * @returns 型が不正な箇所
+ */
+function migrationInputErrors(value: JsonObject): string[] {
+	const invalid: string[] = [];
+	for (const name of LEGACY_ENGINE_NAMES) {
+		const section = value[name];
+		if (!isObject(section)) {
+			continue;
+		}
+		if (section.enabled !== undefined && typeof section.enabled !== "boolean") {
+			invalid.push(`${name}.enabled must be a boolean`);
+		}
+		if (
+			(FINDING_ENGINE_NAMES as readonly string[]).includes(name) &&
+			section.rules !== undefined &&
+			!isObject(section.rules)
+		) {
+			invalid.push(`${name}.rules must be an object`);
+		}
+	}
+	return invalid;
+}
+
+/**
+ * 新旧で意味が変わる指定を列挙する
+ *
+ * @param value - 調べる設定
+ * @returns 新旧を区別できないengineの名前
+ */
+function ambiguousEngines(value: JsonObject): string[] {
+	return LEGACY_ENGINE_NAMES.filter((name) => {
+		const section = value[name];
+		return (
+			isObject(section) &&
+			(section.enabled === undefined ||
+				(name === "tsdoc-check" &&
+					isObject(section.rules) &&
+					typeof section.rules.suppression === "string"))
+		);
+	});
+}
+
+/**
+ * 旧書式と確認した設定の各sectionを移行する
+ *
+ * @param value - 旧書式と確認した設定
  * @returns 移行後の設定と手作業の案内
  */
-export function migrateConfig(value: unknown): MigrationResult {
-	if (!isObject(value)) {
-		return { config: {}, manual: ["quality.json must be a JSON object"] };
-	}
+function migrateLegacyConfig(value: JsonObject): MigrationResult {
 	const manual: string[] = [];
 	const config: JsonObject = {};
 	for (const [name, section] of Object.entries(value)) {
 		const engine = (FINDING_ENGINE_NAMES as readonly string[]).includes(name);
+		if (!LEGACY_ENGINE_NAMES.includes(name)) {
+			config[name] = section;
+			continue;
+		}
 		config[name] =
 			engine && isObject(section)
 				? migrateEngine(name, section, manual)
@@ -386,8 +526,47 @@ export function migrateConfig(value: unknown): MigrationResult {
 	return { config, manual };
 }
 
+/**
+ * 移行前のquality.jsonを新しい書式へ移す
+ *
+ * @param value - 移行前の設定
+ * @param fromV5 - 曖昧な指定もv5の意味で移行するか
+ * @returns 移行後の設定と手作業の案内
+ */
+export function migrateConfig(value: unknown, fromV5 = false): MigrationResult {
+	if (!isObject(value)) {
+		return { config: {}, manual: ["quality.json must be a JSON object"] };
+	}
+	const invalid = migrationInputErrors(value);
+	if (invalid.length > 0) {
+		return { config: value, manual: invalid };
+	}
+	const currentSections = hasCurrentConfig(value);
+	const current = currentSections || "oxlint" in value || "oxfmt" in value;
+	const legacy = hasLegacyConfig(value);
+	if ((legacy && current && !fromV5) || (fromV5 && currentSections)) {
+		return {
+			config: value,
+			manual: [
+				"quality.json mixes current and legacy settings; separate the formats before migrating, then use --from-v5 for the legacy configuration",
+			],
+		};
+	}
+	if (!legacy && !fromV5) {
+		const ambiguous = current ? [] : ambiguousEngines(value);
+		return {
+			config: value,
+			manual: ambiguous.map(
+				(name) =>
+					`${name}: cannot distinguish legacy and current settings; use --from-v5 to preserve v5 semantics, or make enabled and the suppression rule/group explicit`,
+			),
+		};
+	}
+	return migrateLegacyConfig(value);
+}
+
 const USAGE =
-	"Usage: quality-check migrate [--config <path>] [--write]\n  Previews the rewrite of an old quality.json; --write applies it.";
+	"Usage: quality-check migrate [--config <path>] [--from-v5] [--write]\n  Previews the rewrite of an old quality.json; --write applies it.\n  --from-v5 interprets ambiguous enabled defaults and suppression entries as v5 settings.";
 
 /**
  * migrateコマンドの本体 既定はpreviewで --write のときだけ書き換える
@@ -401,7 +580,10 @@ export function main(argv: string[], cwd = process.cwd()): number {
 		console.log(USAGE);
 		return 0;
 	}
-	const parsed = parseArgv(argv, { flags: ["write"], values: ["config"] });
+	const parsed = parseArgv(argv, {
+		flags: ["from-v5", "write"],
+		values: ["config"],
+	});
 	const configured = parsed.values.get("config")?.at(-1);
 	const path =
 		configured === undefined ? findConfigFile(cwd) : resolve(cwd, configured);
@@ -412,7 +594,15 @@ export function main(argv: string[], cwd = process.cwd()): number {
 	const before: unknown = JSON.parse(
 		readFileSync(path, "utf8").replace(/^\uFEFF/, ""),
 	);
-	const result = migrateConfig(before);
+	const result = migrateConfig(before, parsed.flags.has("from-v5"));
+	if (result.manual.length > 0) {
+		console.error(
+			["Fix these by hand:", ...result.manual.map((line) => `  ${line}`)].join(
+				"\n",
+			),
+		);
+		return 1;
+	}
 	const after = `${JSON.stringify(result.config, null, "\t")}\n`;
 	if (JSON.stringify(before) === JSON.stringify(result.config)) {
 		console.log(`${path} already uses the current format`);
@@ -422,13 +612,5 @@ export function main(argv: string[], cwd = process.cwd()): number {
 	} else {
 		console.log(`Preview of ${path} (pass --write to apply):\n${after}`);
 	}
-	if (result.manual.length === 0) {
-		return 0;
-	}
-	console.error(
-		["Fix these by hand:", ...result.manual.map((line) => `  ${line}`)].join(
-			"\n",
-		),
-	);
-	return 1;
+	return 0;
 }

@@ -19,10 +19,60 @@
 		},
 		"failOnWarnings": {
 			"default": false,
-			"description": "Treats finding-engine warnings as errors and passes --error-on-warnings to Biome.",
+			"description": "Treats finding-engine warnings as errors, passes --error-on-warnings to Biome, and passes --deny-warnings to Oxlint.",
 			"type": "boolean"
 		},
 		"biome": {
+			"anyOf": [
+				{
+					"type": "boolean"
+				},
+				{
+					"additionalProperties": false,
+					"properties": {
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
+						},
+						"args": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array"
+						}
+					},
+					"type": "object"
+				}
+			]
+		},
+		"oxlint": {
+			"anyOf": [
+				{
+					"type": "boolean"
+				},
+				{
+					"additionalProperties": false,
+					"properties": {
+						"enabled": {
+							"default": true,
+							"description": "Whether quality-check runs this engine. A section that is present runs unless this is false.",
+							"type": "boolean"
+						},
+						"args": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array"
+						}
+					},
+					"type": "object"
+				}
+			]
+		},
+		"oxfmt": {
 			"anyOf": [
 				{
 					"type": "boolean"
@@ -4102,7 +4152,8 @@
 										}
 									]
 								},
-								"suppression": {
+								"suppressions": {
+									"description": "Applies to every rule of the suppressions group.",
 									"anyOf": [
 										{
 											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
@@ -4589,6 +4640,36 @@
 										}
 									]
 								},
+								"suppression": {
+									"anyOf": [
+										{
+											"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+											"enum": [
+												"off",
+												"on",
+												"warn",
+												"error"
+											],
+											"type": "string"
+										},
+										{
+											"additionalProperties": false,
+											"properties": {
+												"level": {
+													"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+													"enum": [
+														"off",
+														"on",
+														"warn",
+														"error"
+													],
+													"type": "string"
+												}
+											},
+											"type": "object"
+										}
+									]
+								},
 								"suppression-unused": {
 									"anyOf": [
 										{
@@ -4814,7 +4895,8 @@
 													}
 												]
 											},
-											"suppression": {
+											"suppressions": {
+												"description": "Applies to every rule of the suppressions group.",
 												"anyOf": [
 													{
 														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
@@ -5295,6 +5377,36 @@
 																	}
 																},
 																"type": "object"
+															}
+														},
+														"type": "object"
+													}
+												]
+											},
+											"suppression": {
+												"anyOf": [
+													{
+														"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+														"enum": [
+															"off",
+															"on",
+															"warn",
+															"error"
+														],
+														"type": "string"
+													},
+													{
+														"additionalProperties": false,
+														"properties": {
+															"level": {
+																"description": "off disables the rule, on keeps its default severity, and warn or error overrides the severity.",
+																"enum": [
+																	"off",
+																	"on",
+																	"warn",
+																	"error"
+																],
+																"type": "string"
 															}
 														},
 														"type": "object"

@@ -31,6 +31,8 @@ export type EngineRunner = (
  */
 export const ENGINE_BINS: Record<ProcessEngineName, string> = {
 	biome: "biome",
+	oxlint: "oxlint",
+	oxfmt: "oxfmt",
 	knip: "knip",
 	typecheck: "tsc",
 };
@@ -150,12 +152,17 @@ function warningArguments(
 	context: EngineCommandContext,
 	configured: readonly string[],
 ): string[] {
+	const flags: Partial<Record<ProcessEngineName, string>> = {
+		biome: "--error-on-warnings",
+		oxlint: "--deny-warnings",
+	};
+	const flag = flags[name];
 	if (
-		name === "biome" &&
+		flag !== undefined &&
 		context.config.failOnWarnings &&
-		!configured.includes("--error-on-warnings")
+		!configured.includes(flag)
 	) {
-		return ["--error-on-warnings"];
+		return [flag];
 	}
 	return [];
 }
@@ -213,6 +220,23 @@ export function buildEngineCommand(
 			...targets,
 			...options.args,
 			...warningArguments(name, context, options.args),
+		];
+	}
+	if (name === "oxlint") {
+		return [
+			executable,
+			...context.overrides.targets,
+			...options.args,
+			...context.overrides.ignore.flatMap((path) => ["--ignore-pattern", path]),
+			...warningArguments(name, context, options.args),
+		];
+	}
+	if (name === "oxfmt") {
+		return [
+			executable,
+			"--check",
+			...context.overrides.targets,
+			...options.args,
 		];
 	}
 	if (name === "typecheck") {

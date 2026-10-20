@@ -12,7 +12,8 @@ bun add -D @yuu1111/quality-check
 
 The four finding engines `code-style-check`, `comment-check`, `document-style-check`, and `tsdoc-check` are built into this package.
 `bun build` bundles those private workspace packages into `dist/cli.js`, so installing this package is enough and no engine package has to be installed or resolved at run time.
-Biome, `tsc`, and Knip stay child processes and resolve from the project's `node_modules/.bin`.
+Biome, Oxlint, Oxfmt, `tsc`, and Knip run as child processes and resolve from the project's `node_modules/.bin`.
+Install the tools you enable as devDependencies of the consuming project; they are not bundled.
 
 ## Usage
 
@@ -31,6 +32,8 @@ Declare the engines to run in `quality.json`, then call the CLI from a script:
   "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
   "failOnWarnings": true,
   "biome": true,
+  "oxlint": true,
+  "oxfmt": true,
   "comment-check": {
     "includes": ["**", "!another-project/**"],
     "rules": {
@@ -95,20 +98,22 @@ A path that matches an engine name needs a `./` prefix, as in `quality-check ./b
 | `<engine>.includes` | Globs inspected by the four built-in finding engines |
 | `<engine>.rules` | Rule selection of the four built-in finding engines |
 | `<engine>.overrides` | Rule selection layered onto the files its globs select |
-| `failOnWarnings` | Treat warnings as blocking findings and apply the same policy to Biome |
+| `failOnWarnings` | Treat warnings as blocking findings and apply the same policy to Biome and Oxlint |
 | `baseline` | Baseline file path; `false` disables the diff |
 
-Engines run in the order `biome`, `typecheck`, `knip`, `code-style-check`, `comment-check`, `document-style-check`, `tsdoc-check`.
+Engines run in the order `biome`, `oxlint`, `oxfmt`, `typecheck`, `knip`, `code-style-check`, `comment-check`, `document-style-check`, `tsdoc-check`.
 
 Each engine owns a top-level section that holds the conditions that engine takes.
 A section that is present starts the engine, and an engine without conditions can be written as just `true`, as in `"biome": true`.
 `false` or `enabled: false` stops it.
 A condition an engine does not take is rejected, so a typo fails at start-up instead of being ignored.
-`biome`, `typecheck`, and `knip` run as child processes, and the four finding engines run in-process.
+`biome`, `oxlint`, `oxfmt`, `typecheck`, and `knip` run as child processes, and the four finding engines run in-process.
 
 | Engine | Command | Conditions |
 |--------|---------|------------|
 | `biome` | `biome check` | `args`; `biome.json` selects the files |
+| `oxlint` | `oxlint` | `args`; accepts targets and `--ignore` |
+| `oxfmt` | `oxfmt --check` | `args`; accepts targets, skips `--ignore` |
 | `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
 | `code-style-check` | in-process | `includes`, `rules`, `overrides` |
@@ -117,7 +122,12 @@ A condition an engine does not take is rejected, so a typo fails at start-up ins
 | `tsdoc-check` | in-process | `includes`, `rules`, `overrides` |
 
 `args` applies only to the child-process engines and is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
-When `failOnWarnings` is true, the runner passes `--error-on-warnings` to Biome automatically and uses the exit codes of the other child-process engines as-is.
+When `failOnWarnings` is true, the runner passes `--error-on-warnings` to Biome and `--deny-warnings` to Oxlint automatically.
+Oxlint runs as `oxlint [targets] [args]` and converts each `--ignore` into `--ignore-pattern <ignore>`.
+Oxfmt runs as `oxfmt --check [targets] [args]`, so the default run checks formatting without writing files.
+Oxfmt skips `--ignore` with a message; its `.oxfmtrc.json` and ignore files select exclusions.
+When using both Biome and Oxfmt, keep their formatting targets separate; this repo uses Oxfmt for YAML only.
+These external engines are not part of the baseline; their exit codes determine their results.
 
 `includes` selects paths relative to the project root with globs.
 It defaults to `**`, while an empty array inspects nothing.
@@ -169,6 +179,9 @@ No check engine keeps a baseline of its own, so the new-and-resolved diff is don
 
 ## Rules
 
+The external engines have separate references for [Oxlint](../../../docs/engines/oxlint.md) and [Oxfmt](../../../docs/engines/oxfmt.md).
+Their rules and formatting settings stay in their own configuration files, not in `quality.json.rules`.
+
 Each built-in engine publishes its own rule vocabulary, and one document holds the options and rules of each engine:
 
 | Engine | Groups | Reference |
@@ -176,7 +189,7 @@ Each built-in engine publishes its own rule vocabulary, and one document holds t
 | `code-style-check` | `spacing` | [`docs/engines/code-style-check.md`](../../../docs/engines/code-style-check.md) |
 | `comment-check` | `suppression`, `shape`, `content` | [`docs/engines/comment-check.md`](../../../docs/engines/comment-check.md) |
 | `document-style-check` | `whitespace`, `layout`, `consistency`, `japanese`, `content` | [`docs/engines/document-style-check.md`](../../../docs/engines/document-style-check.md) |
-| `tsdoc-check` | `correctness`, `suppression`, `completeness`, `style` | [`docs/engines/tsdoc-check.md`](../../../docs/engines/tsdoc-check.md) |
+| `tsdoc-check` | `correctness`, `suppressions`, `completeness`, `style` | [`docs/engines/tsdoc-check.md`](../../../docs/engines/tsdoc-check.md) |
 
 ## Baseline
 
@@ -196,11 +209,16 @@ Set `baseline` to `false` in `quality.json` to diff nothing and report every fin
 
 `quality-check migrate` rewrites a `quality.json` in the old format into the current one.
 It previews by default and writes only with `--write`.
-A setting it cannot convert is left alone, and the command prints what to fix by hand and exits with 1.
+If any setting cannot be converted, the file is left unchanged even with `--write`; the command prints what to fix by hand and exits with 1.
+Migration preserves which engines were enabled and moves the old TSDoc `suppression` group to `suppressions`, distinct from the `suppression` rule.
+If the format is ambiguous, the command leaves the file unchanged and asks for manual input.
+Use `--from-v5` only when the input is known to use v5 semantics, including disabled engines when `enabled` is omitted and the old TSDoc `suppression` group.
+Otherwise, make the intended engine states and individual rules explicit by hand.
 
 ```bash
 quality-check migrate
 quality-check migrate --write
+quality-check migrate --from-v5 --write
 ```
 
 `quality-check document-style` runs the review ledger of the built-in `document-style-check` engine:
@@ -232,7 +250,7 @@ The review file pins the document bytes and the rules bytes by hash, so editing 
 | `--update-baseline` | Replace the baseline with the current findings |
 | `--json` | Print the per-engine results as JSON |
 | `document-style <command>` | Run the review ledger (`scan`, `check`, or `lint`) |
-| `migrate` | Rewrite an old `quality.json` (`--config <path>`, `--write`) |
+| `migrate` | Rewrite an old `quality.json` (`--config <path>`, `--write`, `--from-v5`) |
 
 `--ignore` and the positional targets reach only the engines that take them.
 

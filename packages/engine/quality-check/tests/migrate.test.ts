@@ -72,13 +72,161 @@ describe("quality config migration", () => {
 	});
 
 	test("reports what it cannot rewrite", () => {
-		const { manual } = migrateConfig({
-			"comment-check": { enabled: true, rules: { nope: "on" } },
-		});
+		const { manual } = migrateConfig(
+			{
+				"comment-check": { enabled: true, rules: { nope: "on" } },
+			},
+			true,
+		);
 		expect(manual).toEqual([
 			"comment-check.rules.nope: unknown rule or group; rename or remove it",
 		]);
 	});
+
+	test("preserves engines disabled by the legacy default on repeated migration", () => {
+		const { config, manual } = migrateConfig(
+			{
+				biome: { enabled: true, args: ["--verbose"] },
+				knip: {},
+				"tsdoc-check": {},
+			},
+			true,
+		);
+		expect(manual).toEqual([]);
+		expect(parseConfig(config, "migrated").engines).toMatchObject({
+			biome: true,
+			knip: false,
+			"tsdoc-check": false,
+		});
+		expect(migrateConfig(config)).toEqual({ config, manual: [] });
+	});
+
+	test("keeps current group options and rule-only suppression on repeated migration", () => {
+		const current = {
+			"tsdoc-check": {
+				rules: {
+					completeness: { options: { scope: "documented" } },
+					suppression: "off",
+				},
+			},
+		};
+		expect(migrateConfig(current)).toEqual({ config: current, manual: [] });
+	});
+
+	test.each([
+		[{ suppression: "off" }, ["suppression"]],
+		["off", ["suppression", "suppression-unused"]],
+	])(
+		"preserves the rules selected by the legacy suppression group %j",
+		(entry, disabled) => {
+			const { config, manual } = migrateConfig(
+				{
+					"tsdoc-check": { enabled: true, rules: { suppression: entry } },
+				},
+				typeof entry === "string",
+			);
+			expect(manual).toEqual([]);
+			expect(
+				parseConfig(config, "migrated").config["tsdoc-check"]?.rules.disable,
+			).toEqual(disabled);
+			expect(migrateConfig(config)).toEqual({ config, manual: [] });
+		},
+	);
+
+	test("asks for an explicit enabled value when the format is ambiguous", () => {
+		const config = { "comment-check": {} };
+		const result = migrateConfig(config);
+		expect(result.config).toEqual(config);
+		expect(result.manual.join("\n")).toContain("--from-v5");
+	});
+
+	test.each([
+		{ biome: { enabled: true }, "comment-check": {} },
+		{ "tsdoc-check": { enabled: true, rules: { suppression: "off" } } },
+	])(
+		"requires explicit v5 mode instead of reinterpreting a current config %j",
+		(config) => {
+			const directory = mkdtempSync(
+				join(tmpdir(), "quality-migrate-ambiguous-"),
+			);
+			try {
+				const path = join(directory, "quality.json");
+				const before = JSON.stringify(config);
+				writeFileSync(path, before, "utf8");
+				expect(main(["--write"], directory)).toBe(1);
+				expect(readFileSync(path, "utf8")).toBe(before);
+				expect(main(["--from-v5", "--write"], directory)).toBe(0);
+				const migrated = parseConfig(
+					JSON.parse(readFileSync(path, "utf8")),
+					"migrated",
+				);
+				if ("biome" in config) {
+					expect(migrated.engines["comment-check"]).toBe(false);
+				} else {
+					expect(migrated.config["tsdoc-check"]?.rules.disable).toEqual([
+						"suppression",
+						"suppression-unused",
+					]);
+				}
+			} finally {
+				rmSync(directory, { force: true, recursive: true });
+			}
+		},
+	);
+
+	test.each([
+		{ biome: true, "tsdoc-check": { docScope: "all" } },
+		{
+			oxlint: true,
+			"tsdoc-check": { enabled: true, docScope: "all" },
+			"comment-check": { rules: { "japanese-period": "on" } },
+		},
+	])(
+		"rejects mixed formats whose omitted enabled value is ambiguous %j",
+		(config) => {
+			const result = migrateConfig(config);
+			expect(result.manual.join("\n")).toContain("--from-v5");
+			expect(result.config).toEqual(config);
+		},
+	);
+
+	test("leaves newly introduced engines enabled while migrating legacy sections", () => {
+		const result = migrateConfig(
+			{
+				"tsdoc-check": { enabled: true, docScope: "all" },
+				oxlint: {},
+				oxfmt: { args: ["--check"] },
+			},
+			true,
+		);
+		expect(result.manual).toEqual([]);
+		expect(result.config.oxlint).toEqual({});
+		expect(result.config.oxfmt).toEqual({ args: ["--check"] });
+		expect(migrateConfig(result.config)).toEqual(result);
+	});
+
+	test.each([
+		{ enabled: true, docScope: "custom" },
+		{ enabled: "bad", docScope: "all" },
+		{ enabled: true, rules: "bad", docScope: "all" },
+	])(
+		"does not write any changes when manual migration remains %j",
+		(section) => {
+			const directory = mkdtempSync(join(tmpdir(), "quality-migrate-manual-"));
+			try {
+				const path = join(directory, "quality.json");
+				const before = JSON.stringify({
+					biome: { enabled: true },
+					"tsdoc-check": section,
+				});
+				writeFileSync(path, before, "utf8");
+				expect(main(["--write"], directory)).toBe(1);
+				expect(readFileSync(path, "utf8")).toBe(before);
+			} finally {
+				rmSync(directory, { force: true, recursive: true });
+			}
+		},
+	);
 
 	test("previews by default and writes with --write", () => {
 		const directory = mkdtempSync(join(tmpdir(), "quality-migrate-"));

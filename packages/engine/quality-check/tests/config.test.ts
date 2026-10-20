@@ -16,11 +16,22 @@ describe("quality config", () => {
 		const config = parseConfig(
 			{
 				biome: { enabled: true },
+				oxfmt: true,
+				oxlint: { args: ["--deny", "correctness"] },
 				"tsdoc-check": { enabled: true },
 			},
 			"test",
 		);
-		expect(enabledEngines(config)).toEqual(["biome", "tsdoc-check"]);
+		expect(enabledEngines(config)).toEqual([
+			"biome",
+			"oxlint",
+			"oxfmt",
+			"tsdoc-check",
+		]);
+		expect(engineConfig(config, "oxlint")?.args).toEqual([
+			"--deny",
+			"correctness",
+		]);
 	});
 
 	test("gives a disabled engine null", () => {

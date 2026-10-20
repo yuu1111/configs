@@ -189,7 +189,7 @@ export function buildSchema(): JsonSchema {
 		failOnWarnings: {
 			default: false,
 			description:
-				"Treats finding-engine warnings as errors and passes --error-on-warnings to Biome.",
+				"Treats finding-engine warnings as errors, passes --error-on-warnings to Biome, and passes --deny-warnings to Oxlint.",
 			type: "boolean",
 		},
 	};

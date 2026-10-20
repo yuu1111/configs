@@ -22,17 +22,21 @@ npmへ公開する共有設定と検査package
 | [構成と設計判断](docs/architecture.md) | packageの層と同梱の理由 |
 | [プロジェクトへの導入](docs/adoption.md) | 設定からCIまでの導入手順 |
 | [engine の共通規約](docs/engine-contract.md) | 検査engineと統合runnerの間で守る契約 |
-| [engine 一覧](docs/engines/index.md) | 検査engineの設定とruleの正本 |
+| [engine 一覧](docs/engines/index.md) | 外部engineと同梱する検出engineの一覧 |
+| [Oxlint](docs/engines/oxlint.md) | 外部lint engineとCLIの連携 |
+| [Oxfmt](docs/engines/oxfmt.md) | 読み取り専用のformatチェックと対象fileの選択 |
 
 ## Development
 
-Bun workspaceのmonorepo Biomeは自分の設定で自分をlintするself-hosting
+Bun workspaceのmonorepo Biomeは自分の共有設定を使い、Oxlintもlintを行う
+OxfmtはYAMLだけを担当し、Biomeとformat対象を分ける
 
 ```bash
 bun install            # install + link workspaces
 bun run build          # 検査engineとその依存を @yuu1111/quality-check へ同梱する
-bunx biome check .     # lint / format check
-bunx biome check --write .   # auto-fix
+bun run lint           # Biome + Oxlint
+bun run format:check   # Biome + Oxfmt
+bun run format         # Biome + Oxfmtで自動修正
 ```
 
 ## Release

@@ -17,6 +17,14 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 - 公開 package を増やさず、engine を private のまま内部APIとして変更できる
 - 公開 package に runtime dependency を持たせないため、engine の依存は bundle へ畳み込む
 
+## 外部toolを子プロセスで呼ぶ理由
+
+- Biome、Oxlint、Oxfmt、TypeScript、Knipは利用projectのdevDependenciesへ入れ、`node_modules/.bin` から解決する
+- 外部toolはbundleせず、利用projectがversionと固有設定を管理する
+- 外部toolの終了codeを検査結果に使い、同梱する検出engineのbaselineへは含めない
+- Oxfmtは既定で `--check` を付け、検査中にfileを書き換えない
+- このrepoではOxfmtにYAMLだけを任せ、Biomeとformat対象を分ける
+
 ## in-processで呼ぶ理由
 
 - engine を子プロセスにすると、argv解析と出力形式が engine ごとに増える
@@ -40,7 +48,8 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 - 統合runnerは起動時に engine の rule 語彙を読み、`quality.json` の `$schema` が指す `schema.json` を生成する
 - `./rule-ids` を import の無い module にすると、build 前でも語彙だけを読み込める
 - group名とrule名は engine が唯一の出所になり、統合runnerの設定とschemaが同じ語彙を使う
-- rule名とgroup名は `rules` の直下へ並べて書き、rule名はengine内で一意なので衝突しない
+- rule名とgroup名は `rules` の直下へ並べて書くため、同じengine内で両者の名前を重複させない
+- tsdoc-checkのgroupは `suppressions` とし、ruleの `suppression` と区別する
 
 ## `overrides` を統合runnerで解く理由
 

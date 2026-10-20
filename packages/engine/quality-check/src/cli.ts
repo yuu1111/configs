@@ -23,7 +23,7 @@ import { runEngines } from "./run";
 const USAGE = [
 	"Usage: quality-check [engine...] [--config <path>] [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]",
 	"       quality-check document-style <scan|check|lint> [options] [path...]",
-	"       quality-check migrate [--config <path>] [--write]",
+	"       quality-check migrate [--config <path>] [--write] [--from-v5]",
 ].join("\n");
 
 interface Options {

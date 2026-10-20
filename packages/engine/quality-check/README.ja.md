@@ -12,7 +12,8 @@ bun add -D @yuu1111/quality-check
 
 4つの検出engine `code-style-check`、`comment-check`、`document-style-check`、`tsdoc-check` はこのpackageへ同梱する
 `bun build` がprivateなworkspace packageを `dist/cli.js` へbundleするため、このpackageを導入すればengine packageの追加導入も実行時の解決も要らない
-Biome、`tsc`、Knipは子プロセスのままで、利用Projectの `node_modules/.bin` から解決する
+Biome、Oxlint、Oxfmt、`tsc`、Knipは子プロセスで起動し、利用Projectの `node_modules/.bin` から解決する
+有効にするtoolは利用ProjectのdevDependenciesへ入れ、`quality-check` へは同梱しない
 
 ## Usage
 
@@ -31,6 +32,8 @@ Biome、`tsc`、Knipは子プロセスのままで、利用Projectの `node_modu
   "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
   "failOnWarnings": true,
   "biome": true,
+  "oxlint": true,
+  "oxfmt": true,
   "comment-check": {
     "includes": ["**", "!another-project/**"],
     "rules": {
@@ -95,20 +98,22 @@ engine名と一致するpathは `quality-check ./biome` のように `./` を付
 | `<engine>.includes` | 同梱する4つの検出engineが検査するfileのglob |
 | `<engine>.rules` | 同梱する4つの検出engineのrule選択 |
 | `<engine>.overrides` | globで選んだfileだけへ重ねるrule選択 |
-| `failOnWarnings` | warningを阻害する検出として扱い、Biomeにも同じ方針を渡す |
+| `failOnWarnings` | warningを阻害する検出として扱い、BiomeとOxlintにも同じ方針を渡す |
 | `baseline` | baseline fileのpath `false` なら差分判定を行わない |
 
-engineは `biome` → `typecheck` → `knip` → `code-style-check` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
+engineは `biome` → `oxlint` → `oxfmt` → `typecheck` → `knip` → `code-style-check` → `comment-check` → `document-style-check` → `tsdoc-check` の順に実行する
 
 engineごとのsectionがそのengineが受け取る条件を持つ
 sectionを書けばそのengineは起動し、条件が無ければ `"biome": true` のように `true` だけで書ける
 止めるときは `false` か `enabled: false` を書く
 engineが受け取らない条件は設定errorにし、打ち間違いが黙って無視されないようにする
-`biome`、`typecheck`、`knip` は子プロセスで起動し、4つの検出engineはin-processで起動する
+`biome`、`oxlint`、`oxfmt`、`typecheck`、`knip` は子プロセスで起動し、4つの検出engineはin-processで起動する
 
 | Engine | Command | 条件 |
 |--------|---------|--------------|
 | `biome` | `biome check` | `args` 対象fileは `biome.json` が持つ |
+| `oxlint` | `oxlint` | `args` 対象pathと `--ignore` を受け取る |
+| `oxfmt` | `oxfmt --check` | `args` 対象pathを受け取り `--ignore` はskipする |
 | `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
 | `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
 | `code-style-check` | in-process | `includes`、`rules`、`overrides` |
@@ -118,7 +123,12 @@ engineが受け取らない条件は設定errorにし、打ち間違いが黙っ
 
 `args` は子プロセスengineだけが受け取り、engineの既定引数の後ろへ足す
 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
-`failOnWarnings` がtrueならBiomeへ `--error-on-warnings` を自動で渡し、他の子プロセスengineは終了codeをそのまま使う
+`failOnWarnings` がtrueならBiomeへ `--error-on-warnings`、Oxlintへ `--deny-warnings` を自動で渡す
+Oxlintは `oxlint [targets] [args]` を起動し、`--ignore` を繰り返しの `--ignore-pattern <ignore>` へ変換する
+Oxfmtは `oxfmt --check [targets] [args]` を起動し、既定ではfileを書き換えずformatを検査する
+Oxfmtは `--ignore` をskipと表示し、除外は `.oxfmtrc.json` とignore fileで指定する
+BiomeとOxfmtを併用するときはformat対象を分け、このrepoではOxfmtをYAMLだけに使う
+これらの外部engineはbaselineの対象にせず、終了codeを検査結果に使う
 
 `includes` はProject rootからの相対pathをglobで選ぶ
 指定を省略すると `**` になり、空の配列は何も検査しない
@@ -171,6 +181,9 @@ engineが知らないgroup名やrule名、ruleが受け取らないoptionは設�
 
 ## Rules
 
+外部engineの設定は [Oxlint](../../../docs/engines/oxlint.md) と [Oxfmt](../../../docs/engines/oxfmt.md) にある
+そのruleとformatの設定は `quality.json.rules` ではなく、tool固有の設定fileで指定する
+
 同梱するengineはそれぞれrule語彙を公開し、設定とruleをengineごとに1つの文書へまとめる
 
 | Engine | Group | 設定とrule |
@@ -178,7 +191,7 @@ engineが知らないgroup名やrule名、ruleが受け取らないoptionは設�
 | `code-style-check` | `spacing` | [`docs/engines/code-style-check.md`](../../../docs/engines/code-style-check.md) |
 | `comment-check` | `suppression`、`shape`、`content` | [`docs/engines/comment-check.md`](../../../docs/engines/comment-check.md) |
 | `document-style-check` | `whitespace`、`layout`、`consistency`、`japanese`、`content` | [`docs/engines/document-style-check.md`](../../../docs/engines/document-style-check.md) |
-| `tsdoc-check` | `correctness`、`suppression`、`completeness`、`style` | [`docs/engines/tsdoc-check.md`](../../../docs/engines/tsdoc-check.md) |
+| `tsdoc-check` | `correctness`、`suppressions`、`completeness`、`style` | [`docs/engines/tsdoc-check.md`](../../../docs/engines/tsdoc-check.md) |
 
 ## Baseline
 
@@ -198,11 +211,16 @@ entryの同一性はengineとruleとfileと検出messageで決まるため、mes
 
 `quality-check migrate` は旧書式の `quality.json` を現在の書式へ移す
 既定はpreviewで、`--write` を付けたときだけ書き換える
-自動で直せない設定は書き換えず、手で直す箇所を出力して終了code 1にする
+自動で直せない設定が1つでもあれば、`--write` を付けてもfileを書き換えず、手で直す箇所を出力して終了code 1にする
+移行はengineの有効状態を保ち、旧TSDocの `suppression` groupは `suppressions` へ移して `suppression` ruleと区別する
+旧書式か新書式か判別できない設定は書き換えず、手作業を案内する
+旧v5形式と分かっている場合は `--from-v5` を付け、`enabled` 省略時の無効状態と旧TSDocの `suppression` groupとして解釈させる
+手で直す場合は、意図するengineの有効状態と個別のruleを明示する
 
 ```bash
 quality-check migrate
 quality-check migrate --write
+quality-check migrate --from-v5 --write
 ```
 
 `quality-check document-style` は同梱する `document-style-check` の検証記録を実行する
@@ -233,7 +251,7 @@ quality-check document-style check doc.md --rules SKILL.md --review review.json
 | `--update-baseline` | 現在の検出でbaselineを置き換える |
 | `--json` | engineごとの結果をJSONで出力する |
 | `document-style <command>` | 検証記録を実行する（`scan`、`check`、`lint`） |
-| `migrate` | 旧書式の `quality.json` を移す（`--config <path>`、`--write`） |
+| `migrate` | 旧書式の `quality.json` を移す（`--config <path>`、`--write`、`--from-v5`） |
 
 `--ignore` と位置引数の対象pathは、その条件を受け取るengineへだけ渡す
 

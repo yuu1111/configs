@@ -12,10 +12,11 @@
 | [`@yuu1111/knip-config`](../packages/config/knip-config/README.ja.md) | Knipの共有設定 |
 | [`@yuu1111/quality-check`](../packages/engine/quality-check/README.ja.md) | 検査engineをまとめて起動するCLI |
 
-`quality-check` は Biome、`tsc`、Knip を子プロセスとして起動するため、その本体も入れる
+`quality-check` は Biome、Oxlint、Oxfmt、`tsc`、Knip を子プロセスとして起動するため、有効にするtoolの本体を利用projectのdevDependenciesへ入れる
+これらは `quality-check` に同梱されず、利用projectの `node_modules/.bin` から解決する
 
 ```bash
-bun add -D @biomejs/biome knip typescript
+bun add -D @biomejs/biome oxlint oxfmt knip typescript
 bun add -D @yuu1111/biome-config @yuu1111/knip-config @yuu1111/quality-check @yuu1111/tsconfig
 ```
 
@@ -55,6 +56,8 @@ export default {
 {
   "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
   "biome": true,
+  "oxlint": true,
+  "oxfmt": true,
   "typecheck": true,
   "knip": true,
   "document-style-check": {
@@ -63,6 +66,11 @@ export default {
   "failOnWarnings": true
 }
 ```
+
+BiomeとOxfmtを併用するときはformat対象を分ける
+このrepoではOxfmtをYAMLだけに限定し、除外を `.oxfmtrc.json` とignore fileで管理する
+Oxlintは `--ignore` を受け取るが、Oxfmtはskipを表示して受け取らない
+外部toolの結果はbaselineの対象外になる
 
 engine ごとの設定とruleは [`docs/engines/`](engines/index.md) を正本にする
 導入時は既定の `recommended` で始め、opt-inのruleを `on` で1つずつ足す
@@ -100,6 +108,8 @@ ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替�
 
 旧書式の `quality.json` は `quality-check migrate` で現在の書式へ移せる
 既定はpreviewで、`--write` を付けたときだけ書き換える
+形式を判別できない設定は書き換えず、手作業を案内する
+旧v5形式と分かっている場合は `quality-check migrate --from-v5 --write` を使い、手で直す場合は意図する `enabled` と個別のruleを明示する
 
 ## scriptへ登録する
 

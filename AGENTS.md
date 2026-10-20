@@ -36,7 +36,8 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 - engine の rule 語彙は `src/rule-ids.ts` へ `RULE_IDS` / `OPT_IN_RULE_IDS` / `RULE_GROUPS` / `FILE_EXTENSIONS` として置き、import を持たせず `./rule-ids` として公開する (rule ごとの option があれば `RULE_OPTIONS` も置く)
 - 全 rule がいずれかの group へ重複なく入ることを tests で検査する
 - engine の package は `./run` `./fix` `./audit` の関数だけを公開し、個別コマンドの argv 解析と出力は `quality-check` が持つ
-- `quality-check` は engine の `./run` を in-process で呼び、`src/engines/index.ts` の `FINDING_ENGINES` に登録する
+- `quality-check` は検出engineの `./run` を in-process で呼び、`src/engines/index.ts` の `FINDING_ENGINES` に登録する
+- 外部engineの `biome`、`oxlint`、`oxfmt`、`typecheck`、`knip` は利用projectの `node_modules/.bin` から解決し、同梱せずbaselineの対象にしない
 - 検出engineは baseline を持たず、新規と解消済みの判定は統合CLIが1つの baseline file で行う
 - `document-style-check` の review ledger は `quality-check document-style <scan|check|lint>` として公開する
 - `.grit` を追加したら `plugins-<layer>.json` へ列挙する (`custom-rules.test.ts` が一覧の一致を検査している)
@@ -56,15 +57,17 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 - パッケージマネージャ: Bun
 - publish: GitHub Release から npm Trusted Publisher で自動実行
 - バージョニング: `bun pm version`
-- lint/format: Biome
+- lint: Biome と Oxlint
+- format: Biome と Oxfmt (OxfmtはYAMLだけを担当し、Biomeと対象を分ける)
 - biome-config の設定ファイルは `base.json` / `react.json` (not `biome.json`) とし、Biome のネスト設定検出を避ける
 
 ## コマンド
 
 - `bun install` - 依存インストール + workspace リンク
 - `bun run build` - engine と @yuu1111/shared を @yuu1111/quality-check へ同梱する
-- `bunx biome check .` - lint/format チェック
-- `bunx biome check --write .` - 自動修正
+- `bun run lint` - Biome と Oxlint のlintチェック
+- `bun run format:check` - Biome と Oxfmt のformatチェック
+- `bun run format` - Biome と Oxfmt の自動修正
 - `bun run check:quality` - build して全 engine を最厳格な設定で実行する
 - `bun pm version patch/minor/major --no-git-tag-version` - バージョン更新 (各パッケージディレクトリで実行)
 
@@ -102,7 +105,7 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 - engine を追加したら、次のすべてを同じ変更で更新する
   - `quality-check` の `ENGINE_NAMES`
   - `quality-check` の `ENGINE_CAPABILITIES`
-  - `quality-check` の `FINDING_ENGINES`
+  - 検出engineの場合は `quality-check` の `FINDING_ENGINES`
   - `docs/engines/<engine>.md` と root README の `## Documents`
   - README と設定表
 - rule を追加または廃止したら、`docs/engines/<engine>.md` の表と group 要約を同じ変更で更新する

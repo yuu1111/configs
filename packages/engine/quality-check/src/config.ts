@@ -30,7 +30,13 @@ import {
 /**
  * 子プロセスで起動するengineの名前
  */
-export const PROCESS_ENGINE_NAMES = ["biome", "typecheck", "knip"] as const;
+export const PROCESS_ENGINE_NAMES = [
+	"biome",
+	"oxlint",
+	"oxfmt",
+	"typecheck",
+	"knip",
+] as const;
 
 /**
  * 子プロセスengine名のunion型
@@ -143,6 +149,8 @@ export interface RuleEngineOptions {
  */
 export interface EngineConfigMap {
 	biome: EngineOptions;
+	oxlint: EngineOptions;
+	oxfmt: EngineOptions;
 	typecheck: TypecheckOptions;
 	knip: EngineOptions;
 	"code-style-check": RuleEngineOptions;
@@ -304,6 +312,12 @@ export const ENGINE_CAPABILITIES: Record<EngineName, EngineCapabilities> = {
 		args: true,
 		findings: false,
 		skipped: { ignore: "biome.json holds its settings" },
+	},
+	oxlint: { args: true, findings: false, skipped: {} },
+	oxfmt: {
+		args: true,
+		findings: false,
+		skipped: { ignore: ".oxfmtrc.json and ignore files hold its settings" },
 	},
 	typecheck: {
 		args: true,

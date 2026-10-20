@@ -45,6 +45,51 @@ afterEach(() => {
 });
 
 describe("process engine commands", () => {
+	test.each([
+		[
+			"oxlint",
+			[
+				"oxlint",
+				"src",
+				"--config",
+				"custom.json",
+				"--ignore-pattern",
+				"generated",
+				"--deny-warnings",
+			],
+		],
+		["oxfmt", ["oxfmt", "--check", "src", "--config", "custom.json"]],
+	] as const)("runs %s with its supported overrides", (name, expected) => {
+		const context = createContext();
+		context.config = parseConfig(
+			{ [name]: { args: ["--config", "custom.json"] }, failOnWarnings: true },
+			"test",
+		);
+		context.overrides = { ignore: ["generated"], targets: ["src"] };
+		expect(buildEngineCommand(name, name, context)).toEqual([...expected]);
+	});
+
+	test.each(["oxlint", "oxfmt"] as const)(
+		"runs %s without explicit paths from the current directory",
+		(name) => {
+			expect(buildEngineCommand(name, name, createContext())).toEqual(
+				name === "oxfmt" ? ["oxfmt", "--check"] : ["oxlint"],
+			);
+		},
+	);
+
+	test("does not repeat an explicit Oxlint warning argument", () => {
+		const context = createContext();
+		context.config = parseConfig(
+			{ oxlint: { args: ["--deny-warnings"] }, failOnWarnings: true },
+			"test",
+		);
+		expect(buildEngineCommand("oxlint", "oxlint", context)).toEqual([
+			"oxlint",
+			"--deny-warnings",
+		]);
+	});
+
 	test("gives Biome the targets without the ignore list", () => {
 		const context = createContext();
 		context.overrides = { ignore: ["dist"], targets: ["."] };
@@ -176,6 +221,20 @@ describe("engine limits", () => {
 		expect(
 			skippedEngineOptions("biome", { ignore: ["src/generated"], targets: [] }),
 		).toEqual(["ignore skipped (biome.json holds its settings)"]);
+		expect(
+			skippedEngineOptions("oxlint", {
+				ignore: ["generated"],
+				targets: ["src"],
+			}),
+		).toEqual([]);
+		expect(
+			skippedEngineOptions("oxfmt", {
+				ignore: ["generated"],
+				targets: ["src"],
+			}),
+		).toEqual([
+			"ignore skipped (.oxfmtrc.json and ignore files hold its settings)",
+		]);
 		expect(
 			skippedEngineOptions("knip", { ignore: [], targets: ["src"] }),
 		).toEqual(["targets skipped (knip analyzes the whole project)"]);

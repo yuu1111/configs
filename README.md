@@ -22,17 +22,20 @@ The individual check engines `code-style-check`, `comment-check`, `document-styl
 | [Architecture](docs/architecture.md) | Why the packages are layered and bundled the way they are |
 | [Adoption](docs/adoption.md) | Installing the packages into a project, from config to CI |
 | [Engine contract](docs/engine-contract.md) | The contract the built-in engines and the integrated runner share |
-| [Engine reference](docs/engines/index.md) | The options and rules of each built-in engine |
+| [Engine reference](docs/engines/index.md) | The external and built-in engines |
+| [Oxlint](docs/engines/oxlint.md) | External lint engine and command-line integration |
+| [Oxfmt](docs/engines/oxfmt.md) | Read-only format checks and file selection |
 
 ## Development
 
-Bun workspace monorepo. Biome is self-hosted (the repo lints itself with its own config).
+Bun workspace monorepo. Biome uses its own shared config, Oxlint adds lint checks, and Oxfmt formats YAML only to avoid conflicting with Biome.
 
 ```bash
 bun install            # install + link workspaces
 bun run build          # bundle the check engines and their dependencies into @yuu1111/quality-check
-bunx biome check .     # lint / format check
-bunx biome check --write .   # auto-fix
+bun run lint           # Biome + Oxlint
+bun run format:check   # Biome + Oxfmt
+bun run format         # auto-fix with Biome + Oxfmt
 ```
 
 ## Release

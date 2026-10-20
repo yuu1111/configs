@@ -144,6 +144,8 @@ export default defineConfig({
 						text: "engine",
 						items: [
 							{ text: "engine 一覧", link: "/docs/engines/" },
+							{ text: "oxlint", link: "/docs/engines/oxlint" },
+							{ text: "oxfmt", link: "/docs/engines/oxfmt" },
 							{
 								text: "code-style-check",
 								link: "/docs/engines/code-style-check",

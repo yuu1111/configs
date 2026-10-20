@@ -2,6 +2,8 @@
 	"$schema": "./node_modules/@yuu1111/quality-check/schema.json",
 	"failOnWarnings": true,
 	"biome": true,
+	"oxlint": true,
+	"oxfmt": true,
 	"typecheck": true,
 	"knip": true,
 	"code-style-check": true,

@@ -6,7 +6,7 @@
 ## 用語
 
 - 検出engine — 報告を返しbaselineの対象になるengine 現在は `code-style-check` `comment-check` `document-style-check` `tsdoc-check`
-- 起動engine — `quality-check` が起動する単位 外部toolの `biome` `typecheck` `knip` も含む
+- 起動engine — `quality-check` が起動する単位 外部toolの `biome` `oxlint` `oxfmt` `typecheck` `knip` も含む
 - rule語彙 — engineが公開するrule識別子の一覧
 - baseline — 統合runnerが持つ差分判定の基準file
 
@@ -26,8 +26,8 @@
 ### in-process 呼び出し
 
 - 検出engineは子プロセスではなく関数として呼ぶ
-- `@yuu1111/shared/engines` の `FindingEngineContext` が `cwd` `includes` `options` `rules` `targets` を渡す
-- `options` はengine固有のoptionを載せ 統合runnerが検証してから渡す engineは既定値へ倒して読む
+- `@yuu1111/shared/engines` の `FindingEngineContext` が `cwd` `includes` `rules` `targets` を渡す
+- ruleごとの `options` は `RuleSelection` へ載せ 統合runnerが検証してから渡す engineは既定値へ倒して読む
 - `FindingEngine` は `@yuu1111/shared/report` の `EngineReport` を返す
 - 検出engineは終了codeを持たない 起動の失敗は例外にし 統合runnerがengineのerrorへ変換する
 - `quality-check` は `src/engines/index.ts` の `FINDING_ENGINES` で全検出engineを登録する
@@ -43,7 +43,7 @@
 - 統合runnerの `rules` は preset とgroup とruleの3段で解決し `RuleSelection` へ展開する rule名とgroup名は `rules` の直下へ並べて書く
 - `RuleSelection` は `enable` `disable` `warn` `error` とruleごとの `options` を持ち engineの関数へそのまま渡す
 - `overrides` は統合runnerが検出engineの起動前に解く fileごとにrule選択を畳み 同じ選択になるfileをまとめてengineを起動する engineは `overrides` を知らない
-- group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所になる
+- group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所になり、同じengine内で重複させない
 
 ## 統合runner の契約
 
@@ -56,6 +56,8 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 | engine | 起動 | 設定で受け取る起動条件 |
 |--------|------|------------------------|
 | `biome` | 子プロセス | args |
+| `oxlint` | 子プロセス | args |
+| `oxfmt` | 子プロセス | args |
 | `typecheck` | 子プロセス | args projects |
 | `knip` | 子プロセス | args |
 | `code-style-check` | in-process | includes rules overrides |
@@ -64,6 +66,12 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 | `tsdoc-check` | in-process | includes rules overrides |
 
 `args` は子プロセスengineだけが受け取り 既定引数の後ろへ足す
+外部engineは利用projectのdevDependenciesへ入れ、`node_modules/.bin` から解決する
+`FINDING_ENGINES` への登録もbundleも行わない
+
+- Oxlintは `oxlint [targets] [args]` を起動し、`--ignore` を繰り返しの `--ignore-pattern <ignore>` へ変換する
+- Oxfmtは `oxfmt --check [targets] [args]` を起動し、既定ではfileを書き換えない
+- Oxfmtは `--ignore` を受け取らずskipを表示し、除外は `.oxfmtrc.json` とignore fileで指定する
 
 ### 個別コマンド
 
@@ -73,11 +81,11 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 
 ### 実行
 
-- 起動順は `ENGINE_NAMES` の並び
+- 起動順は `biome` → `oxlint` → `oxfmt` → `typecheck` → `knip` → `code-style-check` → `comment-check` → `document-style-check` → `tsdoc-check` で、`ENGINE_NAMES` が正本になる
 - 位置引数のうちengine名と一致するものは起動するengineの選択になり、残りは対象pathになる
 - engine選択時はbaseline差分を起動するengineに絞り、`--update-baseline` との併用は拒否する
 - 検出engineの検出は統合runnerが1つのbaseline fileでまとめて差分し 増えた検出だけを阻害する
-- `failOnWarnings` がtrueなら検出engineのwarningを阻害する検出へ変え、Biomeへ `--error-on-warnings` を渡す
+- `failOnWarnings` がtrueなら検出engineのwarningを阻害する検出へ変え、Biomeへ `--error-on-warnings`、Oxlintへ `--deny-warnings` を渡す
 - 終了codeは 0 が全engine成功 1 が阻害する検出またはengineの失敗 2 が設定または起動の失敗
 
 ### 変更の手順
@@ -85,11 +93,12 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 - ruleを足したengineは統合runnerのminorを上げる
 - 出力またはoptionの削除はmajorを上げる
 - `quality.json` を破壊的に変えるreleaseは旧書式を通常の読込では受け入れず、変更previewを既定にして `--write` で適用するmigration command (`quality-check migrate`) を同時に提供する
-- 自動変換できない設定はmigration commandが書き換えず、必要な手作業を出力する
+- 自動変換できない設定が1つでもあればmigration commandはfile全体を書き換えず、必要な手作業を出力する
+- 形式を判別できない設定は推測で移行せず、旧v5形式を明示する `--from-v5` または意図する `enabled` とruleの手動指定を案内する
 - `schema.json` は `bun run build` で再生成してcommitする
 - `README.md` `README.ja.md` `AGENTS.md` の一覧と `bun.lock` のworkspaces entryを同じ変更で更新する
 
 ## 未統合のもの
 
 - `biome` の `.grit` ルールはrule語彙を公開していない
-- `biome` `typecheck` `knip` はbaselineと検出へ参加しない
+- `biome` `oxlint` `oxfmt` `typecheck` `knip` はbaselineと検出へ参加しない

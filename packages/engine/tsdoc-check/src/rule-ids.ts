@@ -120,7 +120,7 @@ export const RULE_GROUPS = {
 		"tsdoc-tag",
 		"type-param-mismatch",
 	],
-	suppression: ["suppression", "suppression-unused"],
+	suppressions: ["suppression", "suppression-unused"],
 	completeness: [
 		"deprecated-without-guidance",
 		"missing-doc",

@@ -3,7 +3,9 @@
 	"private": true,
 	"scripts": {
 		"test": "bun test packages",
-		"format": "biome check --write --unsafe .",
+		"format": "biome check --write --unsafe . && oxfmt --write .",
+		"lint": "biome check . && oxlint --deny-warnings .",
+		"format:check": "biome format . && oxfmt --check .",
 		"build": "bun run --filter '@yuu1111/quality-check' build",
 		"check:quality": "bun run build && quality-check",
 		"docs:dev": "vitepress dev",
@@ -22,6 +24,8 @@
 		"@yuu1111/quality-check": "workspace:*",
 		"@yuu1111/tsconfig": "workspace:*",
 		"knip": "^6.42.0",
+		"oxfmt": "^0.74.0",
+		"oxlint": "^1.89.0",
 		"typescript": "^7.0.2",
 		"vitepress": "^1.6.4"
 	}

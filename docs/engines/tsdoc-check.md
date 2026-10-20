@@ -59,8 +59,8 @@ object literal のメンバーは変数の初期化式から辿り、引数、�
 | `type-param-mismatch` | `correctness` | error | true | - | 宣言に無いtype parameterを指す `@typeParam` |
 | `tsdoc-tag` | `correctness` | warning | true | - | TSDoc設定が定義していないtag |
 | `orphan-doc` | `correctness` | warning | true | - | どの宣言にも付いていないTSDoc comment |
-| `suppression` | `suppression` | error | true | - | 理由の無い抑制、未知のrule、ruleを書いていない抑制 |
-| `suppression-unused` | `suppression` | warning | true | - | 何も抑制しない抑制 |
+| `suppression` | `suppressions` | error | true | - | 理由の無い抑制、未知のrule、ruleを書いていない抑制 |
+| `suppression-unused` | `suppressions` | warning | true | - | 何も抑制しない抑制 |
 | `missing-doc` | `completeness` | warning | false | `exported`、`all` | TSDoc commentの無い宣言 |
 | `param-untagged` | `completeness` | warning | false | `exported`、`documented` | `@param` の無い宣言済みparameter |
 | `type-param-untagged` | `completeness` | warning | false | `exported`、`documented` | `@typeParam` の無い宣言済みtype parameter |
@@ -70,7 +70,9 @@ object literal のメンバーは変数の初期化式から辿り、引数、�
 | `single-line-doc` | `style` | warning | false | `exported`、`documented` | 1行で書いたTSDoc comment |
 | `blank-line-before-tags` | `style` | warning | false | `exported`、`documented` | summaryの直下に書いたblock tag |
 
-`correctness` は書かれたTSDocが正しいかを見る rule で、すべて既定で有効になる
+`correctness` は書かれたTSDocが正しいかを見る rule、`suppressions` は抑制の理由と使用状況を見る rule で、すべて既定で有効になる
+`suppressions` groupは `suppression` ruleと名前を分け、group全体と個別のruleを別々に指定できる
+旧書式の `suppression` groupは `quality-check migrate` で移行する
 `completeness` は書き足りないものを咎める rule、`style` は書いたTSDocの体裁を見る rule で、どちらもopt-inのため `rules` が `on` にするまで実行しない
 そのため `preset` の `recommended` は書かれたTSDocの構文と契約の整合だけを検査し、docの有無と体裁を要求しない
 
