@@ -10,10 +10,10 @@ Shared configuration and check packages published to npm.
 |---------|-------------|
 | [`@yuu1111/biome-config`](packages/config/biome-config/README.md) | Shared [Biome](https://biomejs.dev/) configuration |
 | [`@yuu1111/knip-config`](packages/config/knip-config/README.md) | Shared [Knip](https://knip.dev/) configuration |
-| [`@yuu1111/quality-check`](packages/engine/quality-check/README.md) | Integrated CLI with the check engines built into it |
+| [`@yuu1111/quality-check`](packages/quality-check/README.md) | Integrated CLI with the check engines built into it |
 | [`@yuu1111/tsconfig`](packages/config/tsconfig/README.md) | Shared TypeScript configurations |
 
-The individual check engines `code-style-check`, `comment-check`, `document-style-check`, and `tsdoc-check` live under `packages/engine/` as private workspace packages and are bundled into `@yuu1111/quality-check`, together with `@yuu1111/shared`.
+Shared configuration packages stay under `packages/config/`, while the integrated CLI lives directly in `packages/quality-check/`. Its four check engines live directly in `quality-check/src/engines/{code,comment,markdown,tsdoc}/`, with CLI, config, runner, engine contracts, and low-level utilities separated by responsibility, and are bundled without runtime dependencies. The built-in engines use the target-domain names `code`, `comment`, `markdown`, and `tsdoc`; rule IDs are unchanged.
 
 ## Documents
 
@@ -22,17 +22,20 @@ The individual check engines `code-style-check`, `comment-check`, `document-styl
 | [Architecture](docs/architecture.md) | Why the packages are layered and bundled the way they are |
 | [Adoption](docs/adoption.md) | Installing the packages into a project, from config to CI |
 | [Engine contract](docs/engine-contract.md) | The contract the built-in engines and the integrated runner share |
-| [Engine reference](docs/engines/index.md) | The options and rules of each built-in engine |
+| [Engine reference](docs/engines/index.md) | The external and built-in engines |
+| [Oxlint](docs/engines/oxlint.md) | External lint engine and command-line integration |
+| [Oxfmt](docs/engines/oxfmt.md) | Read-only format checks and file selection |
 
 ## Development
 
-Bun workspace monorepo. Biome is self-hosted (the repo lints itself with its own config).
+Bun workspace monorepo. Biome uses its own shared config, Oxlint adds lint checks, and Oxfmt formats YAML only to avoid conflicting with Biome.
 
 ```bash
 bun install            # install + link workspaces
 bun run build          # bundle the check engines and their dependencies into @yuu1111/quality-check
-bunx biome check .     # lint / format check
-bunx biome check --write .   # auto-fix
+bun run lint           # Biome + Oxlint
+bun run format:check   # Biome + Oxfmt
+bun run format         # auto-fix with Biome + Oxfmt
 ```
 
 ## Release

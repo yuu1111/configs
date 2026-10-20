@@ -1,0 +1,137 @@
+/**
+ * markdownが報告するruleの識別子一覧
+ */
+export const RULE_IDS = [
+	"bare-url",
+	"blockquote-blank",
+	"blockquote-space",
+	"code-fence-language",
+	"code-span-padding",
+	"command-prompt",
+	"consecutive-blank-lines",
+	"date-anchored-statement",
+	"descriptive-link-text",
+	"duplicate-heading",
+	"emphasis-as-heading",
+	"emphasis-marker",
+	"emphasis-padding",
+	"empty-link",
+	"fence-blank-lines",
+	"fence-style",
+	"first-line-heading",
+	"full-width-alphanumeric",
+	"hard-break-html",
+	"hard-tabs",
+	"heading-blank-lines",
+	"heading-indent",
+	"heading-level-jump",
+	"heading-space",
+	"heading-trailing-punctuation",
+	"indented-code-block",
+	"japanese-comma",
+	"japanese-period",
+	"link-label-padding",
+	"list-blank-lines",
+	"list-indent",
+	"list-marker-consistency",
+	"list-marker-space",
+	"ordered-list-marker",
+	"reversed-link",
+	"setext-heading",
+	"single-top-level-heading",
+	"single-trailing-newline",
+	"table-blank-lines",
+	"table-column-count",
+	"table-style",
+	"thematic-break-style",
+	"trailing-backslash",
+	"trailing-whitespace",
+] as const;
+
+/**
+ * markdownが検査するfileの拡張子
+ */
+export const FILE_EXTENSIONS = [".markdown", ".md"] as const;
+
+/**
+ * RULE_IDSが定義するrule識別子のunion型
+ */
+export type RuleId = (typeof RULE_IDS)[number];
+
+/**
+ * 既定では実行せず--enableで明示的に有効にするruleの識別子一覧
+ */
+export const OPT_IN_RULE_IDS = [
+	"emphasis-marker",
+	"fence-style",
+	"first-line-heading",
+	"full-width-alphanumeric",
+	"japanese-comma",
+	"japanese-period",
+	"list-marker-consistency",
+	"ordered-list-marker",
+	"single-top-level-heading",
+	"table-style",
+	"thematic-break-style",
+] as const;
+
+/**
+ * OPT_IN_RULE_IDSが定義するrule識別子のunion型
+ */
+export type OptInRuleId = (typeof OPT_IN_RULE_IDS)[number];
+
+/**
+ * ruleをgroupへまとめた対応表 `rules` のgroup単位の指定が使う
+ */
+export const RULE_GROUPS = {
+	whitespace: [
+		"blockquote-space",
+		"code-span-padding",
+		"consecutive-blank-lines",
+		"emphasis-padding",
+		"hard-break-html",
+		"hard-tabs",
+		"link-label-padding",
+		"single-trailing-newline",
+		"trailing-backslash",
+		"trailing-whitespace",
+	],
+	layout: [
+		"blockquote-blank",
+		"code-fence-language",
+		"command-prompt",
+		"duplicate-heading",
+		"emphasis-as-heading",
+		"fence-blank-lines",
+		"heading-blank-lines",
+		"heading-indent",
+		"heading-level-jump",
+		"heading-space",
+		"heading-trailing-punctuation",
+		"indented-code-block",
+		"list-blank-lines",
+		"list-indent",
+		"list-marker-space",
+		"setext-heading",
+		"table-blank-lines",
+		"table-column-count",
+	],
+	consistency: [
+		"emphasis-marker",
+		"fence-style",
+		"first-line-heading",
+		"list-marker-consistency",
+		"ordered-list-marker",
+		"single-top-level-heading",
+		"table-style",
+		"thematic-break-style",
+	],
+	japanese: ["full-width-alphanumeric", "japanese-comma", "japanese-period"],
+	content: [
+		"bare-url",
+		"date-anchored-statement",
+		"descriptive-link-text",
+		"empty-link",
+		"reversed-link",
+	],
+} as const satisfies Record<string, readonly RuleId[]>;

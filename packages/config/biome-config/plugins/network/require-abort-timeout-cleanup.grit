@@ -2,7 +2,7 @@ engine biome(1.0)
 language js(typescript)
 
 `const $timer = setTimeout(() => $controller.abort(), $delay)` as $match where {
-	$match <: within JsFunctionBody() as $scope ,
+	$match <: within JsFunctionBody() as $scope,
 	$scope <: contains `fetch($url, { $... })` as $fetch where {
 		$fetch <: contains `signal: $controller.signal`
 	},

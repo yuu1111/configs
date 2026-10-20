@@ -10,12 +10,13 @@
 | [`@yuu1111/tsconfig`](../packages/config/tsconfig/README.ja.md) | TypeScriptの共有設定 |
 | [`@yuu1111/biome-config`](../packages/config/biome-config/README.ja.md) | Biomeの共有設定 |
 | [`@yuu1111/knip-config`](../packages/config/knip-config/README.ja.md) | Knipの共有設定 |
-| [`@yuu1111/quality-check`](../packages/engine/quality-check/README.ja.md) | 検査engineをまとめて起動するCLI |
+| [`@yuu1111/quality-check`](../packages/quality-check/README.ja.md) | 検査engineをまとめて起動するCLI |
 
-`quality-check` は Biome、`tsc`、Knip を子プロセスとして起動するため、その本体も入れる
+`quality-check` は Biome、Oxlint、Oxfmt、`tsc`、Knip を子プロセスとして起動するため、有効にするtoolの本体を利用projectのdevDependenciesへ入れる
+これらは `quality-check` に同梱されず、利用projectの `node_modules/.bin` から解決する
 
 ```bash
-bun add -D @biomejs/biome knip typescript
+bun add -D @biomejs/biome oxlint oxfmt knip typescript
 bun add -D @yuu1111/biome-config @yuu1111/knip-config @yuu1111/quality-check @yuu1111/tsconfig
 ```
 
@@ -54,42 +55,59 @@ export default {
 ```json
 {
   "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
-  "biome": {
-    "enabled": true
-  },
-  "typecheck": {
-    "enabled": true
-  },
-  "knip": {
-    "enabled": true
-  },
-  "document-style-check": {
-    "enabled": true,
-    "includes": ["docs/**"],
-    "rules": {
-      "preset": "recommended"
-    }
+  "biome": true,
+  "oxlint": true,
+  "oxfmt": true,
+  "typecheck": true,
+  "knip": true,
+  "markdown": {
+    "includes": ["docs/**"]
   },
   "failOnWarnings": true
 }
 ```
 
+BiomeとOxfmtを併用するときはformat対象を分ける
+このrepoではOxfmtをYAMLだけに限定し、除外を `.oxfmtrc.json` とignore fileで管理する
+Oxlintは `--ignore` を受け取るが、Oxfmtはskipを表示して受け取らない
+外部toolの結果はbaselineの対象外になる
+
 engine ごとの設定とruleは [`docs/engines/`](engines/index.md) を正本にする
-導入時は `preset` の `recommended` で始め、opt-inのruleを `on` で1つずつ足す
+導入時は既定の `recommended` で始め、opt-inのruleを `on` で1つずつ足す
+ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替えたいときは group 名を書く
 
 ```json
 {
-  "document-style-check": {
-    "enabled": true,
+  "markdown": {
     "rules": {
-      "preset": "recommended",
-      "typography": {
-        "japanese-period": "on"
-      }
+      "japanese-period": "on"
     }
   }
 }
 ```
+
+ディレクトリごとに rule を変えたいときは `overrides` を使う
+
+```json
+{
+  "markdown": {
+    "rules": {
+      "japanese": "on"
+    },
+    "overrides": [
+      {
+        "files": ["docs/en/**"],
+        "rules": {
+          "japanese": "off"
+        }
+      }
+    ]
+  }
+}
+```
+
+旧書式は `quality-check migrate` でpreviewし、`--write` で適用する
+旧engine名、v5とv6の設定、baselineの扱いは [engine名の移行と互換性](engine-contract.md#engine名の移行と互換性) にある
 
 ## scriptへ登録する
 

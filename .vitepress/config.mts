@@ -20,10 +20,8 @@ const rewrites: Record<string, string> = {
 		"en/packages/config/knip-config/index.md",
 	"packages/config/tsconfig/README.ja.md": "packages/config/tsconfig/index.md",
 	"packages/config/tsconfig/README.md": "en/packages/config/tsconfig/index.md",
-	"packages/engine/quality-check/README.ja.md":
-		"packages/engine/quality-check/index.md",
-	"packages/engine/quality-check/README.md":
-		"en/packages/engine/quality-check/index.md",
+	"packages/quality-check/README.ja.md": "packages/quality-check/index.md",
+	"packages/quality-check/README.md": "en/packages/quality-check/index.md",
 };
 
 const sourceOfRewrite = Object.fromEntries(
@@ -128,8 +126,8 @@ export default defineConfig({
 			themeConfig: {
 				nav: [
 					{ text: "ガイド", link: "/docs/architecture" },
-					{ text: "engine", link: "/docs/engines/code-style-check" },
-					{ text: "package", link: "/packages/engine/quality-check/" },
+					{ text: "engine", link: "/docs/engines/code" },
+					{ text: "package", link: "/packages/quality-check/" },
 				],
 				sidebar: [
 					{
@@ -144,16 +142,18 @@ export default defineConfig({
 						text: "engine",
 						items: [
 							{ text: "engine 一覧", link: "/docs/engines/" },
+							{ text: "oxlint", link: "/docs/engines/oxlint" },
+							{ text: "oxfmt", link: "/docs/engines/oxfmt" },
 							{
-								text: "code-style-check",
-								link: "/docs/engines/code-style-check",
+								text: "code",
+								link: "/docs/engines/code",
 							},
-							{ text: "comment-check", link: "/docs/engines/comment-check" },
+							{ text: "comment", link: "/docs/engines/comment" },
 							{
-								text: "document-style-check",
-								link: "/docs/engines/document-style-check",
+								text: "markdown",
+								link: "/docs/engines/markdown",
 							},
-							{ text: "tsdoc-check", link: "/docs/engines/tsdoc-check" },
+							{ text: "tsdoc", link: "/docs/engines/tsdoc" },
 						],
 					},
 					{
@@ -161,7 +161,7 @@ export default defineConfig({
 						items: [
 							{
 								text: "quality-check",
-								link: "/packages/engine/quality-check/",
+								link: "/packages/quality-check/",
 							},
 							{ text: "biome-config", link: "/packages/config/biome-config/" },
 							{ text: "knip-config", link: "/packages/config/knip-config/" },
@@ -177,14 +177,14 @@ export default defineConfig({
 			title: "@yuu1111/configs",
 			description: "Shared configuration and check packages published to npm",
 			themeConfig: {
-				nav: [{ text: "Packages", link: "/en/packages/engine/quality-check/" }],
+				nav: [{ text: "Packages", link: "/en/packages/quality-check/" }],
 				sidebar: [
 					{
 						text: "Packages",
 						items: [
 							{
 								text: "@yuu1111/quality-check",
-								link: "/en/packages/engine/quality-check/",
+								link: "/en/packages/quality-check/",
 							},
 							{
 								text: "@yuu1111/biome-config",

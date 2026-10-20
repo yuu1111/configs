@@ -1,44 +1,32 @@
 {
 	"$schema": "./node_modules/@yuu1111/quality-check/schema.json",
 	"failOnWarnings": true,
-	"biome": {
-		"enabled": true
-	},
-	"typecheck": {
-		"enabled": true
-	},
-	"knip": {
-		"enabled": true
-	},
-	"code-style-check": {
-		"enabled": true
-	},
-	"comment-check": {
-		"enabled": true,
+	"biome": true,
+	"oxlint": true,
+	"oxfmt": true,
+	"typecheck": true,
+	"knip": true,
+	"code": true,
+	"comment": {
 		"rules": {
-			"preset": "recommended",
-			"shape": {
-				"cramped-comment": "on"
-			},
-			"content": {
-				"japanese-period": "on"
-			}
+			"cramped-comment": "on",
+			"japanese-period": "on"
 		}
 	},
-	"document-style-check": {
-		"enabled": true,
+	"markdown": {
 		"rules": {
 			"preset": "all",
-			"structure": {
-				"first-line-heading": "off"
-			}
+			"first-line-heading": "off"
 		}
 	},
-	"tsdoc-check": {
-		"enabled": true,
+	"tsdoc": {
 		"rules": {
-			"preset": "all"
-		},
-		"styleScope": "documented"
+			"preset": "all",
+			"style": {
+				"options": {
+					"scope": "documented"
+				}
+			}
+		}
 	}
 }

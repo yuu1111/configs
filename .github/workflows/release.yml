@@ -35,7 +35,8 @@ jobs:
           no-cache: true
 
       - run: bun install --frozen-lockfile --ignore-scripts
-      - run: bunx biome check .
+      - run: bun run lint
+      - run: bun run format:check
       - run: bun test
 
       - name: Select package
@@ -54,7 +55,7 @@ jobs:
               release_version="${RELEASE_TAG#tsconfig-v}"
               ;;
             quality-check-v*)
-              package_dir="packages/engine/quality-check"
+              package_dir="packages/quality-check"
               release_version="${RELEASE_TAG#quality-check-v}"
               ;;
             knip-config-v*)
