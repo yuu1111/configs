@@ -10,6 +10,7 @@ import {
 } from "../engines/catalog";
 import type { FindingEngineContext } from "../engines/contract";
 import { compareFindings } from "../engines/findings";
+import { canonicalEngineName } from "../engines/legacy-names";
 import {
 	FINDING_ENGINES,
 	type FindingEngineRegistry,
@@ -414,22 +415,22 @@ function selectedEngines(
 }
 
 /**
- * baselineを起動するengineだけに絞る engine名の無いentryは残す
+ * baselineを比較中のengineだけに絞る engine名の無いentryは残す
  *
  * @param baseline - 読み込み済みのbaseline
- * @param selected - 起動するengineの指定
- * @returns 起動しないengineのentryを除いたbaseline
+ * @param name - 比較するengine名
+ * @returns 他のengineのentryを除いたbaseline
  */
-function scopeBaseline(
+function baselineForEngine(
 	baseline: BaselineFile | null,
-	selected: readonly EngineName[] | undefined,
+	name: EngineName,
 ): BaselineFile | null {
-	if (baseline === null || selected === undefined || selected.length === 0) {
-		return baseline;
+	if (baseline === null) {
+		return null;
 	}
-	const names = selected as readonly string[];
 	const entries: BaselineEntry[] = baseline.entries.filter(
-		(entry) => entry.engine === undefined || names.includes(entry.engine),
+		(entry) =>
+			entry.engine === undefined || canonicalEngineName(entry.engine) === name,
 	);
 	return { ...baseline, entries };
 }
@@ -443,7 +444,6 @@ function scopeBaseline(
 export async function runEngines(options: RunOptions): Promise<EngineResult[]> {
 	const runner = options.runner ?? runEngineProcess;
 	const names = selectedEngines(options.config, options.selected);
-	const baseline = scopeBaseline(options.baseline, options.selected);
 	const context: EngineCommandContext = {
 		color: options.color,
 		config: options.config,
@@ -451,6 +451,7 @@ export async function runEngines(options: RunOptions): Promise<EngineResult[]> {
 	};
 	const results: EngineResult[] = [];
 	for (const name of names) {
+		const baseline = baselineForEngine(options.baseline, name);
 		results.push(
 			await runEngine(name, { ...options, baseline }, context, runner),
 		);

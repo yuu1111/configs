@@ -516,24 +516,73 @@ describe("engine selection", () => {
 		).rejects.toThrow("knip is not enabled");
 	});
 
-	test("scopes the baseline to the selected engines", async () => {
-		const results = await runEngines(
-			createOptions({
-				baseline: createBaseline([commentFinding, documentFinding]),
-				config: parseConfig(
-					{
-						comment: { enabled: true },
-						markdown: { enabled: true },
-					},
-					"test",
-				),
-				findingEngines: registryFor("comment", reportOf([commentFinding])),
-				selected: ["comment"],
-			}),
-		);
-		expect(results).toHaveLength(1);
-		expect(results[0]?.status).toBe("passed");
-		expect(results[0]?.reported).toEqual([]);
-		expect(results[0]?.resolved).toBe(0);
-	});
+	test.each([
+		{
+			selected: undefined,
+			markdownRemaining: true,
+			expected: [
+				["comment", 0],
+				["markdown", 0],
+			],
+		},
+		{
+			selected: [],
+			markdownRemaining: true,
+			expected: [
+				["comment", 0],
+				["markdown", 0],
+			],
+		},
+		{
+			selected: ["comment", "markdown"],
+			markdownRemaining: true,
+			expected: [
+				["comment", 0],
+				["markdown", 0],
+			],
+		},
+		{
+			selected: undefined,
+			markdownRemaining: false,
+			expected: [
+				["comment", 0],
+				["markdown", 1],
+			],
+		},
+		{
+			selected: ["comment", "markdown"],
+			markdownRemaining: false,
+			expected: [
+				["comment", 0],
+				["markdown", 1],
+			],
+		},
+		{
+			selected: ["comment"],
+			markdownRemaining: false,
+			expected: [["comment", 0]],
+		},
+	] as const)(
+		"counts only each engine's own resolved findings: %j",
+		async ({ selected, markdownRemaining, expected }) => {
+			const registry = registryFor("comment", reportOf([commentFinding]));
+			registry.markdown = () =>
+				reportOf(markdownRemaining ? [documentFinding] : []);
+			const results = await runEngines(
+				createOptions({
+					baseline: createBaseline([commentFinding, documentFinding]),
+					config: parseConfig({ comment: true, markdown: true }, "test"),
+					findingEngines: registry,
+					...(selected === undefined ? {} : { selected }),
+				}),
+			);
+			expect(results.map((result) => [result.name, result.resolved])).toEqual(
+				expected.map((entry) => [...entry]),
+			);
+			for (const result of results) {
+				expect(result.status).toBe("passed");
+				expect(result.reported).toEqual([]);
+			}
+		},
+	);
 });
