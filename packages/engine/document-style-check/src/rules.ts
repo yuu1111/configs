@@ -125,7 +125,35 @@ const PROHIBITED_LINK_TEXTS = new Set([
  * @returns 最初の句点の0始まりの位置 見つからなければ-1
  */
 export function findJapanesePeriod(line: string): number {
-	return line.indexOf(JAPANESE_PERIOD);
+	// リンク先を同じ長さの非表示記号へ置き換え、指摘の桁とラベルの末尾を保つ
+	const prose = line
+		.replace(
+			/\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/g,
+			(match: string, label: string) =>
+				`[${label}${"\ufffc".repeat(match.length - label.length - 1)}`,
+		)
+		.replace(BARE_URL, (url) => {
+			const target = url.replace(URL_TRAILING, "");
+			return " ".repeat(target.length) + url.slice(target.length);
+		});
+	for (let index = 0; index < line.length; index += 1) {
+		if (line[index] === JAPANESE_PERIOD) {
+			return index;
+		}
+		if (
+			prose[index] === "." &&
+			JAPANESE_CHARACTER.test(
+				prose
+					.slice(0, index)
+					.replace(/[*_~\ufffc]+$/, "")
+					.at(-1) ?? "",
+			) &&
+			!/[A-Za-z0-9./\\-]/.test(prose[index + 1] ?? "")
+		) {
+			return index;
+		}
+	}
+	return -1;
 }
 
 /**

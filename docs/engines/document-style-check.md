@@ -57,7 +57,7 @@
 | `heading-trailing-punctuation` | `layout` | warning | true | 末尾に句読点のある見出し |
 | `indented-code-block` | `layout` | error | true | 字下げで書いたコードブロック |
 | `japanese-comma` | `japanese` | error | false | 日本語に隣接する半角カンマ |
-| `japanese-period` | `japanese` | error | false | 日本語の文を終える `。` |
+| `japanese-period` | `japanese` | error | false | 日本語の文を終える `。` と、日本語の直後で句点として使う `.` |
 | `link-label-padding` | `whitespace` | error | true | 内側に空白のあるリンクテキスト |
 | `list-blank-lines` | `layout` | error | true | 前後が空行でないリスト |
 | `list-indent` | `layout` | error | true | 階層に合わないリストの字下げ |

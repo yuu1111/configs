@@ -152,6 +152,39 @@ test("本文、見出し、箇条書き、表の句点を検出する", () => {
 	]);
 });
 
+test.each([
+	"本文です.\n",
+	"本文です. 次の文です\n",
+	"本文です.次の文です\n",
+	"「本文です.」\n",
+	"**本文です.**\n",
+	"_本文です._\n",
+	"__本文です.__\n",
+	"[本文です](https://example.com/a(b)).\n",
+	"**本文です**.\n",
+	"[本文です](https://example.com).\n",
+	"- 項目です.\n",
+	"| 列です. | 値 |\n| --- | --- |\n",
+])("日本語の句点をピリオドに置き換えても検出する: %s", (source) => {
+	expect(enabledRulesOf(source)).toEqual(["japanese-period"]);
+});
+
+test.each([
+	"English sentence.\n",
+	"値は3.14、バージョンはv1.2.3\n",
+	"日本語.md を開く\n",
+	"日本語.txt\n",
+	"[資料](https://example.com/日本語.html)\n",
+	"[資料](https://例え.テスト/)\n",
+	"[資料](https://example.com/資料.日本語)\n",
+	"<https://例え.テスト/>\n",
+	"`本文です.` を説明する\n",
+	"```text\n本文です.\n```\n",
+	"---\ntitle: 本文です.\n---\n\n本文\n",
+])("句点ではないピリオドと検査対象外の領域は検出しない: %s", (source) => {
+	expect(enabledRulesOf(source)).toEqual([]);
+});
+
 test("frontmatterの句点を検出しない", () => {
 	expect(enabledRulesOf("---\ntitle: 題名です。\n---\n\n本文\n")).toEqual([]);
 });
