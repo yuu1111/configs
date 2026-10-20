@@ -14,7 +14,7 @@ npmへ公開する共有設定と検査package
 | [`@yuu1111/tsconfig`](packages/config/tsconfig/README.ja.md) | 共有のTypeScript設定 |
 
 共有設定は `packages/config/` にまとめ、統合CLIは `packages/quality-check/` に直接置く
-4つの検査engineは `quality-check/src/engines/{code,comment,markdown,tsdoc}/` に直接置き、共通処理は `quality-check/src/shared/` に置いて、runtime dependencyを持たない形でbundleする
+4つの検査engineは `quality-check/src/engines/{code,comment,markdown,tsdoc}/` に直接置き、CLI、設定、runner、engine契約、低水準utilityを責務ごとに分けて、runtime dependencyを持たない形でbundleする
 同梱engineの設定名とCLIのengine名は対象領域を表す `code`、`comment`、`markdown`、`tsdoc` に揃え、rule IDは変えない
 
 ## Documents

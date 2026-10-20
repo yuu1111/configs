@@ -11,7 +11,7 @@ bun add -D @yuu1111/quality-check
 ```
 
 The four finding engines `code`, `comment`, `markdown`, and `tsdoc` are built into this package.
-`bun build` bundles the internal engine modules, shared code, and their dependencies into `dist/cli.js`, leaving the published package without runtime dependencies. No separate engine package has to be installed or resolved at run time.
+`bun build` bundles the internal engine modules, shared code, and their dependencies into `dist/cli.js`, leaving the published package without runtime dependencies. No separate engine package has to be installed or resolved at run time. The repository separates CLI, config, runner, engine contracts, and low-level utilities; see the [architecture](../../docs/architecture.md) for source responsibilities and dependency boundaries.
 Biome, Oxlint, Oxfmt, `tsc`, and Knip run as child processes and resolve from the project's `node_modules/.bin`.
 Install the tools you enable as devDependencies of the consuming project; they are not bundled.
 

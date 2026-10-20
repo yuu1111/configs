@@ -1,9 +1,6 @@
-import {
-	applyRuleSeverities,
-	type FindingEngineContext,
-} from "../../shared/engines";
-import { collectFiles } from "../../shared/files";
-import { toReport } from "../../shared/report";
+import { collectFiles } from "../../utils/files";
+import { applyRuleSeverities, type FindingEngineContext } from "../contract";
+import { toReport } from "../report";
 import type { OptInRuleId, RuleId } from "./rule-ids";
 import type { Finding } from "./rules";
 import { SUPPORTED_EXTENSIONS, scanFiles } from "./scan";

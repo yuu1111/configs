@@ -13,6 +13,7 @@ bun add -D @yuu1111/quality-check
 4つの検出engine `code`、`comment`、`markdown`、`tsdoc` はこのpackageへ同梱する
 `bun build` が内部engine、共通処理とその依存を `dist/cli.js` へbundleし、公開packageはruntime dependencyを持たない
 engine packageの追加導入も実行時の解決も要らない
+repo内ではCLI、設定、runner、engine契約、低水準utilityを分ける sourceの責務と依存方向は [構成と設計判断](../../docs/architecture.md) に記す
 Biome、Oxlint、Oxfmt、`tsc`、Knipは子プロセスで起動し、利用Projectの `node_modules/.bin` から解決する
 有効にするtoolは利用ProjectのdevDependenciesへ入れ、`quality-check` へは同梱しない
 

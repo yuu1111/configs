@@ -6,7 +6,7 @@ import {
 	SUPPORTED_EXTENSIONS,
 	scanSource,
 } from "../../../src/engines/comment/scan";
-import { collectFiles } from "../../../src/shared/files";
+import { collectFiles } from "../../../src/utils/files";
 
 describe("file collection", () => {
 	test("excludes a path with a negative glob", () => {

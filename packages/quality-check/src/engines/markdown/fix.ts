@@ -1,5 +1,5 @@
-import type { FindingEngineContext } from "../../shared/engines";
-import { collectFiles } from "../../shared/files";
+import { collectFiles } from "../../utils/files";
+import type { FindingEngineContext } from "../contract";
 import type { OptInRuleId, RuleId } from "./rule-ids";
 import { DOCUMENT_EXTENSIONS, fixFiles } from "./scan";
 

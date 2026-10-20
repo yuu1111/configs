@@ -13,7 +13,7 @@ import {
 	fixFiles,
 	lintFiles,
 } from "../../../src/engines/markdown/scan";
-import { collectFiles } from "../../../src/shared/files";
+import { collectFiles } from "../../../src/utils/files";
 
 /**
  * 一時ディレクトリへfile一式を作り、後片付けする

@@ -16,8 +16,8 @@
 
 - 統合CLIは `packages/quality-check/` に直接置き、検出engineと共通処理は内部moduleにする
 - engineの実装は `quality-check/src/engines/{code,comment,markdown,tsdoc}/` に直接置き、さらに `src/` を挟まない
-- 共通処理は `quality-check/src/shared/` に置く
-- testsは `quality-check/tests/engines/{code,comment,markdown,tsdoc}/` と `quality-check/tests/shared/` に置く
+- engine契約とreportは `quality-check/src/engines/`、fileとJSONの低水準処理は `quality-check/src/utils/` に置く
+- testsは `quality-check/tests/{cli,config,runner,engines,utils,package}/` に責務を対応させ、engineのtestsは `tests/engines/{code,comment,markdown,tsdoc}/` に置く
 - 公開する `quality-check` が build 時に内部engine、共通処理とその依存を bundle し、runtime dependency を持たない
 - engineごとの `rule-ids.ts` に `RULE_IDS` `OPT_IN_RULE_IDS` `RULE_GROUPS` を置き import を持たせない
 - 検査するfileの拡張子を `FILE_EXTENSIONS` として `rule-ids.ts` へ置き、統合runnerが上書きでfileを分けるときに使う
@@ -29,17 +29,17 @@
 ### in-process 呼び出し
 
 - 検出engineは子プロセスではなく関数として呼ぶ
-- [`src/shared/engines.ts`](../packages/quality-check/src/shared/engines.ts) の `FindingEngineContext` が `cwd` `includes` `rules` `targets` を渡す
+- [contract.ts](../packages/quality-check/src/engines/contract.ts) の `FindingEngineContext` が `cwd` `includes` `rules` `targets` を渡す
 - ruleごとの `options` は `RuleSelection` へ載せ 統合runnerが検証してから渡す engineは既定値へ倒して読む
-- `FindingEngine` は [`src/shared/report.ts`](../packages/quality-check/src/shared/report.ts) の `EngineReport` を返す
+- `FindingEngine` は [report.ts](../packages/quality-check/src/engines/report.ts) の `EngineReport` を返す
 - 検出engineは終了codeを持たない 起動の失敗は例外にし 統合runnerがengineのerrorへ変換する
-- `quality-check` は `src/engines/index.ts` の `FINDING_ENGINES` で全検出engineを登録する
+- `quality-check` は [registry.ts](../packages/quality-check/src/engines/registry.ts) の `FINDING_ENGINES` で全検出engineを登録する
 
 ### 検出の型
 
 検出1件は `file` `line` `column` `rule` `message` `severity` を持つ
-型と分類は [`src/shared/report.ts`](../packages/quality-check/src/shared/report.ts) が唯一の出所になり engineは `toReport` を使う
-統合runnerは `normalizeReport` でengine名と `text` を補う
+位置と重大度の型は [findings.ts](../packages/quality-check/src/engines/findings.ts)、報告の型と分類は [report.ts](../packages/quality-check/src/engines/report.ts) が唯一の出所になり engineは `toReport` を使う
+統合runnerは [runner/findings.ts](../packages/quality-check/src/runner/findings.ts) の `normalizeReport` でengine名と `text` を補う
 
 ### rule語彙
 
@@ -52,7 +52,7 @@
 
 ### engine の能力
 
-engineの能力は `packages/quality-check/src/config.ts` の `ENGINE_CAPABILITIES` が唯一の出所になる
+engineの能力は [catalog.ts](../packages/quality-check/src/engines/catalog.ts) の `ENGINE_CAPABILITIES` が唯一の出所になる
 `findings` は検出engineかどうか、`args` は追加の引数を受け取るか、`skipped` は受け取らない起動条件とその理由を持つ
 rule語彙の有無は `RULE_VOCABULARY` が持つ
 

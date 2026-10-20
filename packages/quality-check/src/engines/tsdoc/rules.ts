@@ -1,4 +1,4 @@
-import type { Located, Severity } from "../../shared/findings";
+import type { Located, Severity } from "../findings";
 import {
 	type Declaration,
 	type DocComment,

@@ -1,0 +1,151 @@
+import { resolve } from "node:path";
+import { DEFAULT_BASELINE_FILE } from "../../config/defaults";
+import { findConfigFile, loadConfig } from "../../config/load";
+import type { QualityConfig } from "../../config/types";
+import type { EngineName } from "../../engines/catalog";
+import {
+	createBaseline,
+	readBaseline,
+	writeBaseline,
+} from "../../runner/baseline";
+import { runEngines } from "../../runner/run";
+import { parseArgv, wantsHelp } from "../argv";
+import { ansiPainter, colorEnabled, plainPainter } from "../color";
+import { formatEngineSection, formatSummary, toJsonReport } from "../output";
+import { splitEngineSelection } from "../selection";
+
+const USAGE = [
+	"Usage: quality-check [engine...] [--config <path>] [--baseline <path>] [--ignore <path>] [--update-baseline] [--json] [path...]",
+	"       quality-check markdown <scan|check|lint> [options] [path...]",
+	"       quality-check migrate [--config <path>] [--write] [--from-v5]",
+].join("\n");
+
+interface Options {
+	baselinePath: string | undefined;
+	configPath: string | undefined;
+	ignores: string[];
+	json: boolean;
+	targets: string[];
+	update: boolean;
+}
+
+function parseArguments(argv: string[]): Options {
+	const parsed = parseArgv(argv, {
+		flags: ["json", "update-baseline"],
+		values: ["baseline", "config", "ignore"],
+	});
+	return {
+		baselinePath: parsed.values.get("baseline")?.at(-1),
+		configPath: parsed.values.get("config")?.at(-1),
+		ignores: [...(parsed.values.get("ignore") ?? [])],
+		json: parsed.flags.has("json"),
+		targets: parsed.targets,
+		update: parsed.flags.has("update-baseline"),
+	};
+}
+
+/**
+ * 位置引数をengine選択と対象pathへ分け baseline更新との組み合わせを検証する
+ *
+ * @param targets - コマンドラインの位置引数の一覧
+ * @param update - baselineを置き換えるか
+ * @returns 起動するengineと対象path
+ */
+function resolveRunSelection(
+	targets: string[],
+	update: boolean,
+): { selected: EngineName[]; targets: string[] } {
+	const selection = splitEngineSelection(targets);
+	if (update && selection.engines.length > 0) {
+		throw new Error("--update-baseline runs every enabled engine");
+	}
+	return { selected: selection.engines, targets: selection.targets };
+}
+
+function resolveBaselinePath(
+	options: Options,
+	config: QualityConfig,
+	cwd: string,
+): string | null {
+	if (options.baselinePath !== undefined) {
+		return resolve(cwd, options.baselinePath);
+	}
+	if (config.baseline === false) {
+		return null;
+	}
+	return resolve(cwd, config.baseline ?? DEFAULT_BASELINE_FILE);
+}
+
+function resolveConfigPath(options: Options, cwd: string): string | null {
+	if (options.configPath !== undefined) {
+		return resolve(cwd, options.configPath);
+	}
+	return findConfigFile(cwd);
+}
+
+/**
+ * CLIの本体を起動して終了codeを返す
+ *
+ * @param argv - 起動時に渡されたcommand line引数
+ * @param cwd - configとbaselineを解決する作業ディレクトリ
+ * @returns 処理結果を表す終了code
+ */
+export async function main(
+	argv: string[],
+	cwd = process.cwd(),
+): Promise<number> {
+	if (wantsHelp(argv)) {
+		console.log(USAGE);
+		return 0;
+	}
+	const options = parseArguments(argv);
+	const color = colorEnabled(process.stdout, process.env);
+	const paint = color ? ansiPainter() : plainPainter;
+	const configPath = resolveConfigPath(options, cwd);
+	if (configPath === null) {
+		console.error(`quality.json not found in ${cwd}`);
+		return 2;
+	}
+	const config = loadConfig(configPath);
+	const selection = resolveRunSelection(options.targets, options.update);
+	const baselinePath = resolveBaselinePath(options, config, cwd);
+	const startedAt = performance.now();
+	const results = await runEngines({
+		baseline:
+			options.update || baselinePath === null
+				? null
+				: readBaseline(baselinePath),
+		color,
+		config,
+		cwd,
+		overrides: { ignore: options.ignores, targets: selection.targets },
+		selected: selection.selected,
+	});
+	const elapsedMs = performance.now() - startedAt;
+	if (options.update) {
+		if (baselinePath === null) {
+			console.error("baseline is disabled by the configuration");
+			return 2;
+		}
+		const baseline = createBaseline(
+			results.flatMap((result) => result.detected),
+		);
+		writeBaseline(baselinePath, baseline);
+		console.log(
+			paint(
+				`Recorded ${baseline.entries.length} entries in ${baselinePath}`,
+				"pass",
+			),
+		);
+		return 0;
+	}
+	if (options.json) {
+		console.log(JSON.stringify(toJsonReport(results, elapsedMs), null, "\t"));
+	} else {
+		for (const result of results) {
+			console.log(formatEngineSection(result, paint));
+		}
+		console.log(formatSummary(results, elapsedMs, paint));
+	}
+	return results.some((result) => result.status !== "passed") ? 1 : 0;
+}

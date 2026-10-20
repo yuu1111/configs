@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { relative } from "node:path";
-import { normalizePath } from "../../shared/files";
-import { compareFindings } from "../../shared/findings";
+import { normalizePath } from "../../utils/files";
+import { compareFindings } from "../findings";
 import { FILE_EXTENSIONS, type OptInRuleId, type RuleId } from "./rule-ids";
 import { type Finding, fixSource, lintSource } from "./rules";
 

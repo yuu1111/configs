@@ -1,4 +1,4 @@
-import type { Located } from "../../shared/findings";
+import type { Located } from "../findings";
 import type { RuleId } from "./rule-ids";
 
 /**

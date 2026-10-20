@@ -19,10 +19,18 @@ npm パッケージとして publish する
 - `packages/quality-check/src/engines/comment/` - comment と抑制の検査 (`comment`)
 - `packages/quality-check/src/engines/markdown/` - Markdownの機械的違反の検査と文体判断の検証記録 (`markdown`)
 - `packages/quality-check/src/engines/tsdoc/` - TSDoc の構文と公開契約の検査 (`tsdoc`)
-- `packages/quality-check/src/shared/` - 検査engineの共通処理とengine契約の型
+- `packages/quality-check/src/cli/` - routing、argv解析、コマンドの出力
+- `packages/quality-check/src/config/` - 設定の型、既定値、解析、rule解決、読込、移行、schema
+- `packages/quality-check/src/runner/` - engine実行、外部tool、baseline、検出の集約、対象fileの選択
+- `packages/quality-check/src/engines/` - engineのcatalog、契約、登録、検出とreportの型、旧名の対応
+- `packages/quality-check/src/utils/` - fileとJSONの低水準処理だけ
 
 engineごとのdirectoryには実装を直接置き、さらに `src/` を挟まない
-対応するtestsは `packages/quality-check/tests/engines/{code,comment,markdown,tsdoc}/` と `packages/quality-check/tests/shared/` に置く
+testsは `packages/quality-check/tests/{cli,config,runner,engines,utils,package}/` に責務を対応させて置き、tests直下にtest fileを置かない engineごとのtestsは `tests/engines/{code,comment,markdown,tsdoc}/` に置き、package整合性は [workspace-bins.test.ts](packages/quality-check/tests/package/workspace-bins.test.ts) で保つ
+
+内部moduleはbarrelや再exportを作らず、所有moduleから直接importする configはrunnerとCLIへ依存せず、runnerはCLIへ依存しない enginesはrunner、CLI、設定parserへ依存しない CLIだけが各層を組み合わせる metadata catalogは設定parserを読み込まない
+
+[src/cli.ts](packages/quality-check/src/cli.ts) は `run` をexportする薄いlauncherとし、routingは [cli/main.ts](packages/quality-check/src/cli/main.ts) に置く schemaの生成scriptはruntimeの外の [scripts/generate-schema.ts](packages/quality-check/scripts/generate-schema.ts) に置く
 
 ## パッケージと公開
 
@@ -38,7 +46,7 @@ engineごとのdirectoryには実装を直接置き、さらに `src/` を挟ま
 - engine の rule 語彙は `quality-check/src/engines/<engine>/rule-ids.ts` へ `RULE_IDS` / `OPT_IN_RULE_IDS` / `RULE_GROUPS` / `FILE_EXTENSIONS` として置き、import を持たない内部moduleにする (rule ごとの option があれば `RULE_OPTIONS` も置く)
 - 全 rule がいずれかの group へ重複なく入ることを tests で検査する
 - engine の `run` `fix` `audit` の関数契約は内部moduleとして保ち、packageの公開subpath exportsにはしない 個別コマンドの argv 解析と出力は `quality-check` が持つ
-- `quality-check` は検出engineの内部 `run` module を in-process で呼び、`src/engines/index.ts` の `FINDING_ENGINES` に登録する
+- `quality-check` は検出engineの内部 `run` module を in-process で呼び、[src/engines/registry.ts](packages/quality-check/src/engines/registry.ts) の `FINDING_ENGINES` に登録する
 - 外部engineの `biome`、`oxlint`、`oxfmt`、`typecheck`、`knip` は利用projectの `node_modules/.bin` から解決し、同梱せずbaselineの対象にしない
 - 検出engineは baseline を持たず、新規と解消済みの判定は統合CLIが1つの baseline file で行う
 - `markdown` の review ledger は `quality-check markdown <scan|check|lint>` として公開する
