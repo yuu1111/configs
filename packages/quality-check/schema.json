@@ -117,6 +117,15 @@
 							},
 							"type": "array"
 						},
+						"tool": {
+							"default": "tsc",
+							"description": "Type checker to run: tsc --noEmit or bun check.",
+							"enum": [
+								"tsc",
+								"bun"
+							],
+							"type": "string"
+						},
 						"projects": {
 							"items": {
 								"minLength": 1,

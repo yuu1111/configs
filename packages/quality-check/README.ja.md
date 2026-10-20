@@ -14,7 +14,8 @@ bun add -D @yuu1111/quality-check
 `bun build` が内部engine、共通処理とその依存を `dist/cli.js` へbundleし、公開packageはruntime dependencyを持たない
 engine packageの追加導入も実行時の解決も要らない
 repo内ではCLI、設定、runner、engine契約、低水準utilityを分ける sourceの責務と依存方向は [構成と設計判断](../../docs/architecture.md) に記す
-Biome、Oxlint、Oxfmt、`tsc`、Knipは子プロセスで起動し、利用Projectの `node_modules/.bin` から解決する
+Biome、Oxlint、Oxfmt、`tsc` またはBun、Knipは子プロセスで起動し、利用Projectと親directoryの `node_modules/.bin` から順に解決する
+Bunはそこで見つからなければ最後に `PATH` から探索する
 有効にするtoolは利用ProjectのdevDependenciesへ入れ、`quality-check` へは同梱しない
 
 ## Usage
@@ -104,6 +105,7 @@ engine名と一致するpathは `quality-check ./biome` のように `./` を付
 | `<engine>.overrides` | globで選んだfileだけへ重ねるrule選択 |
 | `failOnWarnings` | warningを阻害する検出として扱い、BiomeとOxlintにも同じ方針を渡す |
 | `baseline` | baseline fileのpath `false` なら差分判定を行わない |
+| `typecheck.tool` | `"tsc"`（既定）か `"bun"` で型検査toolを選ぶ |
 
 engineは `biome` → `oxlint` → `oxfmt` → `typecheck` → `knip` → `code` → `comment` → `markdown` → `tsdoc` の順に実行する
 
@@ -118,7 +120,7 @@ engineが受け取らない条件は設定errorにし、打ち間違いが黙っ
 | `biome` | `biome check` | `args` 対象fileは `biome.json` が持つ |
 | `oxlint` | `oxlint` | `args` 対象pathと `--ignore` を受け取る |
 | `oxfmt` | `oxfmt --check` | `args` 対象pathを受け取り `--ignore` はskipする |
-| `typecheck` | `tsc --noEmit` | `args`、`projects` 設定は `tsconfig.json` が持つ |
+| `typecheck` | `tsc --noEmit`（既定）または `bun check` | `tool`（`"tsc"` または `"bun"`）、`args`、`projects` 設定は `tsconfig.json` が持つ |
 | `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
 | `code` | in-process | `includes`、`rules`、`overrides` |
 | `comment` | in-process | `includes`、`rules`、`overrides` |
@@ -180,8 +182,20 @@ engineが知らないgroup名やrule名、ruleが受け取らないoptionは設�
 
 検出engineはbaselineを持たないため、新規と解消済みの判定はengineごとではなく統合CLIが1つのbaseline fileで行う
 
-`typecheck` は `projects` に並べたtsconfigごとに `tsc --noEmit -p <path>` を起動する
-省略時はカレントの `tsconfig.json` を1回だけ読む
+`typecheck.tool` は `"tsc"`（既定、`tsc --noEmit`）か `"bun"`（[`bun check`](https://bun.com/docs/runtime/check)）を選ぶ
+`projects` に並べたtsconfigごとに、選んだcommandへ `--project <path>` を渡して起動し、`args` は末尾へ足す
+`projects` の省略時はカレントの `tsconfig.json` を対象に1回だけ起動する
+Bunを選ぶ `quality.json` の例:
+
+```json
+{
+  "typecheck": {
+    "tool": "bun",
+    "projects": ["tsconfig.json"],
+    "args": ["--pretty", "false"]
+  }
+}
+```
 
 ## Rules
 

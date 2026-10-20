@@ -61,7 +61,7 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 | `biome` | 子プロセス | args |
 | `oxlint` | 子プロセス | args |
 | `oxfmt` | 子プロセス | args |
-| `typecheck` | 子プロセス | args projects |
+| `typecheck` | 子プロセス | tool（`"tsc"` が既定、`"bun"`）args projects |
 | `knip` | 子プロセス | args |
 | `code` | in-process | includes rules overrides |
 | `comment` | in-process | includes rules overrides |
@@ -69,8 +69,24 @@ rule語彙の有無は `RULE_VOCABULARY` が持つ
 | `tsdoc` | in-process | includes rules overrides |
 
 `args` は子プロセスengineだけが受け取り 既定引数の後ろへ足す
-外部engineは利用projectのdevDependenciesへ入れ、`node_modules/.bin` から解決する
+外部toolは利用projectのdevDependenciesへ入れ、利用projectと親directoryの `node_modules/.bin` から順に解決する
+Bun実行fileも同じ順に探索し、見つからなければ最後に `PATH` から探索する
 `FINDING_ENGINES` への登録もbundleも行わない
+
+`typecheck.tool` は `"tsc"`（既定、`tsc --noEmit`）か `"bun"`（[`bun check`](https://bun.com/docs/runtime/check)）を選ぶ
+`projects` に並べたtsconfigごとに、選んだcommandへ `--project <path>` を渡して起動し、`args` は末尾へ足す
+`projects` の省略時はカレントの `tsconfig.json` を対象に1回だけ起動する
+Bunを選ぶ `quality.json` の例:
+
+```json
+{
+  "typecheck": {
+    "tool": "bun",
+    "projects": ["tsconfig.json"],
+    "args": ["--pretty", "false"]
+  }
+}
+```
 
 - Oxlintは `oxlint [targets] [args]` を起動し、`--ignore` を繰り返しの `--ignore-pattern <ignore>` へ変換する
 - Oxfmtは `oxfmt --check [targets] [args]` を起動し、既定ではfileを書き換えない

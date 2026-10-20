@@ -101,6 +101,15 @@ describe("quality config", () => {
 		expect(options?.["missing-doc"]).toBeUndefined();
 	});
 
+	test.each(["unknown", "buncheck", "", null, false, 1])(
+		"rejects invalid typecheck tool %j",
+		(tool) => {
+			expect(() => parseConfig({ typecheck: { tool } }, "test")).toThrow(
+				"typecheck.tool must be tsc or bun",
+			);
+		},
+	);
+
 	test("reads the tsconfig paths of the type checker", () => {
 		const config = parseConfig(
 			{
@@ -114,6 +123,7 @@ describe("quality config", () => {
 		expect(engineConfig(config, "typecheck")).toEqual({
 			args: [],
 			projects: [".", "examples/client"],
+			tool: "tsc",
 		});
 	});
 

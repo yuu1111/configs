@@ -122,11 +122,19 @@ describe("process engine commands", () => {
 		]);
 	});
 
-	test("runs the type checker on the current tsconfig without projects", () => {
-		expect(buildEngineCommands("typecheck", "tsc", createContext())).toEqual([
-			["tsc", "--noEmit"],
-		]);
-	});
+	test.each([
+		["tsc", ["tsc", "--noEmit"]],
+		["bun", ["bun", "check"]],
+	] as const)(
+		"runs %s on the current tsconfig without projects",
+		(tool, expected) => {
+			const context = createContext();
+			context.config = parseConfig({ typecheck: { tool } }, "test");
+			expect(buildEngineCommands("typecheck", tool, context)).toEqual([
+				[...expected],
+			]);
+		},
+	);
 
 	test("leaves the Knip arguments to its own configuration", () => {
 		expect(buildEngineCommand("knip", "knip", createContext())).toEqual([

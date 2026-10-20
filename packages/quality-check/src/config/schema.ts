@@ -137,6 +137,12 @@ function engineSchema(name: EngineName): JsonSchema {
 		properties.args = STRING_ARRAY;
 	}
 	if (name === "typecheck") {
+		properties.tool = {
+			default: "tsc",
+			description: "Type checker to run: tsc --noEmit or bun check.",
+			enum: ["tsc", "bun"],
+			type: "string",
+		};
 		properties.projects = STRING_ARRAY;
 	}
 	if (isRuleEngine(name)) {

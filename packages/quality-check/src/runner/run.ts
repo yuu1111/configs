@@ -25,10 +25,10 @@ import {
 } from "./baseline";
 import {
 	buildEngineCommands,
-	ENGINE_BINS,
 	type EngineCommandContext,
 	type EngineProcessResult,
 	type EngineRunner,
+	engineBin,
 	type RunOverrides,
 	resolveExecutable,
 	runEngineProcess,
@@ -117,7 +117,11 @@ export interface RunOptions {
 	/**
 	 * engineの実行fileを解決する関数 テストでは差し替える
 	 */
-	resolve?: (name: ProcessEngineName, cwd: string) => string | null;
+	resolve?: (
+		name: ProcessEngineName,
+		cwd: string,
+		config: QualityConfig,
+	) => string | null;
 	runner?: EngineRunner;
 }
 
@@ -365,13 +369,17 @@ async function runEngine(
 	if (isFindingEngine(name)) {
 		return runFindingEngine(name, options);
 	}
-	const executable = (options.resolve ?? resolveExecutable)(name, options.cwd);
+	const executable = (options.resolve ?? resolveExecutable)(
+		name,
+		options.cwd,
+		options.config,
+	);
 	const skipped = skippedEngineOptions(name, options.overrides);
 	if (executable === null) {
 		return {
 			...baseResult(name, null, ""),
 			durationMs: null,
-			message: `${ENGINE_BINS[name]} is not installed`,
+			message: `${engineBin(name, options.config)} is not installed`,
 			skipped,
 			status: "error",
 		};

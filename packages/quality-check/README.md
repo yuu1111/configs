@@ -12,7 +12,8 @@ bun add -D @yuu1111/quality-check
 
 The four finding engines `code`, `comment`, `markdown`, and `tsdoc` are built into this package.
 `bun build` bundles the internal engine modules, shared code, and their dependencies into `dist/cli.js`, leaving the published package without runtime dependencies. No separate engine package has to be installed or resolved at run time. The repository separates CLI, config, runner, engine contracts, and low-level utilities; see the [architecture](../../docs/architecture.md) for source responsibilities and dependency boundaries.
-Biome, Oxlint, Oxfmt, `tsc`, and Knip run as child processes and resolve from the project's `node_modules/.bin`.
+Biome, Oxlint, Oxfmt, `tsc` or Bun, and Knip run as child processes and resolve from the project's `node_modules/.bin` and those of its parents.
+Bun also falls back to `PATH` after these directories.
 Install the tools you enable as devDependencies of the consuming project; they are not bundled.
 
 ## Usage
@@ -102,6 +103,7 @@ A path that matches an engine name needs a `./` prefix, as in `quality-check ./b
 | `<engine>.overrides` | Rule selection layered onto the files its globs select |
 | `failOnWarnings` | Treat warnings as blocking findings and apply the same policy to Biome and Oxlint |
 | `baseline` | Baseline file path; `false` disables the diff |
+| `typecheck.tool` | `"tsc"` (default) or `"bun"`; selects the type checker |
 
 Engines run in the order `biome`, `oxlint`, `oxfmt`, `typecheck`, `knip`, `code`, `comment`, `markdown`, `tsdoc`.
 
@@ -116,7 +118,7 @@ A condition an engine does not take is rejected, so a typo fails at start-up ins
 | `biome` | `biome check` | `args`; `biome.json` selects the files |
 | `oxlint` | `oxlint` | `args`; accepts targets and `--ignore` |
 | `oxfmt` | `oxfmt --check` | `args`; accepts targets, skips `--ignore` |
-| `typecheck` | `tsc --noEmit` | `args`, `projects`; `tsconfig.json` holds the settings |
+| `typecheck` | `tsc --noEmit` (default) or `bun check` | `tool` (`"tsc"` or `"bun"`), `args`, `projects`; `tsconfig.json` holds the settings |
 | `knip` | `knip` | `args`; `knip.ts` holds the settings |
 | `code` | in-process | `includes`, `rules`, `overrides` |
 | `comment` | in-process | `includes`, `rules`, `overrides` |
@@ -177,7 +179,20 @@ The overrides fold into a rule selection per file before a finding engine starts
 
 No check engine keeps a baseline of its own, so the new-and-resolved diff is done by this CLI from a single baseline file.
 
-`typecheck` starts `tsc --noEmit -p <path>` once per path in `projects`, and falls back to the current `tsconfig.json`.
+`typecheck.tool` selects `"tsc"` (default, `tsc --noEmit`) or `"bun"` ([`bun check`](https://bun.com/docs/runtime/check)).
+For each tsconfig in `projects`, the runner starts the selected command with `--project <path>`, then appends `args` at the end.
+Omitting `projects` runs the command once for the current `tsconfig.json`.
+For example, select Bun in `quality.json`:
+
+```json
+{
+  "typecheck": {
+    "tool": "bun",
+    "projects": ["tsconfig.json"],
+    "args": ["--pretty", "false"]
+  }
+}
+```
 
 ## Rules
 

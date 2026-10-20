@@ -25,7 +25,7 @@ function engineOptionKeys(name: EngineName): readonly string[] {
 		keys.push("args");
 	}
 	if (name === "typecheck") {
-		keys.push("projects");
+		keys.push("projects", "tool");
 	}
 	if (isRuleEngine(name)) {
 		keys.push("includes", "overrides", "rules");
@@ -139,6 +139,14 @@ function parseEngineOptions(
 		options.args = readStringArray(value.args, `${source}: ${name}.args`) ?? [];
 	}
 	if (name === "typecheck") {
+		if (
+			value.tool !== undefined &&
+			value.tool !== "tsc" &&
+			value.tool !== "bun"
+		) {
+			throw new Error(`${source}: typecheck.tool must be tsc or bun`);
+		}
+		options.tool = value.tool ?? "tsc";
 		options.projects =
 			readStringArray(value.projects, `${source}: ${name}.projects`) ?? [];
 	}

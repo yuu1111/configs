@@ -323,6 +323,52 @@ describe("engine orchestration", () => {
 		);
 	});
 
+	test.each([undefined, "tsc", "bun"] as const)(
+		"resolves and runs the selected typecheck tool %s",
+		async (tool) => {
+			const directory = mkdtempSync(join(tmpdir(), "quality-typecheck-"));
+			try {
+				const binDirectory = join(directory, "node_modules", ".bin");
+				mkdirSync(binDirectory, { recursive: true });
+				const suffix = process.platform === "win32" ? ".exe" : "";
+				for (const bin of ["tsc", "bun"]) {
+					writeFileSync(join(binDirectory, `${bin}${suffix}`), "");
+				}
+				const commands: string[][] = [];
+				const options = createOptions({
+					color: true,
+					config: parseConfig(
+						{
+							typecheck: {
+								tool,
+								projects: [".", "client"],
+								args: ["--strict"],
+							},
+						},
+						"test",
+					),
+					cwd: directory,
+					runner: async (command) => {
+						commands.push(command);
+						return { exitCode: 0, stdout: "checked", stderr: "" };
+					},
+				});
+				delete options.resolve;
+				const results = await runEngines(options);
+				const executable = join(binDirectory, `${tool ?? "tsc"}${suffix}`);
+				const prefix =
+					tool === "bun" ? [executable, "check"] : [executable, "--noEmit"];
+				expect(commands).toEqual([
+					[...prefix, "--project", ".", "--pretty", "--strict"],
+					[...prefix, "--project", "client", "--pretty", "--strict"],
+				]);
+				expect(results[0]?.status).toBe("passed");
+			} finally {
+				rmSync(directory, { force: true, recursive: true });
+			}
+		},
+	);
+
 	test("keeps a single project output free of a command header", async () => {
 		const results = await runEngines(
 			createOptions({
@@ -338,10 +384,19 @@ describe("engine orchestration", () => {
 		expect(results[0]?.output).toBe("checked");
 	});
 
-	test("reports an engine that is not installed", async () => {
-		const results = await runEngines(createOptions({ resolve: () => null }));
+	test.each([
+		[{ biome: true }, "biome"],
+		[{ typecheck: true }, "tsc"],
+		[{ typecheck: { tool: "bun" } }, "bun"],
+	])("reports a missing executable for %j", async (config, bin) => {
+		const results = await runEngines(
+			createOptions({
+				config: parseConfig(config, "test"),
+				resolve: () => null,
+			}),
+		);
 		expect(results[0]?.status).toBe("error");
-		expect(results[0]?.message).toBe("biome is not installed");
+		expect(results[0]?.message).toBe(`${bin} is not installed`);
 		expect(results[0]?.durationMs).toBeNull();
 	});
 

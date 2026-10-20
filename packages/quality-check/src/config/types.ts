@@ -21,6 +21,11 @@ export interface EngineOptions {
  */
 export interface TypecheckOptions extends EngineOptions {
 	/**
+	 * 型検査に使うtool bunはbun checkを起動する
+	 */
+	tool: "tsc" | "bun";
+
+	/**
 	 * 型検査するtsconfigのpath
 	 */
 	projects: string[];

@@ -31,7 +31,7 @@ export type EngineRunner = (
 /**
  * 子プロセスで起動するengineごとの実行file名
  */
-export const ENGINE_BINS: Record<ProcessEngineName, string> = {
+const ENGINE_BINS: Record<ProcessEngineName, string> = {
 	biome: "biome",
 	oxlint: "oxlint",
 	oxfmt: "oxfmt",
@@ -90,18 +90,36 @@ export function skippedEngineOptions(
 }
 
 /**
+ * engineの設定で選ばれた実行file名を返す
+ *
+ * @param name - 起動するengine名
+ * @param config - toolの選択を持つ統合設定
+ * @returns 探索する実行file名
+ */
+export function engineBin(
+	name: ProcessEngineName,
+	config?: QualityConfig,
+): string {
+	return name === "typecheck"
+		? (config?.config.typecheck?.tool ?? "tsc")
+		: ENGINE_BINS[name];
+}
+
+/**
  * node_modules/.binとPATHからengineの実行fileを探す
  *
  * @param name - 実行fileを探すengine名
  * @param cwd - 探索を開始する作業ディレクトリのpath
+ * @param config - toolの選択を持つ統合設定
  * @returns 見つけた実行fileのpath PATHにも無ければnull
  */
 export function resolveExecutable(
 	name: ProcessEngineName,
 	cwd: string,
+	config?: QualityConfig,
 ): string | null {
 	const shims = process.platform === "win32" ? WINDOWS_SHIMS : POSIX_SHIMS;
-	const bin = ENGINE_BINS[name];
+	const bin = engineBin(name, config);
 	let directory = cwd;
 	for (;;) {
 		for (const shim of shims) {
@@ -180,7 +198,7 @@ function buildTypecheckCommand(
 	const options = context.config.config.typecheck;
 	return [
 		executable,
-		"--noEmit",
+		...(options?.tool === "bun" ? ["check"] : ["--noEmit"]),
 		...(project === undefined ? [] : ["--project", project]),
 		...colorArguments("typecheck", context.color),
 		...(options?.args ?? []),
