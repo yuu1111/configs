@@ -6,15 +6,19 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 ## package の層
 
 - `packages/config/` は他プロジェクトへ配布する共有設定を置く
-- `packages/engine/` は検査engineを置き、publish するのは [`@yuu1111/quality-check`](../packages/engine/quality-check/README.ja.md) だけにする
-- engine は engine 契約だけへ依存し、engine 同士は依存しない
-- `@yuu1111/shared` は `packages/engine/shared` に置き、engine 契約の型と共通処理を持ち publish しない
+- 統合CLI [`@yuu1111/quality-check`](../packages/quality-check/README.ja.md) は `packages/quality-check/` に直接置く
+- 検査engineを1つのpackageへ統合したため、CLIだけを囲む中間directoryは置かない
+- 4つのengineは `quality-check/src/engines/{code-style,comment,document-style,tsdoc}/` に実装を直接置き、さらに `src/` を挟まない
+- engine は共通のengine契約へ依存し、engine 同士は依存しない
+- `quality-check/src/shared/` はengine契約の型と共通処理を持つ
+- 対応するtestsは `quality-check/tests/engines/{code-style,comment,document-style,tsdoc}/` と `quality-check/tests/shared/` に置く
 
 ## engineを同梱する理由
 
 - 利用者が install する package を `quality-check` ひとつに絞る
-- engine 間の version は build 時に固定され、利用者の依存解決へ持ち込まれない
-- 公開 package を増やさず、engine を private のまま内部APIとして変更できる
+- engineと共通処理は同じpackageの内部moduleとして変更し、単独のversionやworkspace依存を管理しない
+- 以前の5つのprivate packageの `package.json` をなくし、公開単位と一致しないpackage境界の保守を減らす
+- `run` `fix` `audit` と import の無い `rule-ids.ts` の内部契約は保ち、packageの公開subpath exportsにはしない
 - 公開 package に runtime dependency を持たせないため、engine の依存は bundle へ畳み込む
 
 ## 外部toolを子プロセスで呼ぶ理由
@@ -43,10 +47,10 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 - そのため `bin/cli.js` を commit し、そこで `dist/cli.js` の `run` を呼ぶ
 - `bin` を変えるときは `bun.lock` の workspaces entry も同じ変更で更新する
 
-## rule語彙を`./rule-ids`へ分ける理由
+## rule語彙を内部の`rule-ids.ts`へ分ける理由
 
 - 統合runnerは起動時に engine の rule 語彙を読み、`quality.json` の `$schema` が指す `schema.json` を生成する
-- `./rule-ids` を import の無い module にすると、build 前でも語彙だけを読み込める
+- engineごとの `rule-ids.ts` を import の無い内部moduleにすると、build 前でも語彙だけを読み込める
 - group名とrule名は engine が唯一の出所になり、統合runnerの設定とschemaが同じ語彙を使う
 - rule名とgroup名は `rules` の直下へ並べて書くため、同じengine内で両者の名前を重複させない
 - tsdoc-checkのgroupは `suppressions` とし、ruleの `suppression` と区別する
@@ -55,10 +59,10 @@ engine が守る契約そのものは [engine の共通規約](engine-contract.m
 
 - fileごとのrule選択は、検出が `file` と `rule` を持つため、engineの外で解決できる
 - engineへ `overrides` を渡すと4つのengineが同じ解決を持つ そこで統合runnerがfileごとにrule選択を畳み、同じ選択になるfileをまとめてengineを起動する
-- engineの `./run` の契約は変えず、`overrides` を使わない設定では起動は1回のままになる
+- engineの内部 `run` moduleの契約は変えず、`overrides` を使わない設定では起動は1回のままになる
 
 ## engineの説明を`docs/engines/`へ置く理由
 
-- engine は private で publish せず、配布物に含まれるのは同梱先の `quality-check` だけである
+- engineは `quality-check` の内部moduleであり、単独のpackageや公開APIを持たない
 - engine ごとに README を持つと、設定とruleの説明が4つの同型な文書へ重複する
 - [`docs/engines/`](engines/index.md) を engine ごとの正本にし、共通の設定modelは `quality-check` の README が持つ

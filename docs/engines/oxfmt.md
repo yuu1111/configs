@@ -46,4 +46,4 @@ BiomeとOxfmtを併用するときは、同じfileを両方でformatしないよ
 
 `*` で一度除外し、directoryを辿れるように戻したうえで `.yaml` と `.yml` だけを対象へ戻す
 `bun run format:check` は検査し、`bun run format` は `oxfmt --write .` でYAMLを整形する
-engine共通の起動条件は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
+engine共通の起動条件は [`quality-check` の設定](../../packages/quality-check/README.ja.md) にある

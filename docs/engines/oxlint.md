@@ -32,4 +32,4 @@ quality-check oxlint src --ignore src/generated
 ```
 
 結果はOxlintの終了codeで判定し、統合runnerのbaselineには含めない
-engine共通の起動条件は [`quality-check` の設定](../../packages/engine/quality-check/README.ja.md) にある
+engine共通の起動条件は [`quality-check` の設定](../../packages/quality-check/README.ja.md) にある

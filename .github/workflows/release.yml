@@ -55,7 +55,7 @@ jobs:
               release_version="${RELEASE_TAG#tsconfig-v}"
               ;;
             quality-check-v*)
-              package_dir="packages/engine/quality-check"
+              package_dir="packages/quality-check"
               release_version="${RELEASE_TAG#quality-check-v}"
               ;;
             knip-config-v*)

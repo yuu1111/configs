@@ -39,59 +39,16 @@
       "name": "@yuu1111/tsconfig",
       "version": "1.0.8",
     },
-    "packages/engine/code-style-check": {
-      "name": "@yuu1111/code-style-check",
-      "version": "0.4.0",
-      "dependencies": {
-        "@babel/parser": "^8.0.7",
-        "@yuu1111/shared": "workspace:*",
-      },
-      "devDependencies": {
-        "@babel/types": "^8.0.6",
-      },
-    },
-    "packages/engine/comment-check": {
-      "name": "@yuu1111/comment-check",
-      "version": "3.0.0",
-      "dependencies": {
-        "@yuu1111/shared": "workspace:*",
-      },
-    },
-    "packages/engine/document-style-check": {
-      "name": "@yuu1111/document-style-check",
-      "version": "0.6.0",
-      "dependencies": {
-        "@yuu1111/shared": "workspace:*",
-      },
-    },
-    "packages/engine/quality-check": {
+    "packages/quality-check": {
       "name": "@yuu1111/quality-check",
       "version": "6.0.0",
       "bin": {
         "quality-check": "bin/cli.js",
       },
       "devDependencies": {
-        "@yuu1111/code-style-check": "workspace:*",
-        "@yuu1111/comment-check": "workspace:*",
-        "@yuu1111/document-style-check": "workspace:*",
-        "@yuu1111/shared": "workspace:*",
-        "@yuu1111/tsdoc-check": "workspace:*",
-      },
-    },
-    "packages/engine/shared": {
-      "name": "@yuu1111/shared",
-      "version": "0.0.0",
-    },
-    "packages/engine/tsdoc-check": {
-      "name": "@yuu1111/tsdoc-check",
-      "version": "2.3.0",
-      "dependencies": {
-        "@babel/parser": "^8.0.5",
+        "@babel/parser": "^8.0.7",
+        "@babel/types": "^8.0.6",
         "@microsoft/tsdoc": "^0.17.1",
-        "@yuu1111/shared": "workspace:*",
-      },
-      "devDependencies": {
-        "@babel/types": "^8.0.5",
       },
     },
   },
@@ -548,21 +505,11 @@
 
     "@yuu1111/biome-config": ["@yuu1111/biome-config@workspace:packages/config/biome-config"],
 
-    "@yuu1111/code-style-check": ["@yuu1111/code-style-check@workspace:packages/engine/code-style-check"],
-
-    "@yuu1111/comment-check": ["@yuu1111/comment-check@workspace:packages/engine/comment-check"],
-
-    "@yuu1111/document-style-check": ["@yuu1111/document-style-check@workspace:packages/engine/document-style-check"],
-
     "@yuu1111/knip-config": ["@yuu1111/knip-config@workspace:packages/config/knip-config"],
 
-    "@yuu1111/quality-check": ["@yuu1111/quality-check@workspace:packages/engine/quality-check"],
-
-    "@yuu1111/shared": ["@yuu1111/shared@workspace:packages/engine/shared"],
+    "@yuu1111/quality-check": ["@yuu1111/quality-check@workspace:packages/quality-check"],
 
     "@yuu1111/tsconfig": ["@yuu1111/tsconfig@workspace:packages/config/tsconfig"],
-
-    "@yuu1111/tsdoc-check": ["@yuu1111/tsdoc-check@workspace:packages/engine/tsdoc-check"],
 
     "algoliasearch": ["algoliasearch@5.59.0", "", { "dependencies": { "@algolia/abtesting": "1.25.0", "@algolia/client-abtesting": "5.59.0", "@algolia/client-analytics": "5.59.0", "@algolia/client-common": "5.59.0", "@algolia/client-insights": "5.59.0", "@algolia/client-personalization": "5.59.0", "@algolia/client-query-suggestions": "5.59.0", "@algolia/client-search": "5.59.0", "@algolia/ingestion": "1.59.0", "@algolia/monitoring": "1.59.0", "@algolia/recommend": "5.59.0", "@algolia/requester-browser-xhr": "5.59.0", "@algolia/requester-fetch": "5.59.0", "@algolia/requester-node-http": "5.59.0" } }, "sha512-wUXzaeI7B526W4y1gFg3lcxgDZ67XSgRJIiellYWOas/pLpO7rOtxm9Gr2E/C8aiSDXIgx1q5TdSsvK67Uakqw=="],
 

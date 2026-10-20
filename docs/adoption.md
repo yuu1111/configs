@@ -10,7 +10,7 @@
 | [`@yuu1111/tsconfig`](../packages/config/tsconfig/README.ja.md) | TypeScriptの共有設定 |
 | [`@yuu1111/biome-config`](../packages/config/biome-config/README.ja.md) | Biomeの共有設定 |
 | [`@yuu1111/knip-config`](../packages/config/knip-config/README.ja.md) | Knipの共有設定 |
-| [`@yuu1111/quality-check`](../packages/engine/quality-check/README.ja.md) | 検査engineをまとめて起動するCLI |
+| [`@yuu1111/quality-check`](../packages/quality-check/README.ja.md) | 検査engineをまとめて起動するCLI |
 
 `quality-check` は Biome、Oxlint、Oxfmt、`tsc`、Knip を子プロセスとして起動するため、有効にするtoolの本体を利用projectのdevDependenciesへ入れる
 これらは `quality-check` に同梱されず、利用projectの `node_modules/.bin` から解決する

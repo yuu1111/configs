@@ -10,10 +10,12 @@ npmへ公開する共有設定と検査package
 |---------|-------------|
 | [`@yuu1111/biome-config`](packages/config/biome-config/README.ja.md) | 共有の [Biome](https://biomejs.dev/) 設定 |
 | [`@yuu1111/knip-config`](packages/config/knip-config/README.ja.md) | 共有の [Knip](https://knip.dev/) 設定 |
-| [`@yuu1111/quality-check`](packages/engine/quality-check/README.ja.md) | 検査engineを同梱する統合CLI |
+| [`@yuu1111/quality-check`](packages/quality-check/README.ja.md) | 検査engineを同梱する統合CLI |
 | [`@yuu1111/tsconfig`](packages/config/tsconfig/README.ja.md) | 共有のTypeScript設定 |
 
-個別の検査engine `code-style-check`、`comment-check`、`document-style-check`、`tsdoc-check` は `packages/engine/` 配下のprivateなworkspace packageとして置き、`@yuu1111/shared` とともに `@yuu1111/quality-check` へ同梱する
+共有設定は `packages/config/` にまとめ、統合CLIは `packages/quality-check/` に直接置く
+4つの検査engineは `quality-check/src/engines/{code-style,comment,document-style,tsdoc}/` に直接置き、共通処理は `quality-check/src/shared/` に置いて、runtime dependencyを持たない形でbundleする
+engineの設定名、CLIのcommand、rule IDは変えない
 
 ## Documents
 

@@ -11,20 +11,22 @@ npm パッケージとして publish する
 - `packages/config/tsconfig` - @yuu1111/tsconfig (共有 TypeScript 設定)
 - `packages/config/knip-config` - @yuu1111/knip-config (共有 Knip 設定)
 
-### engine
+### quality-check
 
-engine 4つと `shared` は private で publish せず、唯一の公開engine `quality-check` が build 時に同梱する
+検査engineのpackageは `packages/quality-check` (@yuu1111/quality-check) だけにし、4つのengineと共通処理を内部moduleとして置く
 
-- `packages/engine/code-style-check` - @yuu1111/code-style-check (関数定義の間隔の検査)
-- `packages/engine/comment-check` - @yuu1111/comment-check (comment と抑制の検査)
-- `packages/engine/document-style-check` - @yuu1111/document-style-check (Markdownの機械的違反の検査と文体判断の検証記録)
-- `packages/engine/tsdoc-check` - @yuu1111/tsdoc-check (TSDoc の構文と公開契約の検査)
-- `packages/engine/quality-check` - @yuu1111/quality-check (engine を同梱して起動する唯一の公開engine)
-- `packages/engine/shared` - @yuu1111/shared (検査engineの共通処理とengine契約の型)
+- `packages/quality-check/src/engines/code-style/` - 関数定義の間隔の検査 (`code-style-check`)
+- `packages/quality-check/src/engines/comment/` - comment と抑制の検査 (`comment-check`)
+- `packages/quality-check/src/engines/document-style/` - Markdownの機械的違反の検査と文体判断の検証記録 (`document-style-check`)
+- `packages/quality-check/src/engines/tsdoc/` - TSDoc の構文と公開契約の検査 (`tsdoc-check`)
+- `packages/quality-check/src/shared/` - 検査engineの共通処理とengine契約の型
+
+engineごとのdirectoryには実装を直接置き、さらに `src/` を挟まない
+対応するtestsは `packages/quality-check/tests/engines/{code-style,comment,document-style,tsdoc}/` と `packages/quality-check/tests/shared/` に置く
 
 ## パッケージと公開
 
-- package の配置は `packages/config/` (共有設定) と `packages/engine/` (検査engine) に分ける
+- 共有設定は `packages/config/` にまとめ、統合CLIは `packages/quality-check/` に直接置く
 - root の devDependencies に `workspace:*` で、root の script と設定 file が使う自パッケージを参照する (シンボリックリンク用)
 - `quality-check` の build は `src/cli.ts` を依存込みで bundle し、公開 package に runtime dependency を持たせない
 - 公開する check package の `bin` は commit した `bin/cli.js` を指し、そこで `dist/cli.js` の `run` を呼ぶ (Bun は install 時に target が存在しない workspace の `bin` を `node_modules/.bin` へ link しないため)
@@ -33,10 +35,10 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 ## engine の規約
 
 - engine をまたぐ契約 (engine 契約、rule 語彙、baseline、能力表) は `docs/engine-contract.md` を正本にする
-- engine の rule 語彙は `src/rule-ids.ts` へ `RULE_IDS` / `OPT_IN_RULE_IDS` / `RULE_GROUPS` / `FILE_EXTENSIONS` として置き、import を持たせず `./rule-ids` として公開する (rule ごとの option があれば `RULE_OPTIONS` も置く)
+- engine の rule 語彙は `quality-check/src/engines/<engine>/rule-ids.ts` へ `RULE_IDS` / `OPT_IN_RULE_IDS` / `RULE_GROUPS` / `FILE_EXTENSIONS` として置き、import を持たない内部moduleにする (rule ごとの option があれば `RULE_OPTIONS` も置く)
 - 全 rule がいずれかの group へ重複なく入ることを tests で検査する
-- engine の package は `./run` `./fix` `./audit` の関数だけを公開し、個別コマンドの argv 解析と出力は `quality-check` が持つ
-- `quality-check` は検出engineの `./run` を in-process で呼び、`src/engines/index.ts` の `FINDING_ENGINES` に登録する
+- engine の `run` `fix` `audit` の関数契約は内部moduleとして保ち、packageの公開subpath exportsにはしない 個別コマンドの argv 解析と出力は `quality-check` が持つ
+- `quality-check` は検出engineの内部 `run` module を in-process で呼び、`src/engines/index.ts` の `FINDING_ENGINES` に登録する
 - 外部engineの `biome`、`oxlint`、`oxfmt`、`typecheck`、`knip` は利用projectの `node_modules/.bin` から解決し、同梱せずbaselineの対象にしない
 - 検出engineは baseline を持たず、新規と解消済みの判定は統合CLIが1つの baseline file で行う
 - `document-style-check` の review ledger は `quality-check document-style <scan|check|lint>` として公開する
@@ -44,7 +46,7 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 
 ## quality-check の設定
 
-- 設定は `quality.json` だけにし、`$schema` が指す JSON Schema を `schema.json` として commit する (統合CLIは起動時に engine の `./rule-ids` から同じ語彙を読む)
+- 設定は `quality.json` だけにし、`$schema` が指す JSON Schema を `schema.json` として commit する (統合CLIは起動時に engine の内部 `rule-ids.ts` から同じ語彙を読む)
 - `rules` は `preset`、group単位、rule単位の3段で書き、具体的な指定が勝つ rule名と group名は `rules` の直下へ並べる (group名とrule名は engine の `RULE_GROUPS` と `RULE_IDS` が唯一の出所)
 - `overrides` は統合CLIが解き、fileごとの rule 選択を畳んでから engine を起動する (engine は `overrides` を知らない)
 - `quality.json` の書式を破壊的に変えたら、`quality-check migrate` が旧書式を移せるようにする
@@ -64,7 +66,7 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 ## コマンド
 
 - `bun install` - 依存インストール + workspace リンク
-- `bun run build` - engine と @yuu1111/shared を @yuu1111/quality-check へ同梱する
+- `bun run build` - 内部engineと共通処理を依存込みで @yuu1111/quality-check へbundleする
 - `bun run lint` - Biome と Oxlint のlintチェック
 - `bun run format:check` - Biome と Oxfmt のformatチェック
 - `bun run format` - Biome と Oxfmt の自動修正
@@ -84,7 +86,7 @@ engine 4つと `shared` は private で publish せず、唯一の公開engine `
 - 見出し構成の一致は、テストで検査できるならテストへ寄せる
 - リポジトリ全体の文書は `docs/` に日本語で置き、入口は root の `README.md` と `README.ja.md` の `## Documents` にする
 - 設計判断は `docs/architecture.md`、engine をまたぐ契約は `docs/engine-contract.md`、導入は `docs/adoption.md` に分ける
-- 同梱する private engine は README を持たず、設定とruleの正本を `docs/engines/<engine>.md` にする
+- 同梱する内部engineは個別の README を持たず、設定とruleの正本を `docs/engines/<engine>.md` にする
 
 ## ドキュメントサイト
 

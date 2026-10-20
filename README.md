@@ -10,10 +10,10 @@ Shared configuration and check packages published to npm.
 |---------|-------------|
 | [`@yuu1111/biome-config`](packages/config/biome-config/README.md) | Shared [Biome](https://biomejs.dev/) configuration |
 | [`@yuu1111/knip-config`](packages/config/knip-config/README.md) | Shared [Knip](https://knip.dev/) configuration |
-| [`@yuu1111/quality-check`](packages/engine/quality-check/README.md) | Integrated CLI with the check engines built into it |
+| [`@yuu1111/quality-check`](packages/quality-check/README.md) | Integrated CLI with the check engines built into it |
 | [`@yuu1111/tsconfig`](packages/config/tsconfig/README.md) | Shared TypeScript configurations |
 
-The individual check engines `code-style-check`, `comment-check`, `document-style-check`, and `tsdoc-check` live under `packages/engine/` as private workspace packages and are bundled into `@yuu1111/quality-check`, together with `@yuu1111/shared`.
+Shared configuration packages stay under `packages/config/`, while the integrated CLI lives directly in `packages/quality-check/`. Its four check engines live directly in `quality-check/src/engines/{code-style,comment,document-style,tsdoc}/`, with common code in `quality-check/src/shared/`, and are bundled without runtime dependencies. Engine setting names, CLI commands, and rule IDs are unchanged.
 
 ## Documents
 
