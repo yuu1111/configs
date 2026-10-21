@@ -1,6 +1,6 @@
 {
 	"name": "@yuu1111/quality-check",
-	"version": "7.0.1",
+	"version": "7.0.2",
 	"description": "Integrated quality check runner with the check engines built in",
 	"homepage": "https://yuu1111.github.io/configs/packages/quality-check/",
 	"repository": {
@@ -31,6 +31,7 @@
 	"devDependencies": {
 		"@babel/parser": "^8.0.7",
 		"@babel/types": "^8.0.6",
-		"@microsoft/tsdoc": "^0.17.1"
+		"@microsoft/tsdoc": "^0.17.1",
+		"mdast-util-from-markdown": "^2.0.2"
 	}
 }

@@ -5,12 +5,12 @@
 
 ## packageを入れる
 
-| Package | 用途 |
-|---------|------|
-| [`@yuu1111/tsconfig`](../packages/config/tsconfig/README.ja.md) | TypeScriptの共有設定 |
-| [`@yuu1111/biome-config`](../packages/config/biome-config/README.ja.md) | Biomeの共有設定 |
-| [`@yuu1111/knip-config`](../packages/config/knip-config/README.ja.md) | Knipの共有設定 |
-| [`@yuu1111/quality-check`](../packages/quality-check/README.ja.md) | 検査engineをまとめて起動するCLI |
+| Package                                                                 | 用途                            |
+| ----------------------------------------------------------------------- | ------------------------------- |
+| [`@yuu1111/tsconfig`](../packages/config/tsconfig/README.ja.md)         | TypeScriptの共有設定            |
+| [`@yuu1111/biome-config`](../packages/config/biome-config/README.ja.md) | Biomeの共有設定                 |
+| [`@yuu1111/knip-config`](../packages/config/knip-config/README.ja.md)   | Knipの共有設定                  |
+| [`@yuu1111/quality-check`](../packages/quality-check/README.ja.md)      | 検査engineをまとめて起動するCLI |
 
 `quality-check` は Biome、Oxlint、Oxfmt、`tsc`、Knip を子プロセスとして起動するため、有効にするtoolの本体を利用projectのdevDependenciesへ入れる
 これらは `quality-check` に同梱されず、利用projectの `node_modules/.bin` から解決する
@@ -26,8 +26,10 @@ bun add -D @yuu1111/biome-config @yuu1111/knip-config @yuu1111/quality-check @yu
 
 ```json
 {
-  "extends": "@yuu1111/tsconfig/base.json",
-  "include": ["src/**/*.ts"]
+	"extends": "@yuu1111/tsconfig/base.json",
+	"include": [
+		"src/**/*.ts"
+	]
 }
 ```
 
@@ -35,35 +37,39 @@ bun add -D @yuu1111/biome-config @yuu1111/knip-config @yuu1111/quality-check @yu
 
 ```json
 {
-  "extends": ["@yuu1111/biome-config/biome"]
+	"extends": [
+		"@yuu1111/biome-config/biome"
+	]
 }
 ```
 
 ### knip.ts
 
 ```ts
-import { application } from "@yuu1111/knip-config/application"
+import { application } from "@yuu1111/knip-config/application";
 
 export default {
 	...application,
-	entry: ["src/main.ts"]
-}
+	entry: ["src/main.ts"],
+};
 ```
 
 ## quality.jsonを書く
 
 ```json
 {
-  "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
-  "biome": true,
-  "oxlint": true,
-  "oxfmt": true,
-  "typecheck": true,
-  "knip": true,
-  "markdown": {
-    "includes": ["docs/**"]
-  },
-  "failOnWarnings": true
+	"$schema": "./node_modules/@yuu1111/quality-check/schema.json",
+	"biome": true,
+	"oxlint": true,
+	"oxfmt": true,
+	"typecheck": true,
+	"knip": true,
+	"markdown": {
+		"includes": [
+			"docs/**"
+		]
+	},
+	"failOnWarnings": true
 }
 ```
 
@@ -78,11 +84,11 @@ ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替�
 
 ```json
 {
-  "markdown": {
-    "rules": {
-      "japanese-period": "on"
-    }
-  }
+	"markdown": {
+		"rules": {
+			"japanese-period": "on"
+		}
+	}
 }
 ```
 
@@ -90,19 +96,21 @@ ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替�
 
 ```json
 {
-  "markdown": {
-    "rules": {
-      "japanese": "on"
-    },
-    "overrides": [
-      {
-        "files": ["docs/en/**"],
-        "rules": {
-          "japanese": "off"
-        }
-      }
-    ]
-  }
+	"markdown": {
+		"rules": {
+			"japanese": "on"
+		},
+		"overrides": [
+			{
+				"files": [
+					"docs/en/**"
+				],
+				"rules": {
+					"japanese": "off"
+				}
+			}
+		]
+	}
 }
 ```
 
@@ -113,9 +121,9 @@ ruleは名前をそのまま `rules` の直下へ書き、まとめて切り替�
 
 ```json
 {
-  "scripts": {
-    "check:quality": "quality-check"
-  }
+	"scripts": {
+		"check:quality": "quality-check"
+	}
 }
 ```
 

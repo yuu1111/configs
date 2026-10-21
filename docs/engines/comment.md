@@ -6,13 +6,16 @@
 
 ```json
 {
-  "comment": {
-    "includes": ["src/**", "!src/generated/**"],
-    "rules": {
-      "cramped-comment": "on",
-      "japanese-period": "on"
-    }
-  }
+	"comment": {
+		"includes": [
+			"src/**",
+			"!src/generated/**"
+		],
+		"rules": {
+			"cramped-comment": "on",
+			"japanese-period": "on"
+		}
+	}
 }
 ```
 
@@ -21,14 +24,14 @@
 
 ## rule 一覧
 
-| Rule | Group | 重大度 | Default | 検出対象 |
-|------|-------|--------|---------|----------|
-| `broad-suppression` | `suppression` | error | true | `biome-ignore-all`、`@ts-nocheck`、ruleを書いていない `eslint-disable` |
-| `undocumented-directive` | `suppression` | error | true | 説明の無い `@ts-ignore` と `@ts-expect-error` |
-| `cramped-comment` | `shape` | error | false | 直前の行へ空行なしで続く複数行comment |
-| `separator-comment` | `shape` | error | true | 記号だけで作った装飾comment |
-| `placeholder-comment` | `content` | error | true | `TODO`、`FIXME`、`XXX`、`HACK` |
-| `japanese-period` | `content` | error | false | 日本語の文を終える `。` を含むcomment |
+| Rule                     | Group         | 重大度 | Default | 検出対象                                                               |
+| ------------------------ | ------------- | ------ | ------- | ---------------------------------------------------------------------- |
+| `broad-suppression`      | `suppression` | error  | true    | `biome-ignore-all`、`@ts-nocheck`、ruleを書いていない `eslint-disable` |
+| `undocumented-directive` | `suppression` | error  | true    | 説明の無い `@ts-ignore` と `@ts-expect-error`                          |
+| `cramped-comment`        | `shape`       | error  | false   | 直前の行へ空行なしで続く複数行comment                                  |
+| `separator-comment`      | `shape`       | error  | true    | 記号だけで作った装飾comment                                            |
+| `placeholder-comment`    | `content`     | error  | true    | `TODO`、`FIXME`、`XXX`、`HACK`                                         |
+| `japanese-period`        | `content`     | error  | false   | 日本語の文を終える `。` を含むcomment                                  |
 
 `cramped-comment` と `japanese-period` はopt-inで、`preset` の `recommended` では無効になる
 

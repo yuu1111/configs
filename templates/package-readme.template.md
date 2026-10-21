@@ -20,12 +20,12 @@ bun add -D @yuu1111/<package>
 
 ## Rules
 
-| Rule | Severity | Default | Detects |
-|------|----------|---------|---------|
+| Rule     | Severity           | Default         | Detects                 |
+| -------- | ------------------ | --------------- | ----------------------- |
 | `<rule>` | <error or warning> | <true or false> | <what the rule detects> |
 
 ## Options
 
-| Option | Description |
-|--------|-------------|
+| Option             | Description            |
+| ------------------ | ---------------------- |
 | `--<name> <value>` | <what the option does> |

@@ -56,17 +56,17 @@ engineの能力は [catalog.ts](../packages/quality-check/src/engines/catalog.ts
 `findings` は検出engineかどうか、`args` は追加の引数を受け取るか、`skipped` は受け取らない起動条件とその理由を持つ
 rule語彙の有無は `RULE_VOCABULARY` が持つ
 
-| engine | 起動 | 設定で受け取る起動条件 |
-|--------|------|------------------------|
-| `biome` | 子プロセス | args |
-| `oxlint` | 子プロセス | args |
-| `oxfmt` | 子プロセス | args |
+| engine      | 起動       | 設定で受け取る起動条件                       |
+| ----------- | ---------- | -------------------------------------------- |
+| `biome`     | 子プロセス | args                                         |
+| `oxlint`    | 子プロセス | args                                         |
+| `oxfmt`     | 子プロセス | args                                         |
 | `typecheck` | 子プロセス | tool（`"tsc"` が既定、`"bun"`）args projects |
-| `knip` | 子プロセス | args |
-| `code` | in-process | includes rules overrides |
-| `comment` | in-process | includes rules overrides |
-| `markdown` | in-process | includes rules overrides |
-| `tsdoc` | in-process | includes rules overrides |
+| `knip`      | 子プロセス | args                                         |
+| `code`      | in-process | includes rules overrides                     |
+| `comment`   | in-process | includes rules overrides                     |
+| `markdown`  | in-process | includes rules overrides                     |
+| `tsdoc`     | in-process | includes rules overrides                     |
 
 `args` は子プロセスengineだけが受け取り 既定引数の後ろへ足す
 外部toolは利用projectのdevDependenciesへ入れ、利用projectと親directoryの `node_modules/.bin` から順に解決する
@@ -80,11 +80,16 @@ Bunを選ぶ `quality.json` の例:
 
 ```json
 {
-  "typecheck": {
-    "tool": "bun",
-    "projects": ["tsconfig.json"],
-    "args": ["--pretty", "false"]
-  }
+	"typecheck": {
+		"tool": "bun",
+		"projects": [
+			"tsconfig.json"
+		],
+		"args": [
+			"--pretty",
+			"false"
+		]
+	}
 }
 ```
 
@@ -111,12 +116,12 @@ Bunを選ぶ `quality.json` の例:
 
 設定のsection名、CLIで選ぶengine名、textとJSONの出力は次の名前へ揃える
 
-| 旧名 | 現在の名前 |
-|------|------------|
-| `code-style-check` | `code` |
-| `comment-check` | `comment` |
+| 旧名                   | 現在の名前 |
+| ---------------------- | ---------- |
+| `code-style-check`     | `code`     |
+| `comment-check`        | `comment`  |
 | `document-style-check` | `markdown` |
-| `tsdoc-check` | `tsdoc` |
+| `tsdoc-check`          | `tsdoc`    |
 
 通常の起動では旧名の設定を拒否し、`quality-check migrate` を案内する
 移行は既定でpreviewし、`--write` のときだけ適用する

@@ -15,32 +15,32 @@ bun add -D @yuu1111/knip-config knip
 Knipは `knip.ts` を読むため、Projectに合うpresetをimportし、presetが推測できないentryを足す
 
 ```ts
-import { application } from "@yuu1111/knip-config/application"
+import { application } from "@yuu1111/knip-config/application";
 
 export default {
 	...application,
-	entry: ["src/main.ts"]
-}
+	entry: ["src/main.ts"],
+};
 ```
 
 ## Presets
 
-| Preset | `includeEntryExports` | 用途 |
-|--------|----------------------|------|
-| `base` | — | 共有の既定値 |
-| `application` | `false` | entry pointをframeworkが解決するapplication |
-| `library` | `true` | entry pointが公開APIそのものであるlibrary |
+| Preset        | `includeEntryExports` | 用途                                        |
+| ------------- | --------------------- | ------------------------------------------- |
+| `base`        | —                     | 共有の既定値                                |
+| `application` | `false`               | entry pointをframeworkが解決するapplication |
+| `library`     | `true`                | entry pointが公開APIそのものであるlibrary   |
 
 ### base
 
 すべてのpresetが `base` をextendsする
 
-| Setting | 値 |
-|---------|-----|
-| `entry` | `["quality.json"]` |
-| `ignoreExportsUsedInFile` | `true` |
-| `treatConfigHintsAsErrors` | `true` |
-| `treatTagHintsAsErrors` | `true` |
+| Setting                    | 値                 |
+| -------------------------- | ------------------ |
+| `entry`                    | `["quality.json"]` |
+| `ignoreExportsUsedInFile`  | `true`             |
+| `treatConfigHintsAsErrors` | `true`             |
+| `treatTagHintsAsErrors`    | `true`             |
 
 `quality-check` は `quality.json` を実行時に読み込むため、このfileはentry pointとして扱われ未使用fileとして報告しない
 利用側の公開APIは `quality-check` のAPIであり、このfileのexportではない
@@ -64,25 +64,25 @@ applicationのentry pointは公開契約ではないため `includeEntryExports:
 ```ts
 export default {
 	...application,
-	entry: ["src/main.ts", "quality.json"]
-}
+	entry: ["src/main.ts", "quality.json"],
+};
 ```
 
 `workspaces` を使う場合、`base` が足すtop levelの `entry` はroot workspaceへ届かないためroot workspace側へ移す
 top levelの `entry` を残すとKnipがconfiguration hintを出し、`base` はhintをerrorとして扱うため実行が失敗する
 
 ```ts
-import { application } from "@yuu1111/knip-config/application"
+import { application } from "@yuu1111/knip-config/application";
 
-const { entry, ...base } = application
+const { entry, ...base } = application;
 
 export default {
 	...base,
 	workspaces: {
 		".": { entry },
-		"packages/app": { entry: ["src/cli.ts"] }
-	}
-}
+		"packages/app": { entry: ["src/cli.ts"] },
+	},
+};
 ```
 
 別Projectを同居させているrepositoryは `ignore` でそのProjectを報告から外し、親のsourceとして読ませない
@@ -90,6 +90,6 @@ export default {
 ```ts
 export default {
 	...application,
-	ignore: ["another-project/**"]
-}
+	ignore: ["another-project/**"],
+};
 ```

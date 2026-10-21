@@ -14,7 +14,6 @@ npm パッケージとして publish する
 ### quality-check
 
 検査engineのpackageは `packages/quality-check` (@yuu1111/quality-check) だけにし、4つのengineと共通処理を内部moduleとして置く
-
 - `packages/quality-check/src/engines/code/` - 関数定義の間隔の検査 (`code`)
 - `packages/quality-check/src/engines/comment/` - comment と抑制の検査 (`comment`)
 - `packages/quality-check/src/engines/markdown/` - Markdownの機械的違反の検査と文体判断の検証記録 (`markdown`)

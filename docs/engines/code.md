@@ -6,12 +6,15 @@
 
 ```json
 {
-  "code": {
-    "includes": ["src/**", "!src/generated/**"],
-    "rules": {
-      "spacing": "on"
-    }
-  }
+	"code": {
+		"includes": [
+			"src/**",
+			"!src/generated/**"
+		],
+		"rules": {
+			"spacing": "on"
+		}
+	}
 }
 ```
 
@@ -20,10 +23,10 @@
 
 ## rule 一覧
 
-| Rule | Group | 重大度 | Default | 検出対象 |
-|------|-------|--------|---------|----------|
-| `blank-line-between-class-members` | `spacing` | error / warning | true | class propertyと隣のmemberの間に空行が無い、または空行が2行以上ある |
-| `blank-line-between-definitions` | `spacing` | error / warning | true | 隣接する定義の間に空行が無い、または空行が2行以上ある |
+| Rule                               | Group     | 重大度          | Default | 検出対象                                                            |
+| ---------------------------------- | --------- | --------------- | ------- | ------------------------------------------------------------------- |
+| `blank-line-between-class-members` | `spacing` | error / warning | true    | class propertyと隣のmemberの間に空行が無い、または空行が2行以上ある |
+| `blank-line-between-definitions`   | `spacing` | error / warning | true    | 隣接する定義の間に空行が無い、または空行が2行以上ある               |
 
 opt-inのruleは無く、`preset` の `recommended` で両ruleが有効になる
 同じruleが空行の不足をerror、過剰をwarningとして報告する
@@ -38,7 +41,6 @@ opt-inのruleは無く、`preset` の `recommended` で両ruleが有効になる
 - classのproperty（`#name`、`accessor`、`declare`、`abstract`を含む）
 
 次のものは定義として扱わない
-
 - overload signatureとabstract method（本体を持たない宣言）
 - interfaceのmethod signature
 - object literalのmethod

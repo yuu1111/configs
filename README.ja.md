@@ -6,12 +6,12 @@ npmへ公開する共有設定と検査package
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
+| Package                                                              | Description                               |
+| -------------------------------------------------------------------- | ----------------------------------------- |
 | [`@yuu1111/biome-config`](packages/config/biome-config/README.ja.md) | 共有の [Biome](https://biomejs.dev/) 設定 |
-| [`@yuu1111/knip-config`](packages/config/knip-config/README.ja.md) | 共有の [Knip](https://knip.dev/) 設定 |
-| [`@yuu1111/quality-check`](packages/quality-check/README.ja.md) | 検査engineを同梱する統合CLI |
-| [`@yuu1111/tsconfig`](packages/config/tsconfig/README.ja.md) | 共有のTypeScript設定 |
+| [`@yuu1111/knip-config`](packages/config/knip-config/README.ja.md)   | 共有の [Knip](https://knip.dev/) 設定     |
+| [`@yuu1111/quality-check`](packages/quality-check/README.ja.md)      | 検査engineを同梱する統合CLI               |
+| [`@yuu1111/tsconfig`](packages/config/tsconfig/README.ja.md)         | 共有のTypeScript設定                      |
 
 共有設定は `packages/config/` にまとめ、統合CLIは `packages/quality-check/` に直接置く
 4つの検査engineは `quality-check/src/engines/{code,comment,markdown,tsdoc}/` に直接置き、CLI、設定、runner、engine契約、低水準utilityを責務ごとに分けて、runtime dependencyを持たない形でbundleする
@@ -19,14 +19,14 @@ npmへ公開する共有設定と検査package
 
 ## Documents
 
-| 文書 | 用途 |
-|------|------|
-| [構成と設計判断](docs/architecture.md) | packageの層と同梱の理由 |
-| [プロジェクトへの導入](docs/adoption.md) | 設定からCIまでの導入手順 |
-| [engine の共通規約](docs/engine-contract.md) | 検査engineと統合runnerの間で守る契約 |
-| [engine 一覧](docs/engines/index.md) | 外部engineと同梱する検出engineの一覧 |
-| [Oxlint](docs/engines/oxlint.md) | 外部lint engineとCLIの連携 |
-| [Oxfmt](docs/engines/oxfmt.md) | 読み取り専用のformatチェックと対象fileの選択 |
+| 文書                                         | 用途                                         |
+| -------------------------------------------- | -------------------------------------------- |
+| [構成と設計判断](docs/architecture.md)       | packageの層と同梱の理由                      |
+| [プロジェクトへの導入](docs/adoption.md)     | 設定からCIまでの導入手順                     |
+| [engine の共通規約](docs/engine-contract.md) | 検査engineと統合runnerの間で守る契約         |
+| [engine 一覧](docs/engines/index.md)         | 外部engineと同梱する検出engineの一覧         |
+| [Oxlint](docs/engines/oxlint.md)             | 外部lint engineとCLIの連携                   |
+| [Oxfmt](docs/engines/oxfmt.md)               | 読み取り専用のformatチェックと対象fileの選択 |
 
 ## Development
 

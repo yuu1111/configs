@@ -16,7 +16,8 @@
 	"markdown": {
 		"rules": {
 			"preset": "all",
-			"first-line-heading": "off"
+			"first-line-heading": "off",
+			"list-blank-lines": "off"
 		}
 	},
 	"tsdoc": {

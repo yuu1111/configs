@@ -1,5 +1,6 @@
 import type { Located, Severity } from "../findings";
 import { type MarkdownLine, markdownLines } from "./audit";
+import { type ListBlankLines, listBlankLines } from "./list-boundaries";
 import type { OptInRuleId, RuleId } from "./rule-ids";
 
 /**
@@ -282,16 +283,6 @@ export function isListItem(line: string): boolean {
 		unorderedListMarker(line) !== undefined ||
 		orderedListMarker(line) !== undefined
 	);
-}
-
-/**
- * リストの塊を構成する行か判定する 字下げした継続行を含む
- *
- * @param line - 判定する本文の1行
- * @returns リスト項目かその継続行ならtrue
- */
-function isListBlock(line: string): boolean {
-	return isListItem(line) || /^(?: {2,}|\t)/.test(line);
 }
 
 /**
@@ -2195,7 +2186,7 @@ function lintBlockBlanks(
 }
 
 /**
- * リスト、見出し、表の前後にある空行不足を検出する
+ * 見出し、表の前後にある空行不足を検出する
  *
  * @param item - 判定する本文の1行
  * @param previous - 直前の行
@@ -2210,15 +2201,6 @@ function lintBlockLines(
 	file: string,
 ): Finding[] {
 	return [
-		...lintBlockBlanks(
-			"list-blank-lines",
-			item.line,
-			previous,
-			next,
-			isListBlock,
-			item.number,
-			file,
-		),
 		...lintBlockBlanks(
 			"heading-blank-lines",
 			item.line,
@@ -2481,6 +2463,7 @@ export function lintSource(
 ): Finding[] {
 	const findings: Finding[] = [];
 	const items = markdownLines(source);
+	const listBlanks = listBlankLines(source, items);
 	let blankStreak = 0;
 	const markers: MarkerState = { marker: undefined };
 	const headings: HeadingState = { level: 0 };
@@ -2496,6 +2479,12 @@ export function lintSource(
 		}
 		const previous = items[index - 1];
 		const next = items[index + 1];
+		if (listBlanks.before.has(item.number)) {
+			findings.push(finding("list-blank-lines", "error", file, item.number, 1));
+		}
+		if (listBlanks.after.has(item.number)) {
+			findings.push(finding("list-blank-lines", "error", file, item.number, 1));
+		}
 		if (item.region !== "body") {
 			blankStreak = 0;
 			ordered = undefined;
@@ -2615,6 +2604,13 @@ function fixLine(item: MarkdownLine, disabled: readonly RuleId[]): string {
 /**
  * 本文以外の領域を結果へ積み 前後の空行を補う
  *
+ * @param item - 積む行の領域と行番号
+ * @param line - 整形済みの行
+ * @param previous - 直前の行
+ * @param next - 次の行
+ * @param result - 積み先の行一覧
+ * @param fenceBlanks - フェンスの前後に空行を補うか
+ * @param listBlankAfter - リスト終了行の後に空行を補うか
  * @returns 積んだ末尾が空行ならtrue
  */
 function pushNonBodyLine(
@@ -2624,12 +2620,13 @@ function pushNonBodyLine(
 	next: MarkdownLine | undefined,
 	result: string[],
 	fenceBlanks: boolean,
+	listBlankAfter: boolean,
 ): boolean {
 	if (fenceBlanks && blankBeforeFence(item, previous)) {
 		result.push("");
 	}
 	result.push(line);
-	if (fenceBlanks && blankAfterFence(item, next)) {
+	if ((fenceBlanks && blankAfterFence(item, next)) || listBlankAfter) {
 		result.push("");
 		return true;
 	}
@@ -2641,7 +2638,7 @@ function pushNonBodyLine(
  */
 interface BlankBlocks {
 	heading: boolean;
-	list: boolean;
+	list: ListBlankLines;
 	table: boolean;
 }
 
@@ -2651,16 +2648,18 @@ interface BlankBlocks {
  * @param line - 判定する本文の1行
  * @param previous - 直前の行
  * @param blocks - 前後に空行を補う塊の指定
+ * @param itemNumber - 判定する行の1始まりの番号
  * @returns 空行を補うならtrue
  */
 function needsBlankBefore(
 	line: string,
 	previous: MarkdownLine | undefined,
 	blocks: BlankBlocks,
+	itemNumber: number,
 ): boolean {
 	return (
 		(blocks.heading && blankBeforeBlock(line, previous, isHeadingLine)) ||
-		(blocks.list && blankBeforeBlock(line, previous, isListBlock)) ||
+		blocks.list.before.has(itemNumber) ||
 		(blocks.table && blankBeforeBlock(line, previous, isTableRow))
 	);
 }
@@ -2671,16 +2670,18 @@ function needsBlankBefore(
  * @param line - 判定する本文の1行
  * @param next - 次の行
  * @param blocks - 前後に空行を補う塊の指定
+ * @param itemNumber - 判定する行の1始まりの番号
  * @returns 空行を補うならtrue
  */
 function needsBlankAfter(
 	line: string,
 	next: MarkdownLine | undefined,
 	blocks: BlankBlocks,
+	itemNumber: number,
 ): boolean {
 	return (
 		(blocks.heading && blankAfterBlock(line, next, isHeadingLine)) ||
-		(blocks.list && blankAfterBlock(line, next, isListBlock)) ||
+		blocks.list.after.has(itemNumber) ||
 		(blocks.table && blankAfterBlock(line, next, isTableRow))
 	);
 }
@@ -2694,6 +2695,7 @@ function needsBlankAfter(
  * @param result - 積み先の行一覧
  * @param blocks - 前後に空行を補う塊の指定
  * @param keepConsecutive - 連続空行をそのまま積むか
+ * @param itemNumber - 積む行の1始まりの番号
  * @returns 積んだ末尾が空行ならtrue
  */
 function pushBodyLine(
@@ -2703,12 +2705,13 @@ function pushBodyLine(
 	result: string[],
 	blocks: BlankBlocks,
 	keepConsecutive: boolean,
+	itemNumber: number,
 ): boolean {
-	if (needsBlankBefore(line, previous, blocks)) {
+	if (needsBlankBefore(line, previous, blocks, itemNumber)) {
 		appendBlankLine(result, keepConsecutive, result[result.length - 1] === "");
 	}
 	result.push(line);
-	if (needsBlankAfter(line, next, blocks)) {
+	if (needsBlankAfter(line, next, blocks, itemNumber)) {
 		result.push("");
 		return true;
 	}
@@ -2895,7 +2898,9 @@ export function fixSource(
 	const keepConsecutive = disabled.includes("consecutive-blank-lines");
 	const blocks: BlankBlocks = {
 		heading: !disabled.includes("heading-blank-lines"),
-		list: !disabled.includes("list-blank-lines"),
+		list: disabled.includes("list-blank-lines")
+			? { after: new Set<number>(), before: new Set<number>() }
+			: listBlankLines(body, items),
 		table: !disabled.includes("table-blank-lines"),
 	};
 	for (let index = 0; index < items.length; index += 1) {
@@ -2915,6 +2920,7 @@ export function fixSource(
 				next,
 				result,
 				fenceBlanks,
+				blocks.list.after.has(item.number),
 			);
 			continue;
 		}
@@ -2952,6 +2958,7 @@ export function fixSource(
 			result,
 			blocks,
 			keepConsecutive,
+			item.number,
 		);
 	}
 	let fixed = bom + result.join(eol);

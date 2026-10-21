@@ -13,7 +13,7 @@ bun add -D oxfmt
 
 ```json
 {
-  "oxfmt": true
+	"oxfmt": true
 }
 ```
 
@@ -40,7 +40,12 @@ BiomeとOxfmtを併用するときは、同じfileを両方でformatしないよ
 
 ```json
 {
-  "ignorePatterns": ["*", "!*/", "!*.yaml", "!*.yml"]
+	"ignorePatterns": [
+		"*",
+		"!*/",
+		"!*.yaml",
+		"!*.yml"
+	]
 }
 ```
 

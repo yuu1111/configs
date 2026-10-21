@@ -16,48 +16,50 @@ bun add -D @yuu1111/tsconfig
 
 ```json
 {
-  "extends": "@yuu1111/tsconfig/base.json",
-  "include": ["src/**/*.ts"]
+	"extends": "@yuu1111/tsconfig/base.json",
+	"include": [
+		"src/**/*.ts"
+	]
 }
 ```
 
 ## Presets
 
-| Preset | Extends | 用途 |
-|--------|---------|------|
-| `base` | — | 他のpresetが継承する厳格なbase |
-| `bun` | `base` | Bunのglobal型を足す |
-| `library` | `base` | declarationとsource mapを出してJavaScriptをemitする |
-| `declaration-only` | `library` | declaration fileだけを出す |
-| `react` | `base` | DOM型とJSX transformを足す |
+| Preset             | Extends   | 用途                                                |
+| ------------------ | --------- | --------------------------------------------------- |
+| `base`             | —         | 他のpresetが継承する厳格なbase                      |
+| `bun`              | `base`    | Bunのglobal型を足す                                 |
+| `library`          | `base`    | declarationとsource mapを出してJavaScriptをemitする |
+| `declaration-only` | `library` | declaration fileだけを出す                          |
+| `react`            | `base`    | DOM型とJSX transformを足す                          |
 
 ### base
 
 他のpresetはすべて `base` をextendsする
 emitせずに型検査だけを行い、emitはpresetまたはbundlerへ任せる
 
-| Option | 値 |
-|--------|-----|
-| `target` | `ESNext` |
-| `lib` | `["ESNext"]` |
-| `module` | `Preserve` |
-| `moduleResolution` | `bundler` |
-| `moduleDetection` | `force` |
-| `strict` | `true` |
-| `noEmit` | `true` |
-| `isolatedModules` | `true` |
-| `verbatimModuleSyntax` | `true` |
-| `esModuleInterop` | `true` |
-| `resolveJsonModule` | `true` |
-| `skipLibCheck` | `true` |
-| `forceConsistentCasingInFileNames` | `true` |
-| `noUncheckedIndexedAccess` | `true` |
-| `noFallthroughCasesInSwitch` | `true` |
-| `exactOptionalPropertyTypes` | `true` |
+| Option                             | 値           |
+| ---------------------------------- | ------------ |
+| `target`                           | `ESNext`     |
+| `lib`                              | `["ESNext"]` |
+| `module`                           | `Preserve`   |
+| `moduleResolution`                 | `bundler`    |
+| `moduleDetection`                  | `force`      |
+| `strict`                           | `true`       |
+| `noEmit`                           | `true`       |
+| `isolatedModules`                  | `true`       |
+| `verbatimModuleSyntax`             | `true`       |
+| `esModuleInterop`                  | `true`       |
+| `resolveJsonModule`                | `true`       |
+| `skipLibCheck`                     | `true`       |
+| `forceConsistentCasingInFileNames` | `true`       |
+| `noUncheckedIndexedAccess`         | `true`       |
+| `noFallthroughCasesInSwitch`       | `true`       |
+| `exactOptionalPropertyTypes`       | `true`       |
 
 ```json
 {
-  "extends": "@yuu1111/tsconfig/base.json"
+	"extends": "@yuu1111/tsconfig/base.json"
 }
 ```
 
@@ -68,7 +70,7 @@ emitせずに型検査だけを行い、emitはpresetまたはbundlerへ任せ�
 
 ```json
 {
-  "extends": "@yuu1111/tsconfig/bun.json"
+	"extends": "@yuu1111/tsconfig/bun.json"
 }
 ```
 
@@ -76,21 +78,23 @@ emitせずに型検査だけを行い、emitはpresetまたはbundlerへ任せ�
 
 emitを有効にし、declaration、declaration map、source mapを出す
 
-| Option | 値 |
-|--------|-----|
-| `noEmit` | `false` |
-| `declaration` | `true` |
-| `declarationMap` | `true` |
-| `sourceMap` | `true` |
+| Option           | 値      |
+| ---------------- | ------- |
+| `noEmit`         | `false` |
+| `declaration`    | `true`  |
+| `declarationMap` | `true`  |
+| `sourceMap`      | `true`  |
 
 ```json
 {
-  "extends": "@yuu1111/tsconfig/library.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist"
-  },
-  "include": ["src/**/*.ts"]
+	"extends": "@yuu1111/tsconfig/library.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist"
+	},
+	"include": [
+		"src/**/*.ts"
+	]
 }
 ```
 
@@ -100,12 +104,14 @@ emitを有効にし、declaration、declaration map、source mapを出す
 
 ```json
 {
-  "extends": "@yuu1111/tsconfig/declaration-only.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist"
-  },
-  "include": ["src/**/*.ts"]
+	"extends": "@yuu1111/tsconfig/declaration-only.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist"
+	},
+	"include": [
+		"src/**/*.ts"
+	]
 }
 ```
 
@@ -115,9 +121,9 @@ emitを有効にし、declaration、declaration map、source mapを出す
 
 ```json
 {
-  "extends": "@yuu1111/tsconfig/react.json",
-  "compilerOptions": {
-    "outDir": "dist"
-  }
+	"extends": "@yuu1111/tsconfig/react.json",
+	"compilerOptions": {
+		"outDir": "dist"
+	}
 }
 ```

@@ -611,12 +611,30 @@ test("フェンス前後の空行不足を検出して空行を入れる", () =>
 	expect(rulesOf(fixed)).toEqual([]);
 });
 
-test("リスト前後の空行不足を検出して空行を入れる", () => {
-	const source = "本文です\n- 項目A\n- 項目B\n続きです\n";
-	expect(rulesOf(source)).toEqual(["list-blank-lines", "list-blank-lines"]);
-	const fixed = "本文です\n\n- 項目A\n- 項目B\n\n続きです\n";
+test("実際のリスト境界の前後に空行を入れる", () => {
+	const source = "本文です\n- 項目A\n- 項目B\n## 次の見出し\n";
+	expect(rulesOf(source).filter((rule) => rule === "list-blank-lines")).toEqual(
+		["list-blank-lines", "list-blank-lines"],
+	);
+	const fixed = "本文です\n\n- 項目A\n- 項目B\n\n## 次の見出し\n";
 	expect(fixSource(source)).toBe(fixed);
 	expect(rulesOf(fixed)).toEqual([]);
+});
+
+test.each([
+	["通常の字下げ", "alpha\n  beta\ngamma\n"],
+	["字下げなしの継続行", "- alpha\nbeta\n"],
+	["継続行と次の項目", "- alpha\nbeta\n- gamma\n"],
+	["段落途中の番号", "alpha\n2. beta\n"],
+	["空のリスト記号", "-\n  text\n"],
+	["入れ子と項目内の段落", "- alpha\n  - beta\n\n  gamma\n- delta\n"],
+	["コードフェンス内", "```md\n- alpha\nbeta\n```\n"],
+	["frontmatter内", "---\nitems:\n- alpha\n---\n"],
+])("リスト境界ではない%sへ空行を挿入しない", (_name, source) => {
+	expect(rulesOf(source).filter((rule) => rule === "list-blank-lines")).toEqual(
+		[],
+	);
+	expect(fixSource(source)).toBe(source);
 });
 
 test("文書の先頭と末尾のリストに空行を求めない", () => {

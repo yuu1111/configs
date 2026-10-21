@@ -24,43 +24,48 @@ Bunはそこで見つからなければ最後に `PATH` から探索する
 
 ```json
 {
-  "scripts": {
-    "check:quality": "quality-check"
-  }
+	"scripts": {
+		"check:quality": "quality-check"
+	}
 }
 ```
 
 ```json
 {
-  "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
-  "failOnWarnings": true,
-  "biome": true,
-  "oxlint": true,
-  "oxfmt": true,
-  "comment": {
-    "includes": ["**", "!another-project/**"],
-    "rules": {
-      "japanese-period": "on"
-    }
-  },
-  "markdown": {
-    "rules": {
-      "preset": "all"
-    }
-  },
-  "tsdoc": {
-    "rules": {
-      "preset": "all"
-    },
-    "overrides": [
-      {
-        "files": ["tests/**"],
-        "rules": {
-          "missing-doc": "off"
-        }
-      }
-    ]
-  }
+	"$schema": "./node_modules/@yuu1111/quality-check/schema.json",
+	"failOnWarnings": true,
+	"biome": true,
+	"oxlint": true,
+	"oxfmt": true,
+	"comment": {
+		"includes": [
+			"**",
+			"!another-project/**"
+		],
+		"rules": {
+			"japanese-period": "on"
+		}
+	},
+	"markdown": {
+		"rules": {
+			"preset": "all"
+		}
+	},
+	"tsdoc": {
+		"rules": {
+			"preset": "all"
+		},
+		"overrides": [
+			{
+				"files": [
+					"tests/**"
+				],
+				"rules": {
+					"missing-doc": "off"
+				}
+			}
+		]
+	}
 }
 ```
 
@@ -97,15 +102,15 @@ engine名と一致するpathは `quality-check ./biome` のように `./` を付
 
 ## Config
 
-| Field | 説明 |
-|-------|-------------|
-| `<engine>` | engineごとのsection `true` と書くか、sectionを書くと起動し、`false` か `enabled: false` で止める |
-| `<engine>.includes` | 同梱する4つの検出engineが検査するfileのglob |
-| `<engine>.rules` | 同梱する4つの検出engineのrule選択 |
-| `<engine>.overrides` | globで選んだfileだけへ重ねるrule選択 |
-| `failOnWarnings` | warningを阻害する検出として扱い、BiomeとOxlintにも同じ方針を渡す |
-| `baseline` | baseline fileのpath `false` なら差分判定を行わない |
-| `typecheck.tool` | `"tsc"`（既定）か `"bun"` で型検査toolを選ぶ |
+| Field                | 説明                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `<engine>`           | engineごとのsection `true` と書くか、sectionを書くと起動し、`false` か `enabled: false` で止める |
+| `<engine>.includes`  | 同梱する4つの検出engineが検査するfileのglob                                                      |
+| `<engine>.rules`     | 同梱する4つの検出engineのrule選択                                                                |
+| `<engine>.overrides` | globで選んだfileだけへ重ねるrule選択                                                             |
+| `failOnWarnings`     | warningを阻害する検出として扱い、BiomeとOxlintにも同じ方針を渡す                                 |
+| `baseline`           | baseline fileのpath `false` なら差分判定を行わない                                               |
+| `typecheck.tool`     | `"tsc"`（既定）か `"bun"` で型検査toolを選ぶ                                                     |
 
 engineは `biome` → `oxlint` → `oxfmt` → `typecheck` → `knip` → `code` → `comment` → `markdown` → `tsdoc` の順に実行する
 
@@ -115,17 +120,17 @@ sectionを書けばそのengineは起動し、条件が無ければ `"biome": tr
 engineが受け取らない条件は設定errorにし、打ち間違いが黙って無視されないようにする
 `biome`、`oxlint`、`oxfmt`、`typecheck`、`knip` は子プロセスで起動し、4つの検出engineはin-processで起動する
 
-| Engine | Command | 条件 |
-|--------|---------|--------------|
-| `biome` | `biome check` | `args` 対象fileは `biome.json` が持つ |
-| `oxlint` | `oxlint` | `args` 対象pathと `--ignore` を受け取る |
-| `oxfmt` | `oxfmt --check` | `args` 対象pathを受け取り `--ignore` はskipする |
+| Engine      | Command                                  | 条件                                                                               |
+| ----------- | ---------------------------------------- | ---------------------------------------------------------------------------------- |
+| `biome`     | `biome check`                            | `args` 対象fileは `biome.json` が持つ                                              |
+| `oxlint`    | `oxlint`                                 | `args` 対象pathと `--ignore` を受け取る                                            |
+| `oxfmt`     | `oxfmt --check`                          | `args` 対象pathを受け取り `--ignore` はskipする                                    |
 | `typecheck` | `tsc --noEmit`（既定）または `bun check` | `tool`（`"tsc"` または `"bun"`）、`args`、`projects` 設定は `tsconfig.json` が持つ |
-| `knip` | `knip` | `args` 設定は `knip.ts` が持つ |
-| `code` | in-process | `includes`、`rules`、`overrides` |
-| `comment` | in-process | `includes`、`rules`、`overrides` |
-| `markdown` | in-process | `includes`、`rules`、`overrides` |
-| `tsdoc` | in-process | `includes`、`rules`、`overrides` |
+| `knip`      | `knip`                                   | `args` 設定は `knip.ts` が持つ                                                     |
+| `code`      | in-process                               | `includes`、`rules`、`overrides`                                                   |
+| `comment`   | in-process                               | `includes`、`rules`、`overrides`                                                   |
+| `markdown`  | in-process                               | `includes`、`rules`、`overrides`                                                   |
+| `tsdoc`     | in-process                               | `includes`、`rules`、`overrides`                                                   |
 
 `args` は子プロセスengineだけが受け取り、engineの既定引数の後ろへ足す
 設定fileで表せない起動条件や、engineの引数が変わったときの逃げ道として使う
@@ -167,13 +172,29 @@ engineが知らないgroup名やrule名、ruleが受け取らないoptionは設�
 
 ```json
 {
-  "tsdoc": {
-    "rules": { "preset": "all" },
-    "overrides": [
-      { "files": ["tests/**"], "rules": { "missing-doc": "off" } },
-      { "files": ["src/legacy/**"], "rules": { "completeness": "warn" } }
-    ]
-  }
+	"tsdoc": {
+		"rules": {
+			"preset": "all"
+		},
+		"overrides": [
+			{
+				"files": [
+					"tests/**"
+				],
+				"rules": {
+					"missing-doc": "off"
+				}
+			},
+			{
+				"files": [
+					"src/legacy/**"
+				],
+				"rules": {
+					"completeness": "warn"
+				}
+			}
+		]
+	}
 }
 ```
 
@@ -189,11 +210,16 @@ Bunを選ぶ `quality.json` の例:
 
 ```json
 {
-  "typecheck": {
-    "tool": "bun",
-    "projects": ["tsconfig.json"],
-    "args": ["--pretty", "false"]
-  }
+	"typecheck": {
+		"tool": "bun",
+		"projects": [
+			"tsconfig.json"
+		],
+		"args": [
+			"--pretty",
+			"false"
+		]
+	}
 }
 ```
 
@@ -205,12 +231,12 @@ Bunを選ぶ `quality.json` の例:
 同梱するengineのrule語彙は import の無い内部module `rule-ids.ts` で定義し、packageの公開subpath exportsにはしない
 設定とruleはengineごとに1つの文書へまとめる
 
-| Engine | Group | 設定とrule |
-|--------|-------|-----------|
-| `code` | `spacing` | [`docs/engines/code.md`](../../docs/engines/code.md) |
-| `comment` | `suppression`、`shape`、`content` | [`docs/engines/comment.md`](../../docs/engines/comment.md) |
+| Engine     | Group                                                        | 設定とrule                                                   |
+| ---------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `code`     | `spacing`                                                    | [`docs/engines/code.md`](../../docs/engines/code.md)         |
+| `comment`  | `suppression`、`shape`、`content`                            | [`docs/engines/comment.md`](../../docs/engines/comment.md)   |
 | `markdown` | `whitespace`、`layout`、`consistency`、`japanese`、`content` | [`docs/engines/markdown.md`](../../docs/engines/markdown.md) |
-| `tsdoc` | `correctness`、`suppressions`、`completeness`、`style` | [`docs/engines/tsdoc.md`](../../docs/engines/tsdoc.md) |
+| `tsdoc`    | `correctness`、`suppressions`、`completeness`、`style`       | [`docs/engines/tsdoc.md`](../../docs/engines/tsdoc.md)       |
 
 ## Baseline
 
@@ -250,39 +276,39 @@ quality-check markdown scan doc.md --rules SKILL.md --review review.json
 quality-check markdown check doc.md --rules SKILL.md --review review.json
 ```
 
-| Command | 説明 |
-|---------|-------------|
-| `scan` | 対象文書の未確認の検証記録を書き出す |
+| Command | 説明                                             |
+| ------- | ------------------------------------------------ |
+| `scan`  | 対象文書の未確認の検証記録を書き出す             |
 | `check` | 埋めた検証記録を現在の本文と基準に対して確認する |
-| `lint` | 機械的な違反を報告し、`--write`で整形する |
+| `lint`  | 機械的な違反を報告し、`--write`で整形する        |
 
 記録は本文と基準のhashを固定するため、どちらかを編集すると無効になる `check`が保証するのは全項目に判断と根拠があることだけで、文体判断の正しさは別に確認する
 
 ## Options
 
-| Option | 説明 |
-|--------|-------------|
-| `--config <path>` | 読み込むconfig file（既定は `quality.json`） |
-| `--baseline <path>` | baseline fileを上書きする |
-| `--ignore <path>` | 除外pathを追加する、複数指定できる |
-| `--update-baseline` | 現在の検出でbaselineを置き換える |
-| `--json` | engineごとの結果をJSONで出力する |
-| `markdown <command>` | 検証記録を実行する（`scan`、`check`、`lint`） |
-| `migrate` | 旧書式の `quality.json` を移す（`--config <path>`、`--write`、`--from-v5`） |
+| Option               | 説明                                                                        |
+| -------------------- | --------------------------------------------------------------------------- |
+| `--config <path>`    | 読み込むconfig file（既定は `quality.json`）                                |
+| `--baseline <path>`  | baseline fileを上書きする                                                   |
+| `--ignore <path>`    | 除外pathを追加する、複数指定できる                                          |
+| `--update-baseline`  | 現在の検出でbaselineを置き換える                                            |
+| `--json`             | engineごとの結果をJSONで出力する                                            |
+| `markdown <command>` | 検証記録を実行する（`scan`、`check`、`lint`）                               |
+| `migrate`            | 旧書式の `quality.json` を移す（`--config <path>`、`--write`、`--from-v5`） |
 
 `--ignore` と位置引数の対象pathは、その条件を受け取るengineへだけ渡す
 
 ### markdown
 
-| Option | 説明 |
-|--------|-------------|
-| `--rules <path>` | `## 判断基準`を持つ基準fileで、`scan`と`check`では必須 |
-| `--review <path>` | 読み書きする検証記録file |
+| Option              | 説明                                                               |
+| ------------------- | ------------------------------------------------------------------ |
+| `--rules <path>`    | `## 判断基準`を持つ基準fileで、`scan`と`check`では必須             |
+| `--review <path>`   | 読み書きする検証記録file                                           |
 | `--preset <preset>` | 起点にするpresetで `recommended`（既定）、`all`、`none` のいずれか |
-| `--enable <rule>` | opt-in ruleを実行する、複数指定できる |
-| `--disable <rule>` | 既定で有効なruleも含めて無効にする、複数指定できる |
-| `--ignore <path>` | 検査から外すpath、複数指定できる |
-| `--write` | 報告の代わりに整形を適用する |
-| `--json` | 検出をJSONで出力する |
+| `--enable <rule>`   | opt-in ruleを実行する、複数指定できる                              |
+| `--disable <rule>`  | 既定で有効なruleも含めて無効にする、複数指定できる                 |
+| `--ignore <path>`   | 検査から外すpath、複数指定できる                                   |
+| `--write`           | 報告の代わりに整形を適用する                                       |
+| `--json`            | 検出をJSONで出力する                                               |
 
 色は標準出力が端末のときだけ付ける `NO_COLOR` で無効にし、`FORCE_COLOR` で強制できる `--json` の出力には付けない

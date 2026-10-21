@@ -22,43 +22,48 @@ Declare the engines to run in `quality.json`, then call the CLI from a script:
 
 ```json
 {
-  "scripts": {
-    "check:quality": "quality-check"
-  }
+	"scripts": {
+		"check:quality": "quality-check"
+	}
 }
 ```
 
 ```json
 {
-  "$schema": "./node_modules/@yuu1111/quality-check/schema.json",
-  "failOnWarnings": true,
-  "biome": true,
-  "oxlint": true,
-  "oxfmt": true,
-  "comment": {
-    "includes": ["**", "!another-project/**"],
-    "rules": {
-      "japanese-period": "on"
-    }
-  },
-  "markdown": {
-    "rules": {
-      "preset": "all"
-    }
-  },
-  "tsdoc": {
-    "rules": {
-      "preset": "all"
-    },
-    "overrides": [
-      {
-        "files": ["tests/**"],
-        "rules": {
-          "missing-doc": "off"
-        }
-      }
-    ]
-  }
+	"$schema": "./node_modules/@yuu1111/quality-check/schema.json",
+	"failOnWarnings": true,
+	"biome": true,
+	"oxlint": true,
+	"oxfmt": true,
+	"comment": {
+		"includes": [
+			"**",
+			"!another-project/**"
+		],
+		"rules": {
+			"japanese-period": "on"
+		}
+	},
+	"markdown": {
+		"rules": {
+			"preset": "all"
+		}
+	},
+	"tsdoc": {
+		"rules": {
+			"preset": "all"
+		},
+		"overrides": [
+			{
+				"files": [
+					"tests/**"
+				],
+				"rules": {
+					"missing-doc": "off"
+				}
+			}
+		]
+	}
 }
 ```
 
@@ -95,15 +100,15 @@ A path that matches an engine name needs a `./` prefix, as in `quality-check ./b
 
 ## Config
 
-| Field | Description |
-|-------|-------------|
-| `<engine>` | One section per engine; writing `true` or a section starts it, and `false` or `enabled: false` stops it |
-| `<engine>.includes` | Globs inspected by the four built-in finding engines |
-| `<engine>.rules` | Rule selection of the four built-in finding engines |
-| `<engine>.overrides` | Rule selection layered onto the files its globs select |
-| `failOnWarnings` | Treat warnings as blocking findings and apply the same policy to Biome and Oxlint |
-| `baseline` | Baseline file path; `false` disables the diff |
-| `typecheck.tool` | `"tsc"` (default) or `"bun"`; selects the type checker |
+| Field                | Description                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| `<engine>`           | One section per engine; writing `true` or a section starts it, and `false` or `enabled: false` stops it |
+| `<engine>.includes`  | Globs inspected by the four built-in finding engines                                                    |
+| `<engine>.rules`     | Rule selection of the four built-in finding engines                                                     |
+| `<engine>.overrides` | Rule selection layered onto the files its globs select                                                  |
+| `failOnWarnings`     | Treat warnings as blocking findings and apply the same policy to Biome and Oxlint                       |
+| `baseline`           | Baseline file path; `false` disables the diff                                                           |
+| `typecheck.tool`     | `"tsc"` (default) or `"bun"`; selects the type checker                                                  |
 
 Engines run in the order `biome`, `oxlint`, `oxfmt`, `typecheck`, `knip`, `code`, `comment`, `markdown`, `tsdoc`.
 
@@ -113,17 +118,17 @@ A section that is present starts the engine, and an engine without conditions ca
 A condition an engine does not take is rejected, so a typo fails at start-up instead of being ignored.
 `biome`, `oxlint`, `oxfmt`, `typecheck`, and `knip` run as child processes, and the four finding engines run in-process.
 
-| Engine | Command | Conditions |
-|--------|---------|------------|
-| `biome` | `biome check` | `args`; `biome.json` selects the files |
-| `oxlint` | `oxlint` | `args`; accepts targets and `--ignore` |
-| `oxfmt` | `oxfmt --check` | `args`; accepts targets, skips `--ignore` |
+| Engine      | Command                                 | Conditions                                                                          |
+| ----------- | --------------------------------------- | ----------------------------------------------------------------------------------- |
+| `biome`     | `biome check`                           | `args`; `biome.json` selects the files                                              |
+| `oxlint`    | `oxlint`                                | `args`; accepts targets and `--ignore`                                              |
+| `oxfmt`     | `oxfmt --check`                         | `args`; accepts targets, skips `--ignore`                                           |
 | `typecheck` | `tsc --noEmit` (default) or `bun check` | `tool` (`"tsc"` or `"bun"`), `args`, `projects`; `tsconfig.json` holds the settings |
-| `knip` | `knip` | `args`; `knip.ts` holds the settings |
-| `code` | in-process | `includes`, `rules`, `overrides` |
-| `comment` | in-process | `includes`, `rules`, `overrides` |
-| `markdown` | in-process | `includes`, `rules`, `overrides` |
-| `tsdoc` | in-process | `includes`, `rules`, `overrides` |
+| `knip`      | `knip`                                  | `args`; `knip.ts` holds the settings                                                |
+| `code`      | in-process                              | `includes`, `rules`, `overrides`                                                    |
+| `comment`   | in-process                              | `includes`, `rules`, `overrides`                                                    |
+| `markdown`  | in-process                              | `includes`, `rules`, `overrides`                                                    |
+| `tsdoc`     | in-process                              | `includes`, `rules`, `overrides`                                                    |
 
 `args` applies only to the child-process engines and is appended after the engine defaults, for conditions the config cannot express and for the case where an engine changes its arguments.
 When `failOnWarnings` is true, the runner passes `--error-on-warnings` to Biome and `--deny-warnings` to Oxlint automatically.
@@ -164,13 +169,29 @@ The selection is handed to the built-in engines directly, so the CLI no longer t
 
 ```json
 {
-  "tsdoc": {
-    "rules": { "preset": "all" },
-    "overrides": [
-      { "files": ["tests/**"], "rules": { "missing-doc": "off" } },
-      { "files": ["src/legacy/**"], "rules": { "completeness": "warn" } }
-    ]
-  }
+	"tsdoc": {
+		"rules": {
+			"preset": "all"
+		},
+		"overrides": [
+			{
+				"files": [
+					"tests/**"
+				],
+				"rules": {
+					"missing-doc": "off"
+				}
+			},
+			{
+				"files": [
+					"src/legacy/**"
+				],
+				"rules": {
+					"completeness": "warn"
+				}
+			}
+		]
+	}
 }
 ```
 
@@ -186,11 +207,16 @@ For example, select Bun in `quality.json`:
 
 ```json
 {
-  "typecheck": {
-    "tool": "bun",
-    "projects": ["tsconfig.json"],
-    "args": ["--pretty", "false"]
-  }
+	"typecheck": {
+		"tool": "bun",
+		"projects": [
+			"tsconfig.json"
+		],
+		"args": [
+			"--pretty",
+			"false"
+		]
+	}
 }
 ```
 
@@ -201,12 +227,12 @@ Their rules and formatting settings stay in their own configuration files, not i
 
 Each built-in engine defines its rule vocabulary in an import-free internal `rule-ids.ts` module, not a public package subpath export. One document holds the options and rules of each engine:
 
-| Engine | Groups | Reference |
-|--------|--------|-----------|
-| `code` | `spacing` | [`docs/engines/code.md`](../../docs/engines/code.md) |
-| `comment` | `suppression`, `shape`, `content` | [`docs/engines/comment.md`](../../docs/engines/comment.md) |
+| Engine     | Groups                                                       | Reference                                                    |
+| ---------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `code`     | `spacing`                                                    | [`docs/engines/code.md`](../../docs/engines/code.md)         |
+| `comment`  | `suppression`, `shape`, `content`                            | [`docs/engines/comment.md`](../../docs/engines/comment.md)   |
 | `markdown` | `whitespace`, `layout`, `consistency`, `japanese`, `content` | [`docs/engines/markdown.md`](../../docs/engines/markdown.md) |
-| `tsdoc` | `correctness`, `suppressions`, `completeness`, `style` | [`docs/engines/tsdoc.md`](../../docs/engines/tsdoc.md) |
+| `tsdoc`    | `correctness`, `suppressions`, `completeness`, `style`       | [`docs/engines/tsdoc.md`](../../docs/engines/tsdoc.md)       |
 
 ## Baseline
 
@@ -245,41 +271,41 @@ quality-check markdown scan doc.md --rules SKILL.md --review review.json
 quality-check markdown check doc.md --rules SKILL.md --review review.json
 ```
 
-| Command | Description |
-|---------|-------------|
-| `scan` | Write an unconfirmed review record for the given documents |
+| Command | Description                                                           |
+| ------- | --------------------------------------------------------------------- |
+| `scan`  | Write an unconfirmed review record for the given documents            |
 | `check` | Verify a filled review record against the current documents and rules |
-| `lint` | Report mechanical violations, or fix them with `--write` |
+| `lint`  | Report mechanical violations, or fix them with `--write`              |
 
 The review file pins the document bytes and the rules bytes by hash, so editing either one invalidates the record.
 `check` only confirms that every candidate carries a decision and a reason; it does not judge the writing.
 
 ## Options
 
-| Option | Description |
-|--------|-------------|
-| `--config <path>` | Config file to load (default `quality.json`) |
-| `--baseline <path>` | Override the baseline file |
-| `--ignore <path>` | Add an excluded path, repeatable |
-| `--update-baseline` | Replace the baseline with the current findings |
-| `--json` | Print the per-engine results as JSON |
-| `markdown <command>` | Run the review ledger (`scan`, `check`, or `lint`) |
-| `migrate` | Rewrite an old `quality.json` (`--config <path>`, `--write`, `--from-v5`) |
+| Option               | Description                                                               |
+| -------------------- | ------------------------------------------------------------------------- |
+| `--config <path>`    | Config file to load (default `quality.json`)                              |
+| `--baseline <path>`  | Override the baseline file                                                |
+| `--ignore <path>`    | Add an excluded path, repeatable                                          |
+| `--update-baseline`  | Replace the baseline with the current findings                            |
+| `--json`             | Print the per-engine results as JSON                                      |
+| `markdown <command>` | Run the review ledger (`scan`, `check`, or `lint`)                        |
+| `migrate`            | Rewrite an old `quality.json` (`--config <path>`, `--write`, `--from-v5`) |
 
 `--ignore` and the positional targets reach only the engines that take them.
 
 ### markdown
 
-| Option | Description |
-|--------|-------------|
-| `--rules <path>` | Rules file that holds the criteria, required by `scan` and `check` |
-| `--review <path>` | Review file to write or read |
-| `--preset <preset>` | Start from the `recommended` (default), `all`, or `none` preset |
-| `--enable <rule>` | Run an opt-in rule, repeatable |
-| `--disable <rule>` | Turn a rule off, repeatable |
-| `--ignore <path>` | Path to leave out, repeatable |
-| `--write` | Apply `lint` fixes instead of reporting them |
-| `--json` | Print findings as JSON |
+| Option              | Description                                                        |
+| ------------------- | ------------------------------------------------------------------ |
+| `--rules <path>`    | Rules file that holds the criteria, required by `scan` and `check` |
+| `--review <path>`   | Review file to write or read                                       |
+| `--preset <preset>` | Start from the `recommended` (default), `all`, or `none` preset    |
+| `--enable <rule>`   | Run an opt-in rule, repeatable                                     |
+| `--disable <rule>`  | Turn a rule off, repeatable                                        |
+| `--ignore <path>`   | Path to leave out, repeatable                                      |
+| `--write`           | Apply `lint` fixes instead of reporting them                       |
+| `--json`            | Print findings as JSON                                             |
 
 Color is added only when stdout is a terminal.
 `NO_COLOR` turns it off and `FORCE_COLOR` turns it on; the `--json` output stays plain.

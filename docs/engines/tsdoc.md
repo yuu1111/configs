@@ -6,20 +6,31 @@
 
 ```json
 {
-  "tsdoc": {
-    "includes": ["src/**", "!src/generated/**"],
-    "rules": {
-      "completeness": { "options": { "scope": "documented" } },
-      "style": "on",
-      "tsdoc-tag": "error"
-    },
-    "overrides": [
-      {
-        "files": ["tests/**"],
-        "rules": { "completeness": "off" }
-      }
-    ]
-  }
+	"tsdoc": {
+		"includes": [
+			"src/**",
+			"!src/generated/**"
+		],
+		"rules": {
+			"completeness": {
+				"options": {
+					"scope": "documented"
+				}
+			},
+			"style": "on",
+			"tsdoc-tag": "error"
+		},
+		"overrides": [
+			{
+				"files": [
+					"tests/**"
+				],
+				"rules": {
+					"completeness": "off"
+				}
+			}
+		]
+	}
 }
 ```
 
@@ -34,11 +45,11 @@ opt-inのruleは、検査する宣言の広さを `scope` というruleごとの
 groupへ渡したscopeは、それを受け取るruleだけに効く
 opt-inのruleだけが `scope` を受け取るため、`recommended` のままでは指定しても何も変わらない
 
-| `scope` | 検査する宣言 | 受け取るrule |
-|---------|--------------|--------------|
-| `exported` | 公開surfaceの宣言(docの要求も同じ範囲) | `scope` を受け取るすべてのrule |
-| `documented` | docがある宣言すべて | `missing-doc` 以外の `scope` を受け取るrule |
-| `all` | 関数本体の外にある宣言すべてへdocを要求する | `missing-doc` だけ |
+| `scope`      | 検査する宣言                                | 受け取るrule                                |
+| ------------ | ------------------------------------------- | ------------------------------------------- |
+| `exported`   | 公開surfaceの宣言(docの要求も同じ範囲)      | `scope` を受け取るすべてのrule              |
+| `documented` | docがある宣言すべて                         | `missing-doc` 以外の `scope` を受け取るrule |
+| `all`        | 関数本体の外にある宣言すべてへdocを要求する | `missing-doc` だけ                          |
 
 公開surfaceはトップレベルの宣言のうち、`export` を付けたもの、`export { name }` が名前を挙げたもの、`export default name` と `export = name` が指すものにする
 `export { name } from "..."` と `export * from "..."` は指す先の宣言がこのfileに無いため対象外にする
@@ -52,23 +63,23 @@ object literal のメンバーは変数の初期化式から辿り、引数、�
 
 ## rule 一覧
 
-| Rule | Group | 重大度 | Default | `scope` | 検出対象 |
-|------|-------|--------|---------|---------|----------|
-| `tsdoc-syntax` | `correctness` | error | true | - | TSDoc parserが返す構文メッセージ |
-| `param-mismatch` | `correctness` | error | true | - | signatureが宣言していないparameterを指す `@param` |
-| `type-param-mismatch` | `correctness` | error | true | - | 宣言に無いtype parameterを指す `@typeParam` |
-| `tsdoc-tag` | `correctness` | warning | true | - | TSDoc設定が定義していないtag |
-| `orphan-doc` | `correctness` | warning | true | - | どの宣言にも付いていないTSDoc comment |
-| `suppression` | `suppressions` | error | true | - | 理由の無い抑制、未知のrule、ruleを書いていない抑制 |
-| `suppression-unused` | `suppressions` | warning | true | - | 何も抑制しない抑制 |
-| `missing-doc` | `completeness` | warning | false | `exported`、`all` | TSDoc commentの無い宣言 |
-| `param-untagged` | `completeness` | warning | false | `exported`、`documented` | `@param` の無い宣言済みparameter |
-| `type-param-untagged` | `completeness` | warning | false | `exported`、`documented` | `@typeParam` の無い宣言済みtype parameter |
-| `param-order` | `completeness` | warning | false | `exported`、`documented` | 宣言順と違う `@param` の並び |
-| `missing-returns` | `completeness` | warning | false | `exported`、`documented` | `@returns` の無い値を返す関数 |
-| `deprecated-without-guidance` | `completeness` | warning | false | `exported`、`documented` | 代替先を示さない `@deprecated` |
-| `single-line-doc` | `style` | warning | false | `exported`、`documented` | 1行で書いたTSDoc comment |
-| `blank-line-before-tags` | `style` | warning | false | `exported`、`documented` | summaryの直下に書いたblock tag |
+| Rule                          | Group          | 重大度  | Default | `scope`                  | 検出対象                                           |
+| ----------------------------- | -------------- | ------- | ------- | ------------------------ | -------------------------------------------------- |
+| `tsdoc-syntax`                | `correctness`  | error   | true    | -                        | TSDoc parserが返す構文メッセージ                   |
+| `param-mismatch`              | `correctness`  | error   | true    | -                        | signatureが宣言していないparameterを指す `@param`  |
+| `type-param-mismatch`         | `correctness`  | error   | true    | -                        | 宣言に無いtype parameterを指す `@typeParam`        |
+| `tsdoc-tag`                   | `correctness`  | warning | true    | -                        | TSDoc設定が定義していないtag                       |
+| `orphan-doc`                  | `correctness`  | warning | true    | -                        | どの宣言にも付いていないTSDoc comment              |
+| `suppression`                 | `suppressions` | error   | true    | -                        | 理由の無い抑制、未知のrule、ruleを書いていない抑制 |
+| `suppression-unused`          | `suppressions` | warning | true    | -                        | 何も抑制しない抑制                                 |
+| `missing-doc`                 | `completeness` | warning | false   | `exported`、`all`        | TSDoc commentの無い宣言                            |
+| `param-untagged`              | `completeness` | warning | false   | `exported`、`documented` | `@param` の無い宣言済みparameter                   |
+| `type-param-untagged`         | `completeness` | warning | false   | `exported`、`documented` | `@typeParam` の無い宣言済みtype parameter          |
+| `param-order`                 | `completeness` | warning | false   | `exported`、`documented` | 宣言順と違う `@param` の並び                       |
+| `missing-returns`             | `completeness` | warning | false   | `exported`、`documented` | `@returns` の無い値を返す関数                      |
+| `deprecated-without-guidance` | `completeness` | warning | false   | `exported`、`documented` | 代替先を示さない `@deprecated`                     |
+| `single-line-doc`             | `style`        | warning | false   | `exported`、`documented` | 1行で書いたTSDoc comment                           |
+| `blank-line-before-tags`      | `style`        | warning | false   | `exported`、`documented` | summaryの直下に書いたblock tag                     |
 
 `correctness` は書かれたTSDocが正しいかを見る rule、`suppressions` は抑制の理由と使用状況を見る rule で、すべて既定で有効になる
 `suppressions` groupは `suppression` ruleと名前を分け、group全体と個別のruleを別々に指定できる
@@ -104,7 +115,7 @@ parseできないfileはTypeScript compilerとBiomeへ任せ、その宣言は�
 
 ```ts
 // tsdoc-ignore missing-doc: the loader reads this value
-export const value = 1
+export const value = 1;
 ```
 
 理由の無い抑制、未知のrule、ruleを書いていない抑制は `suppression` のerrorになる

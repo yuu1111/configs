@@ -13,8 +13,8 @@ bun add -D oxlint
 
 ```json
 {
-  "oxlint": true,
-  "failOnWarnings": true
+	"oxlint": true,
+	"failOnWarnings": true
 }
 ```
 

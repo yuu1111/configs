@@ -152,6 +152,27 @@ describe("published Biome configurations", () => {
 	}
 
 	for (const configExport of ["biome", "react"] as const) {
+		test(`${configExport} export formats Markdown tables`, () => {
+			const consumerDirectory = createConsumer(configExport);
+			const markdown = "# Heading\n\n| a | b |\n|---|---|\n| c | d |\n";
+			try {
+				const file = join(consumerDirectory, "sample.md");
+				writeFileSync(file, markdown);
+				const result = runBiome(consumerDirectory, "format", "sample.md", [
+					"--write",
+					"--no-errors-on-unmatched",
+				]);
+				expect(result.exitCode, result.output).toBe(0);
+				expect(readFileSync(file, "utf8")).toBe(
+					"# Heading\n\n| a   | b   |\n| --- | --- |\n| c   | d   |\n",
+				);
+			} finally {
+				rmSync(consumerDirectory, { recursive: true, force: true });
+			}
+		});
+	}
+
+	for (const configExport of ["biome", "react"] as const) {
 		test(`${configExport} export enables the performance diagnostics`, () => {
 			const consumerDirectory = createConsumer(configExport);
 			try {

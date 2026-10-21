@@ -15,32 +15,32 @@ bun add -D @yuu1111/knip-config knip
 Knip loads `knip.ts`, so import the preset that matches the project and add the entries it cannot infer:
 
 ```ts
-import { application } from "@yuu1111/knip-config/application"
+import { application } from "@yuu1111/knip-config/application";
 
 export default {
 	...application,
-	entry: ["src/main.ts"]
-}
+	entry: ["src/main.ts"],
+};
 ```
 
 ## Presets
 
-| Preset | `includeEntryExports` | Use case |
-|--------|----------------------|----------|
-| `base` | — | Shared defaults |
-| `application` | `false` | Applications whose entry points a framework resolves |
-| `library` | `true` | Libraries whose entry points are their public API |
+| Preset        | `includeEntryExports` | Use case                                             |
+| ------------- | --------------------- | ---------------------------------------------------- |
+| `base`        | —                     | Shared defaults                                      |
+| `application` | `false`               | Applications whose entry points a framework resolves |
+| `library`     | `true`                | Libraries whose entry points are their public API    |
 
 ### base
 
 Every preset extends `base`.
 
-| Setting | Value |
-|---------|-------|
-| `entry` | `["quality.json"]` |
-| `ignoreExportsUsedInFile` | `true` |
-| `treatConfigHintsAsErrors` | `true` |
-| `treatTagHintsAsErrors` | `true` |
+| Setting                    | Value              |
+| -------------------------- | ------------------ |
+| `entry`                    | `["quality.json"]` |
+| `ignoreExportsUsedInFile`  | `true`             |
+| `treatConfigHintsAsErrors` | `true`             |
+| `treatTagHintsAsErrors`    | `true`             |
 
 `quality-check` loads `quality.json` at run time, so the file counts as an entry point and is not reported as unused.
 `ignoreExportsUsedInFile` keeps its exports out of the report, because the public API of a consuming project is the API of `quality-check` and not the exports of this file.
@@ -64,24 +64,24 @@ A shared preset cannot see dynamic entry points, CLI binaries, or generated file
 ```ts
 export default {
 	...application,
-	entry: ["src/main.ts", "quality.json"]
-}
+	entry: ["src/main.ts", "quality.json"],
+};
 ```
 
 `workspaces` does not inherit the top-level `entry` in the root workspace, so move `entry` there:
 
 ```ts
-import { application } from "@yuu1111/knip-config/application"
+import { application } from "@yuu1111/knip-config/application";
 
-const { entry, ...base } = application
+const { entry, ...base } = application;
 
 export default {
 	...base,
 	workspaces: {
 		".": { entry },
-		"packages/app": { entry: ["src/cli.ts"] }
-	}
-}
+		"packages/app": { entry: ["src/cli.ts"] },
+	},
+};
 ```
 
 Knip prints a configuration hint when a repository with `workspaces` also writes `entry` at the top level, and `base` fails the run on a hint.
@@ -91,6 +91,6 @@ A repository that also holds another project keeps it out of the report with `ig
 ```ts
 export default {
 	...application,
-	ignore: ["another-project/**"]
-}
+	ignore: ["another-project/**"],
+};
 ```

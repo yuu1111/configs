@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -14,16 +14,20 @@
 			"expand": "always"
 		}
 	},
+	"markdown": {
+		"formatter": {
+			"enabled": true
+		}
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true,
+			"preset": "recommended",
 			"complexity": {
 				"noExcessiveCognitiveComplexity": "warn"
 			},
 			"nursery": {
-				"noFloatingPromises": "warn",
-				"useImportsFirst": "error"
+				"noFloatingPromises": "warn"
 			},
 			"performance": {
 				"noBarrelFile": "error",
@@ -33,6 +37,7 @@
 				"noExportedImports": "error",
 				"noNestedTernary": "warn",
 				"noUselessElse": "error",
+				"useImportsFirst": "error",
 				"useBlockStatements": "error",
 				"useCollapsedElseIf": "error",
 				"useCollapsedIf": "error",
