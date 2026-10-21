@@ -1,5 +1,5 @@
 import { fromMarkdown } from "mdast-util-from-markdown";
-import type { MarkdownLine } from "./audit";
+import { type MarkdownLine, markdownLines } from "./audit";
 
 /**
  * リストの前後で空行が不足している行番号
@@ -53,4 +53,23 @@ export function listBlankLines(
 		}
 	}
 	return { after, before };
+}
+
+/**
+ * 整形済みの本文にリスト前後の不足する空行だけを補う
+ *
+ * @param source - ほかの整形を適用したMarkdownの本文文字列
+ * @returns リスト前後の空行を補った本文文字列
+ */
+export function fixListBlankLines(source: string): string {
+	const boundaries = listBlankLines(source, markdownLines(source));
+	const eol = source.includes("\r\n") ? "\r\n" : "\n";
+	return source
+		.split(/\r?\n/)
+		.flatMap((line, index) =>
+			boundaries.before.has(index + 1) || boundaries.after.has(index)
+				? ["", line]
+				: [line],
+		)
+		.join(eol);
 }

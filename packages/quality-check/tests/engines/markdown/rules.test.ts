@@ -637,6 +637,14 @@ test.each([
 	expect(fixSource(source)).toBe(source);
 });
 
+test("タブの整形で現れたリストの境界も一度で整える", () => {
+	const source = "paragraph\n\t- item\n";
+	const fixed = "paragraph\n\n  - item\n";
+	expect(fixSource(source)).toBe(fixed);
+	expect(fixSource(fixed)).toBe(fixed);
+	expect(rulesOf(fixed)).toEqual([]);
+});
+
 test("文書の先頭と末尾のリストに空行を求めない", () => {
 	expect(rulesOf("- 項目A\n- 項目B\n")).toEqual([]);
 	expect(rulesOf("1. 項目A\n2. 項目B\n")).toEqual([]);
