@@ -13,6 +13,15 @@
 			"expand": "always"
 		}
 	},
+	"html": {
+		"experimentalFullSupportEnabled": true,
+		"formatter": {
+			"enabled": true
+		},
+		"linter": {
+			"enabled": true
+		}
+	},
 	"markdown": {
 		"parser": {
 			"frontmatter": true
