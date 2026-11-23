@@ -4,6 +4,8 @@
 
 Shared configuration and check packages published to npm.
 
+[![Yuu1111 Configs on StartupScores](https://startupscores.com/badge/yuu1111-configs.svg?style=shield&v=combo&theme=dark)](https://startupscores.com/open-source/yuu1111-configs)
+
 ## Packages
 
 | Package                                                           | Description                                         |
